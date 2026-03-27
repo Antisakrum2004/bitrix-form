@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Создать задачу — Bitrix24</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2026;
+    --border: #2a2d35; --border-focus: #4f7fff; --text: #e8eaf0;
+    --text-muted: #6b7280; --text-dim: #3d4149; --accent: #4f7fff;
+    --accent-glow: rgba(79,127,255,0.15); --danger: #ff4f4f;
+    --success: #22c55e; --warning: #f59e0b;
+    --mono: 'JetBrains Mono', monospace; --display: 'Unbounded', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.3; pointer-events: none; z-index: 0; }
+
+  /* TOPBAR */
+  .topbar { position: sticky; top: 0; z-index: 100; background: rgba(14,15,17,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .topbar-logo { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: -0.02em; }
+  .topbar-logo span { color: var(--accent); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .webhook-badge { font-size: 11px; color: var(--success); display: none; }
+  .gear-btn { width: 36px; height: 36px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.15s; position: relative; user-select: none; }
+  .gear-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .gear-btn.active { border-color: var(--warning); background: rgba(245,158,11,0.1); }
+  .gear-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--warning); border: 2px solid var(--bg); display: none; }
+  .gear-dot.show { display: block; }
+
+  /* SETTINGS PANEL */
+  .settings-panel { position: sticky; top: 56px; z-index: 99; background: var(--surface); border-bottom: 1px solid var(--border); overflow: hidden; max-height: 0; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 32px; }
+  .settings-panel.open { max-height: 130px; padding: 16px 32px; }
+  .settings-inner { display: flex; align-items: flex-end; gap: 12px; }
+  .settings-field { flex: 1; }
+  .settings-field label { display: block; font-size: 11px; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .settings-inner input[type="text"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 9px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .settings-inner input[type="text"]:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .settings-status { font-size: 11px; margin-top: 5px; color: var(--text-dim); }
+  .btn-save { background: var(--warning); color: #000; border: none; border-radius: 3px; padding: 9px 18px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; flex-shrink: 0; align-self: flex-start; margin-top: 23px; }
+  .btn-save:hover { opacity: 0.85; }
+
+  /* LAYOUT */
+  .outer { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 36px 32px 80px; display: grid; grid-template-columns: 252px 1fr; gap: 28px; align-items: start; }
+
+  /* SIDEBAR */
+  .sidebar { position: sticky; top: 76px; }
+  .sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .sidebar-head { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 11px 14px; display: flex; align-items: center; gap: 8px; }
+  .sidebar-head-icon { font-size: 13px; }
+  .sidebar-head-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .sidebar-body { padding: 14px; }
+  .step-list { display: flex; flex-direction: column; }
+  .step-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .step-item:first-child { padding-top: 0; }
+  .step-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-num { width: 18px; height: 18px; border-radius: 2px; background: var(--accent-glow); border: 1px solid rgba(79,127,255,0.3); color: var(--accent); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 2px; line-height: 1.3; }
+  .step-desc { font-size: 10px; color: var(--text-muted); line-height: 1.6; }
+  .step-desc code { background: var(--surface2); border: 1px solid var(--border); border-radius: 2px; padding: 0 3px; font-size: 10px; color: var(--accent); }
+
+  .sidebar-tip { margin-top: 10px; background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 3px; padding: 9px 11px; }
+  .sidebar-tip-label { font-size: 10px; font-weight: 700; color: var(--success); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+  .sidebar-tip-text { font-size: 10px; color: var(--text-muted); line-height: 1.6; }
+  .sidebar-tip-text code { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 0 3px; font-size: 10px; color: var(--accent); }
+
+  .sidebar-api { margin-top: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 9px 11px; }
+  .sidebar-api-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .api-field { font-size: 10px; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .api-field:last-child { margin-bottom: 0; }
+  .api-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .api-name { color: var(--accent); font-weight: 700; min-width: 80px; }
+  .api-val { color: var(--text-dim); }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; animation: fadeUp 0.4s ease both; }
+  .card + .card { margin-top: 14px; }
+  .card-header { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--surface2); }
+  .card-num { width: 20px; height: 20px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); }
+  .card-body { padding: 18px; }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .req { color: var(--danger); font-size: 14px; line-height: 1; }
+  input[type="text"], input[type="date"], textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: var(--mono); font-size: 13px; padding: 9px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; resize: vertical; line-height: 1.6; }
+  input[type="date"] { color-scheme: dark; resize: none; }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); }
+  input[type="text"]:focus, input[type="date"]:focus, textarea:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+  input.error, textarea.error { border-color: var(--danger); }
+  .error-msg { font-size: 11px; color: var(--danger); margin-top: 4px; display: none; }
+  .error-msg.show { display: block; }
+  .field-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .char-count { font-size: 11px; color: var(--text-dim); }
+
+  .section-emoji { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 11px; }
+  .section-emoji:last-child { margin-bottom: 0; }
+  .emoji-icon { font-size: 15px; line-height: 1.5; flex-shrink: 0; width: 22px; text-align: center; }
+  .section-content { flex: 1; }
+  .section-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+
+  /* Tags */
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 7px 9px; min-height: 40px; cursor: text; transition: border-color 0.15s, box-shadow 0.15s; }
+  .tags-wrap:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .tags-wrap.error { border-color: var(--danger); }
+  .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-glow); border: 1px solid rgba(79,127,255,0.4); border-radius: 2px; padding: 2px 7px; font-size: 11px; color: var(--accent); white-space: nowrap; }
+  .tag-chip-remove { cursor: pointer; opacity: 0.5; font-size: 13px; line-height: 1; transition: opacity 0.15s; }
+  .tag-chip-remove:hover { opacity: 1; }
+  .tag-input { border: none !important; background: transparent !important; box-shadow: none !important; padding: 2px 4px !important; font-size: 13px; min-width: 130px; flex: 1; outline: none; color: var(--text); font-family: var(--mono); }
+  .tag-hint { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Priority */
+  .priority-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .priority-option { position: relative; }
+  .priority-option input[type="radio"] { position: absolute; opacity: 0; width: 0; }
+  .priority-option label { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all 0.15s; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text-muted); user-select: none; }
+  .priority-option input[type="radio"]:checked + label { border-color: var(--accent); background: var(--accent-glow); color: var(--text); }
+  .priority-option.important input[type="radio"]:checked + label { border-color: var(--warning); background: rgba(245,158,11,0.1); color: var(--warning); }
+  .priority-option label:hover { border-color: var(--text-muted); color: var(--text); }
+
+  /* Files */
+  .file-upload-area { border: 1px dashed var(--border); border-radius: 3px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--bg); position: relative; }
+  .file-upload-area:hover, .file-upload-area.drag-over { border-color: var(--accent); background: var(--accent-glow); }
+  .file-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .file-upload-text { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+  .file-upload-text span { color: var(--accent); }
+  .file-list { margin-top: 7px; display: flex; flex-direction: column; gap: 4px; }
+  .file-item { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 5px 9px; font-size: 11px; }
+  .file-item-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { color: var(--text-dim); flex-shrink: 0; }
+  .file-item-status { flex-shrink: 0; }
+  .file-item-remove { cursor: pointer; color: var(--text-dim); font-size: 15px; transition: color 0.15s; flex-shrink: 0; line-height: 1; }
+  .file-item-remove:hover { color: var(--danger); }
+  .upload-progress { height: 3px; background: var(--border); border-radius: 2px; margin-top: 7px; overflow: hidden; display: none; }
+  .upload-progress-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .upload-progress.show { display: block; }
+
+  .info-block { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 3px; padding: 11px 13px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+  .info-block code { background: var(--surface2); border: 1px solid var(--border); border-radius: 2px; padding: 1px 4px; font-size: 11px; color: var(--accent); }
+  .preview-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 12px; font-size: 12px; line-height: 1.8; color: var(--text-muted); min-height: 70px; white-space: pre-wrap; word-break: break-word; }
+  .preview-wrap.has-content { color: var(--text); }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 2px 7px; border-radius: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-new { background: rgba(79,127,255,0.15); color: var(--accent); border: 1px solid rgba(79,127,255,0.3); }
+  .badge-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+
+  .btn-wrap { margin-top: 20px; }
+  .btn-submit { width: 100%; background: var(--accent); color: #fff; font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border: none; border-radius: 3px; padding: 15px 24px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .btn-submit:hover { background: #3d6de0; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,127,255,0.35); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-submit .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  .btn-submit.loading .spinner { display: block; }
+  .btn-submit.loading .btn-text { opacity: 0.7; }
+
+  .toast { position: fixed; bottom: 28px; right: 28px; padding: 13px 18px; border-radius: 4px; font-family: var(--mono); font-size: 13px; font-weight: 500; z-index: 999; transform: translateY(14px); opacity: 0; transition: all 0.25s ease; max-width: 360px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #0f1f14; border-color: var(--success); color: var(--success); }
+  .toast.error { background: #1f0f0f; border-color: var(--danger); color: var(--danger); }
+  .toast-icon { font-size: 15px; flex-shrink: 0; }
+  .toast-body { flex: 1; }
+  .toast-title { font-weight: 700; margin-bottom: 2px; }
+  .toast-msg { font-size: 11px; opacity: 0.8; line-height: 1.5; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MOBILE */
+  @media (max-width: 800px) {
+    .topbar { padding: 0 16px; }
+    .settings-panel { padding: 0 16px; }
+    .settings-panel.open { max-height: 160px; padding: 14px 16px; }
+    .settings-inner { flex-direction: column; gap: 8px; }
+    .btn-save { margin-top: 0; width: 100%; text-align: center; }
+    .outer { grid-template-columns: 1fr; padding: 16px 16px 60px; gap: 0; }
+    .sidebar { display: none; }
+    .toast { bottom: 14px; right: 12px; left: 12px; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span></div>
+  <div class="topbar-right">
+    <div class="webhook-badge" id="webhookBadge">✓ Подключено</div>
+    <div class="gear-btn" id="gearBtn" onclick="toggleSettings()" title="Настройки вебхука">
+      ⚙️
+      <div class="gear-dot" id="gearDot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-inner">
+    <div class="settings-field">
+      <label>Вебхук Bitrix24</label>
+      <input type="text" id="webhookUrl" placeholder="https://ВАШ_ПОРТАЛ.bitrix24.ru/rest/1/ТОКЕН/" />
+      <div class="settings-status" id="webhookStatus">Вставь URL вебхука и нажми «Сохранить»</div>
+    </div>
+    <button class="btn-save" onclick="saveWebhook()">Сохранить</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="outer">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-head">
+        <div class="sidebar-head-icon">📖</div>
+        <div class="sidebar-head-title">Как создать задачу</div>
+      </div>
+      <div class="sidebar-body">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div>
+              <div class="step-title">Вебхук</div>
+              <div class="step-desc">Нажми <code>⚙️</code> справа вверху, вставь URL вебхука из Bitrix24, сохрани. Один раз — и готово.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div>
+              <div class="step-title">Название</div>
+              <div class="step-desc">Кратко о задаче. Станет заголовком в Bitrix24.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div>
+              <div class="step-title">Тег проекта</div>
+              <div class="step-desc">Пиши название проекта → <code>Enter</code>. Тег виден в карточке задачи.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div>
+              <div class="step-title">Срок</div>
+              <div class="step-desc">Необязательно. Без даты Bitrix ставит +7 дней.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">5</div>
+            <div>
+              <div class="step-title">Описание</div>
+              <div class="step-desc">Заполни нужные секции — пустые не попадут в задачу. Предпросмотр внизу.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">6</div>
+            <div>
+              <div class="step-title">Файлы</div>
+              <div class="step-desc">Перетащи или выбери — прикрепятся после создания задачи.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">7</div>
+            <div>
+              <div class="step-title">Создать</div>
+              <div class="step-desc">Нажми кнопку → задача в Бэклоге со статусом «Новые».</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-tip">
+          <div class="sidebar-tip-label">✓ Нужно заполнить</div>
+          <div class="sidebar-tip-text">Вебхук сохранён · GROUP_ID = <code>78</code> · Исполнитель указан · Тег добавлен</div>
+        </div>
+
+        <div class="sidebar-api">
+          <div class="sidebar-api-label">API → tasks.task.add</div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">TITLE</span><span class="api-val">название</span></div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">DESCRIPTION</span><span class="api-val">описание</span></div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">TAGS</span><span class="api-val">теги проекта</span></div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">GROUP_ID</span><span class="api-val">Бэклог = 78</span></div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">PRIORITY</span><span class="api-val">0 / 2</span></div>
+          <div class="api-field"><span class="api-dot"></span><span class="api-name">DEADLINE</span><span class="api-val">крайний срок</span></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FORM -->
+  <div>
+    <form id="taskForm" novalidate>
+
+      <!-- 1 -->
+      <div class="card" style="animation-delay:0.04s">
+        <div class="card-header">
+          <div class="card-num">1</div>
+          <div class="card-title">Название задачи</div>
+          <div style="margin-left:auto"><span class="badge badge-new"><span class="badge-dot"></span>Новая</span></div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>Имя задачи <span class="req">*</span></label>
+            <input type="text" id="taskTitle" placeholder="Краткое и чёткое название" maxlength="255" />
+            <div class="field-meta">
+              <div class="error-msg" id="titleError">Обязательное поле</div>
+              <div class="char-count" id="titleCount">0 / 255</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="card" style="animation-delay:0.08s">
+        <div class="card-header">
+          <div class="card-num">2</div>
+          <div class="card-title">Проект и сроки</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>🏷 Тег проекта <span class="req">*</span></label>
+            <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()">
+              <input type="text" id="tagInput" class="tag-input" placeholder="Название проекта → Enter" />
+            </div>
+            <div class="tag-hint">Enter или запятая — добавить · Backspace — удалить последний</div>
+            <div class="error-msg" id="tagsError">Добавь хотя бы один тег</div>
+          </div>
+          <div class="field">
+            <label>📅 Крайний срок</label>
+            <input type="date" id="taskDeadline" style="color-scheme:dark" />
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Необязательно — без даты Bitrix поставит +7 дней.</div>
+          </div>
+          <!-- Планирование сроков -->
+          <div class="field" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:12px;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.05em">⏱ Планирование сроков</div>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span style="font-size:10px;color:var(--text-muted)">Разрешить изменить</span>
+                <div id="allowChangeToggle" onclick="toggleAllowChange()" style="width:36px;height:20px;border-radius:10px;background:var(--accent);position:relative;cursor:pointer">
+                  <div id="allowChangeKnob" style="width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);position:absolute;top:2px;transition:transform 0.2s;transform:translateX(16px)"></div>
+                </div>
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="plannedDuration" placeholder="24" min="1" max="999" style="width:80px;background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;padding:6px 8px;outline:none" oninput="updateDuration()" />
+              <span style="font-size:13px;color:var(--text-muted)">час</span>
+            </div>
+            <div id="durationInfo" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="card" style="animation-delay:0.12s">
+        <div class="card-header">
+          <div class="card-num">3</div>
+          <div class="card-title">Описание задачи</div>
+        </div>
+        <div class="card-body">
+          <div class="section-emoji">
+            <div class="emoji-icon">🎯</div>
+            <div class="section-content">
+              <div class="section-label">Цель</div>
+              <textarea id="fieldGoal" rows="2" placeholder="Зачем мы это делаем и какой результат хотим."></textarea>
+            </div>
+          </div>
+          <div class="section-emoji">
+            <div class="emoji-icon">📋</div>
+            <div class="section-content">
+              <div class="section-label">Что сделать</div>
+              <textarea id="fieldTodo" rows="3" placeholder="- действие 1&#10;- действие 2&#10;- действие 3"></textarea>
+            </div>
+          </div>
+          <div class="section-emoji">
+            <div class="emoji-icon">🔗</div>
+            <div class="section-content">
+              <div class="section-label">Зависимости</div>
+              <textarea id="fieldDeps" rows="2" placeholder="Что нужно до старта. Если нет — прочерк."></textarea>
+            </div>
+          </div>
+          <div class="section-emoji">
+            <div class="emoji-icon">✅</div>
+            <div class="section-content">
+              <div class="section-label">Критерии приёмки (DOD)</div>
+              <textarea id="fieldDod" rows="3" placeholder="- что проверяем при сдаче&#10;- пункт 2&#10;- пункт 3"></textarea>
+            </div>
+          </div>
+          <div class="section-emoji">
+            <div class="emoji-icon">📎</div>
+            <div class="section-content">
+              <div class="section-label">Материалы — ссылки</div>
+              <textarea id="fieldMaterials" rows="2" placeholder="https://... — ТЗ, макеты, Google Drive, Notion"></textarea>
+            </div>
+          </div>
+          <div class="section-emoji" style="margin-top:10px">
+            <div class="emoji-icon">📁</div>
+            <div class="section-content">
+              <div class="section-label">Материалы — файлы</div>
+              <div class="file-upload-area" id="dropZone">
+                <input type="file" id="fileInput" multiple />
+                <div class="file-upload-text">📂 Перетащи файлы сюда<br><span>или нажми для выбора</span></div>
+              </div>
+              <div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div>
+              <div class="file-list" id="fileList"></div>
+            </div>
+          </div>
+          <div class="section-emoji" style="margin-top:10px">
+            <div class="emoji-icon">📞</div>
+            <div class="section-content">
+              <div class="section-label">Контакт</div>
+              <textarea id="fieldContact" rows="2" placeholder="Кто отвечает на вопросы — имя и контакт"></textarea>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="section-label" style="font-size:10px;color:var(--text-muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.08em">Предпросмотр описания</div>
+          <div class="preview-wrap" id="descPreview">Заполни поля выше — здесь появится итоговый текст задачи</div>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="card" style="animation-delay:0.16s">
+        <div class="card-header">
+          <div class="card-num">4</div>
+          <div class="card-title">Приоритет</div>
+        </div>
+        <div class="card-body">
+          <div class="priority-wrap">
+            <div class="priority-option">
+              <input type="radio" name="priority" id="prioNormal" value="0" checked>
+              <label for="prioNormal">⬜ Обычная</label>
+            </div>
+            <div class="priority-option important">
+              <input type="radio" name="priority" id="prioImportant" value="2">
+              <label for="prioImportant">⭐ Важная</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="card" style="animation-delay:0.2s">
+        <div class="card-header">
+          <div class="card-num">5</div>
+          <div class="card-title">Проект</div>
+        </div>
+        <div class="card-body">
+          <div class="info-block">
+            Задача → группа <code>Бэклог</code> (GROUP_ID: <code id="groupIdDisplay">78</code>) · Статус: <code>Новые</code>
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <label>GROUP_ID «Бэклог» <span class="req">*</span></label>
+              <input type="text" id="groupId" placeholder="78" />
+              <div style="font-size:10px;color:var(--text-dim);margin-top:4px">Bitrix24 → Группы → Бэклог → ?ID=XX</div>
+            </div>
+            <div>
+              <label>RESPONSIBLE_ID <span class="req">*</span></label>
+              <input type="text" id="responsibleId" placeholder="116" />
+              <div style="font-size:10px;color:var(--text-dim);margin-top:4px">
+                <span style="color:var(--accent);cursor:pointer" onclick="fetchMyId()">Узнать мой ID →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-wrap">
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <div class="spinner"></div>
+          <span class="btn-text">Создать задачу в Bitrix24</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon"></div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle"></div>
+    <div class="toast-msg" id="toastMsg"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_WEBHOOK = '';
+const BACKLOG_GROUP_ID = '78';
+const DEFAULT_RESPONSIBLE_ID = '116';
+
+let webhookUrl = localStorage.getItem('bx_webhook') || DEFAULT_WEBHOOK;
+let savedGroupId = localStorage.getItem('bx_group_id') || BACKLOG_GROUP_ID;
+let savedResponsibleId = localStorage.getItem('bx_responsible_id') || DEFAULT_RESPONSIBLE_ID;
+let tags = [], selectedFiles = [], settingsOpen = false;
+let allowChangeDeadline = true;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (webhookUrl) { document.getElementById('webhookUrl').value = webhookUrl; setWebhookSaved(true); }
+  document.getElementById('groupId').value = savedGroupId;
+  document.getElementById('groupIdDisplay').textContent = savedGroupId;
+  document.getElementById('responsibleId').value = savedResponsibleId;
+  ['fieldGoal','fieldTodo','fieldDeps','fieldDod','fieldMaterials','fieldContact'].forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+  document.getElementById('taskTitle').addEventListener('input', function() {
+    document.getElementById('titleCount').textContent = this.value.length + ' / 255';
+    if (this.value.trim()) { this.classList.remove('error'); document.getElementById('titleError').classList.remove('show'); }
+  });
+  document.getElementById('groupId').addEventListener('input', function() { document.getElementById('groupIdDisplay').textContent = this.value || '—'; });
+  const tagInput = document.getElementById('tagInput');
+  tagInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput.value.trim().replace(/,$/, '')); }
+    else if (e.key === 'Backspace' && tagInput.value === '' && tags.length > 0) removeTag(tags.length - 1);
+  });
+  tagInput.addEventListener('blur', () => { if (tagInput.value.trim()) addTag(tagInput.value.trim()); });
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
+  fileInput.addEventListener('change', e => { handleFiles(Array.from(e.target.files)); fileInput.value = ''; });
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(Array.from(e.dataTransfer.files)); });
+  document.addEventListener('click', e => { if (settingsOpen && !e.target.closest('#settingsPanel') && !e.target.closest('#gearBtn')) closeSettings(); });
+});
+
+function toggleSettings() { settingsOpen ? closeSettings() : openSettings(); }
+function openSettings() { settingsOpen = true; document.getElementById('settingsPanel').classList.add('open'); document.getElementById('gearBtn').classList.add('active'); setTimeout(() => document.getElementById('webhookUrl').focus(), 300); }
+function closeSettings() { settingsOpen = false; document.getElementById('settingsPanel').classList.remove('open'); document.getElementById('gearBtn').classList.remove('active'); }
+function setWebhookSaved(saved) {
+  const st = document.getElementById('webhookStatus');
+  const dot = document.getElementById('gearDot');
+  const badge = document.getElementById('webhookBadge');
+  if (saved) { st.textContent = '✓ Вебхук сохранён'; st.style.color = 'var(--success)'; dot.classList.remove('show'); badge.style.display = 'block'; }
+  else { st.textContent = 'Вставь URL вебхука и нажми «Сохранить»'; st.style.color = 'var(--text-dim)'; dot.classList.add('show'); badge.style.display = 'none'; }
+}
+function saveWebhook() {
+  const val = document.getElementById('webhookUrl').value.trim();
+  if (!val || !val.includes('bitrix24')) { showToast('error', 'Неверный вебхук', 'URL должен содержать bitrix24.ru/rest/...'); return; }
+  webhookUrl = val.endsWith('/') ? val : val + '/';
+  localStorage.setItem('bx_webhook', webhookUrl);
+  setWebhookSaved(true);
+  showToast('success', 'Вебхук сохранён', 'Теперь можно создавать задачи');
+  setTimeout(closeSettings, 700);
+}
+function addTag(value) {
+  if (!value) return;
+  value.split(',').map(s => s.trim()).filter(Boolean).forEach(t => { if (t && !tags.includes(t)) tags.push(t); });
+  document.getElementById('tagInput').value = '';
+  renderTags();
+  if (tags.length > 0) { document.getElementById('tagsWrap').classList.remove('error'); document.getElementById('tagsError').classList.remove('show'); }
+}
+function removeTag(i) { tags.splice(i, 1); renderTags(); }
+function renderTags() {
+  const wrap = document.getElementById('tagsWrap'), input = document.getElementById('tagInput');
+  wrap.innerHTML = '';
+  tags.forEach((t, i) => { const c = document.createElement('span'); c.className = 'tag-chip'; c.innerHTML = `${escHtml(t)} <span class="tag-chip-remove" onclick="removeTag(${i})">×</span>`; wrap.appendChild(c); });
+  wrap.appendChild(input);
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function handleFiles(files) { files.forEach(f => { if (!selectedFiles.find(sf => sf.name===f.name && sf.size===f.size)) selectedFiles.push(f); }); renderFileList(); }
+function renderFileList() {
+  const list = document.getElementById('fileList'); list.innerHTML = '';
+  selectedFiles.forEach((f, i) => { const el = document.createElement('div'); el.className = 'file-item'; el.id = `file-item-${i}`; el.innerHTML = `<span>📄</span><span class="file-item-name">${escHtml(f.name)}</span><span class="file-item-size">${fmt(f.size)}</span><span class="file-item-status" id="file-status-${i}"></span><span class="file-item-remove" onclick="removeFile(${i})">×</span>`; list.appendChild(el); });
+}
+function removeFile(i) { selectedFiles.splice(i, 1); renderFileList(); }
+function fmt(b) { return b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
+async function uploadFiles(hook, taskId) {
+  if (!selectedFiles.length) return;
+  document.getElementById('uploadProgress').classList.add('show');
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const f = selectedFiles[i], s = document.getElementById(`file-status-${i}`);
+    if (s) s.textContent = '⏳';
+    try {
+      const base64 = await toB64(f);
+      const r = await fetch(hook + 'tasks.task.files.attach', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({taskId, fileContent:[f.name, base64], fileName:f.name}) });
+      const d = await r.json();
+      if (s) s.textContent = d.result ? '✅' : '⚠️';
+    } catch { if (s) s.textContent = '❌'; }
+    document.getElementById('uploadBar').style.width = Math.round(((i+1)/selectedFiles.length)*100)+'%';
+  }
+}
+function toB64(f) { return new Promise((res,rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(f); }); }
+// Planning duration functions
+function toggleAllowChange() {
+  allowChangeDeadline = !allowChangeDeadline;
+  const toggle = document.getElementById('allowChangeToggle');
+  const knob = document.getElementById('allowChangeKnob');
+  if (allowChangeDeadline) {
+    toggle.style.background = 'var(--accent)';
+    knob.style.transform = 'translateX(16px)';
+  } else {
+    toggle.style.background = 'var(--border)';
+    knob.style.transform = 'translateX(2px)';
+  }
+}
+function updateDuration() {
+  const val = document.getElementById('plannedDuration').value;
+  const info = document.getElementById('durationInfo');
+  if (!val || isNaN(parseInt(val))) {
+    info.style.display = 'none';
+    return;
+  }
+  const hours = parseInt(val);
+  const days = Math.ceil(hours / 8);
+  const now = new Date();
+  const end = new Date(now.getTime() + hours * 3600 * 1000);
+  const daysText = days === 1 ? 'день' : days < 5 ? 'дня' : 'дней';
+  info.innerHTML = `<div style="margin-bottom:4px"><span style="color:var(--accent)">≈ ${days} раб. ${daysText}</span> <span style="color:var(--text-dim)">(по 8ч = ${hours}ч)</span></div><div style="color:var(--text-dim)">Старт: ${now.toLocaleDateString('ru-RU')} → Финиш: ${end.toLocaleDateString('ru-RU')} в ${end.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'})}</div>`;
+  info.style.display = 'block';
+}
+function buildDescription() {
+  const g = id => document.getElementById(id).value.trim(), p = [];
+  if (g('fieldGoal'))      p.push('🎯 Цель:\n'+g('fieldGoal'));
+  if (g('fieldTodo'))      p.push('📋 Что сделать:\n'+g('fieldTodo'));
+  if (g('fieldDeps'))      p.push('🔗 Зависимости:\n'+g('fieldDeps'));
+  if (g('fieldDod'))       p.push('✅ Критерии приёмки:\n'+g('fieldDod'));
+  if (g('fieldMaterials')) p.push('📎 Материалы:\n'+g('fieldMaterials'));
+  if (g('fieldContact'))   p.push('📞 Контакт:\n'+g('fieldContact'));
+  return p.join('\n\n');
+}
+function updatePreview() {
+  const d = buildDescription(), el = document.getElementById('descPreview');
+  if (d) { el.textContent = d; el.classList.add('has-content'); } else { el.textContent = 'Заполни поля выше — здесь появится итоговый текст задачи'; el.classList.remove('has-content'); }
+}
+function validate() {
+  let ok = true;
+  const t = document.getElementById('taskTitle');
+  if (!t.value.trim()) { t.classList.add('error'); document.getElementById('titleError').classList.add('show'); ok = false; }
+  if (!tags.length) { document.getElementById('tagsWrap').classList.add('error'); document.getElementById('tagsError').classList.add('show'); ok = false; }
+  return ok;
+}
+document.getElementById('taskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validate()) { showToast('error', 'Заполни обязательные поля', 'Название и тег проекта обязательны'); return; }
+  const cw = document.getElementById('webhookUrl').value.trim() || webhookUrl;
+  if (!cw) { showToast('error', 'Вебхук не указан', 'Нажми ⚙️ вверху и введи URL'); return; }
+  const gid = document.getElementById('groupId').value.trim();
+  if (!gid) { showToast('error', 'Укажи GROUP_ID', 'Нужен ID проекта «Бэклог»'); return; }
+  const rid = document.getElementById('responsibleId').value.trim();
+  if (!rid) { showToast('error', 'Укажи RESPONSIBLE_ID', 'Нажми «Узнать мой ID»'); return; }
+  const hook = cw.endsWith('/') ? cw : cw + '/';
+  const dl = document.getElementById('taskDeadline').value;
+  const pd = document.getElementById('plannedDuration').value;
+  const payload = { fields: { TITLE: document.getElementById('taskTitle').value.trim(), DESCRIPTION: buildDescription(), GROUP_ID: parseInt(gid), RESPONSIBLE_ID: parseInt(rid), PRIORITY: parseInt(document.querySelector('input[name="priority"]:checked').value), STATUS: 2, TAGS: tags } };
+  if (dl) payload.fields.DEADLINE = dl + 'T18:00:00+03:00';
+  // Planning duration fields
+  if (allowChangeDeadline !== undefined) payload.fields.ALLOW_CHANGE_DEADLINE = allowChangeDeadline ? 'Y' : 'N';
+  if (pd) {
+    const hours = parseInt(pd);
+    payload.fields.DURATION_PLAN_SECONDS = hours * 3600;
+    if (!dl) {
+      const end = new Date(Date.now() + hours * 3600 * 1000);
+      payload.fields.END_DATE_PLAN = end.toISOString();
+    }
+  }
+  localStorage.setItem('bx_group_id', gid); localStorage.setItem('bx_responsible_id', rid);
+  const btn = document.getElementById('submitBtn'), bt = btn.querySelector('.btn-text');
+  btn.classList.add('loading'); btn.disabled = true; bt.textContent = 'Создаём задачу...';
+  try {
+    const res = await fetch(hook + 'tasks.task.add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.result?.task?.id) {
+      const tid = data.result.task.id;
+      if (selectedFiles.length) { bt.textContent = `Загружаем файлы (${selectedFiles.length})...`; await uploadFiles(hook, tid); }
+      showToast('success', `Задача #${tid} создана!`, `Теги: ${tags.join(', ')} · Бэклог`);
+      resetForm();
+    } else if (data.error) { showToast('error', 'Ошибка Bitrix24', data.error_description || data.error); }
+    else { showToast('error', 'Неизвестный ответ', JSON.stringify(data).slice(0,120)); }
+  } catch(err) {
+    if (err.name === 'TypeError') showToast('error', 'CORS ошибка', 'Открой через Live Server или python -m http.server');
+    else showToast('error', 'Сетевая ошибка', err.message);
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false; bt.textContent = 'Создать задачу в Bitrix24';
+    document.getElementById('uploadProgress').classList.remove('show');
+    document.getElementById('uploadBar').style.width = '0%';
+  }
+});
+async function fetchMyId() {
+  const h = document.getElementById('webhookUrl').value.trim() || webhookUrl;
+  if (!h) { showToast('error', 'Вебхук не указан', 'Нажми ⚙️ и сохрани вебхук'); return; }
+  try {
+    const r = await fetch((h.endsWith('/') ? h : h+'/') + 'profile.json');
+    const d = await r.json();
+    if (d.result?.ID) { document.getElementById('responsibleId').value = d.result.ID; localStorage.setItem('bx_responsible_id', d.result.ID); showToast('success', 'ID получен: '+d.result.ID, d.result.NAME+' '+(d.result.LAST_NAME||'')); }
+    else showToast('error', 'Не удалось получить ID', JSON.stringify(d).slice(0,100));
+  } catch { showToast('error', 'Ошибка запроса', 'Проверь вебхук'); }
+}
+function resetForm() {
+  ['taskTitle','fieldGoal','fieldTodo','fieldDeps','fieldDod','fieldMaterials','fieldContact'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('taskDeadline').value = '';
+  document.getElementById('prioNormal').checked = true;
+  document.getElementById('titleCount').textContent = '0 / 255';
+  tags = []; renderTags(); selectedFiles = []; renderFileList(); updatePreview();
+}
+let toastTimer;
+function showToast(type, title, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = type === 'success' ? '✓' : '✕';
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg || '';
+  t.className = 'toast '+type+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+</script>
+</body>
+</html>
