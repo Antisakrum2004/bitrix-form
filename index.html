@@ -313,9 +313,7 @@
   .planning-box { background: rgba(10,12,18,0.6); border: 1px solid var(--glass-border); border-radius: 6px; padding: 12px; margin-top: 8px; }
 
   /* ═══════════════════════════════════════════════════════════
-     ОГОНОК ВАЖНОСТИ — 4-слойный, без filter, без свечения
-     Цвет через CSS-класс .lit + transition
-     Transform через @keyframes (только transform)
+     ОГОНОК — 4-слойный, без filter, без свечения
      ═══════════════════════════════════════════════════════════ */
   .flame-btn {
     display: flex; align-items: center; gap: 8px;
@@ -340,29 +338,21 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-
-  /* Слой 1 — самый большой, снаружи */
   .flame-l1 { fill: #3a3f52; opacity: 0.45; transition: fill 0.3s ease; }
-  /* Слой 2 — средний */
   .flame-l2 { fill: #3a3f52; opacity: 0.65; transition: fill 0.3s ease; }
-  /* Слой 3 — поменьше */
   .flame-l3 { fill: #3a3f52; opacity: 0.82; transition: fill 0.3s ease; }
-  /* Слой 4 — жёлтая серединка */
   .flame-l4 { fill: #3a3f52; opacity: 1; transition: fill 0.3s ease; }
 
-  /* Hover — чуть светлее, только когда выключен */
   .flame-icon:not(.lit):hover .flame-l1 { fill: #5f657d; }
   .flame-icon:not(.lit):hover .flame-l2 { fill: #5f657d; }
   .flame-icon:not(.lit):hover .flame-l3 { fill: #5f657d; }
   .flame-icon:not(.lit):hover .flame-l4 { fill: #5f657d; }
 
-  /* Зажжён — каждый слой свой цвет */
   .flame-icon.lit .flame-l1 { fill: #8b1a00; }
   .flame-icon.lit .flame-l2 { fill: #e63e00; }
   .flame-icon.lit .flame-l3 { fill: #ff6d00; }
   .flame-icon.lit .flame-l4 { fill: #ffab00; }
 
-  /* Плавный bounce */
   .flame-icon.igniting {
     animation: ignite 0.45s cubic-bezier(0.25, 1.2, 0.5, 1);
   }
@@ -374,7 +364,6 @@
     100% { transform: scale(1) rotate(0deg); }
   }
 
-  /* Плавное затухание */
   .flame-icon.extinguishing {
     animation: extinguish 0.3s ease;
   }
@@ -461,7 +450,6 @@
   <div>
     <form id="taskForm" novalidate>
 
-      <!-- Карточка 1 — Название + огонёк -->
       <div class="card" style="animation-delay:0.04s">
         <div class="card-header">
           <div class="card-num">1</div>
@@ -490,7 +478,6 @@
         </div>
       </div>
 
-      <!-- Карточка 2 — Проект и сроки -->
       <div class="card" style="animation-delay:0.08s">
         <div class="card-header">
           <div class="card-num">2</div>
@@ -532,7 +519,6 @@
         </div>
       </div>
 
-      <!-- Карточка 3 — Описание -->
       <div class="card" style="animation-delay:0.12s">
         <div class="card-header">
           <div class="card-num">3</div>
@@ -542,27 +528,27 @@
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><line x1="8" y1="2" x2="8" y2="5.5"/><line x1="8" y1="10.5" x2="8" y2="14"/><line x1="2" y1="8" x2="5.5" y2="8"/><line x1="10.5" y1="8" x2="14" y2="8"/></svg></div>
-            <div class="section-content"><div class="section-label">Цель</div><textarea data-icon-field rows="1" placeholder="Зачем мы это делаем и какой результат хотим."></textarea></div>
+            <div class="section-content"><div class="section-label">Цель</div><textarea id="fieldGoal" data-icon-field rows="1" placeholder="Зачем мы это делаем и какой результат хотим."></textarea></div>
           </div>
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5L4 5l1.5 1.5M8.5 3.5L10 5 8.5 6.5"/><line x1="6.5" y1="11" x2="9.5" y2="11"/><line x1="3" y1="8.5" x2="13" y2="8.5"/><line x1="3" y1="13.5" x2="13" y2="13.5"/></svg></div>
-            <div class="section-content"><div class="section-label">Что сделать</div><textarea data-icon-field rows="1" placeholder="- действие 1&#10;- действие 2&#10;- действие 3"></textarea></div>
+            <div class="section-content"><div class="section-label">Что сделать</div><textarea id="fieldTodo" data-icon-field rows="1" placeholder="- действие 1&#10;- действие 2&#10;- действие 3"></textarea></div>
           </div>
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3.5l-3 4.5 3 4.5"/><path d="M11.5 3.5l3 4.5-3 4.5"/><line x1="9" y1="1.5" x2="7" y2="14.5"/></svg></div>
-            <div class="section-content"><div class="section-label">Зависимости</div><textarea data-icon-field rows="1" placeholder="Что нужно до старта. Если нет — прочерк."></textarea></div>
+            <div class="section-content"><div class="section-label">Зависимости</div><textarea id="fieldDeps" data-icon-field rows="1" placeholder="Что нужно до старта. Если нет — прочерк."></textarea></div>
           </div>
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg></div>
-            <div class="section-content"><div class="section-label">Критерии приёмки (DOD)</div><textarea data-icon-field rows="1" placeholder="- что проверяем при сдаче&#10;- пункт 2&#10;- пункт 3"></textarea></div>
+            <div class="section-content"><div class="section-label">Критерии приёмки (DOD)</div><textarea id="fieldDod" data-icon-field rows="1" placeholder="- что проверяем при сдаче&#10;- пункт 2&#10;- пункт 3"></textarea></div>
           </div>
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2a3.5 3.5 0 014.24 4.24l-1.2 1.2M9.5 14a3.5 3.5 0 01-4.24-4.24l1.2-1.2"/></svg></div>
-            <div class="section-content"><div class="section-label">Материалы — ссылки</div><textarea data-icon-field rows="1" placeholder="https://... — ТЗ, макеты, Google Drive, Notion"></textarea></div>
+            <div class="section-content"><div class="section-label">Материалы — ссылки</div><textarea id="fieldMaterials" data-icon-field rows="1" placeholder="https://... — ТЗ, макеты, Google Drive, Notion"></textarea></div>
           </div>
 
           <div class="section-field" data-state="empty">
@@ -580,7 +566,7 @@
 
           <div class="section-field" data-state="empty">
             <div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>
-            <div class="section-content"><div class="section-label">Контакт</div><textarea data-icon-field rows="1" placeholder="Кто отвечает на вопросы — имя и контакт"></textarea></div>
+            <div class="section-content"><div class="section-label">Контакт</div><textarea id="fieldContact" data-icon-field rows="1" placeholder="Кто отвечает на вопросы — имя и контакт"></textarea></div>
           </div>
 
           <div class="divider"></div>
@@ -589,7 +575,6 @@
         </div>
       </div>
 
-      <!-- Карточка 4 — Проект -->
       <div class="card" style="animation-delay:0.16s">
         <div class="card-header">
           <div class="card-num">4</div>
@@ -631,17 +616,12 @@
 </div>
 
 <script>
-/* ═══════════════════════════════════════
-   ОГОНОК — простой toggle
-   ═══════════════════════════════════════ */
 let flameOn = false;
 
 function toggleFlame() {
   const icon  = document.getElementById('flameIcon');
   const label = document.getElementById('flameLabel');
-
   if (icon.classList.contains('igniting') || icon.classList.contains('extinguishing')) return;
-
   if (!flameOn) {
     flameOn = true;
     icon.classList.add('lit', 'igniting');
@@ -656,10 +636,6 @@ function toggleFlame() {
   }
 }
 
-
-/* ═══════════════════════════════════════
-   ОСТАЛЬНАЯ ЛОГИКА
-   ═══════════════════════════════════════ */
 function autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 function updateFieldIcons() {
   document.querySelectorAll('.section-field').forEach(sf => {
@@ -744,7 +720,17 @@ function toB64(f){return new Promise((r,j)=>{const fr=new FileReader();fr.onload
 function toggleAllowChange() { window.allowChangeDeadline=!window.allowChangeDeadline; document.getElementById('allowChangeToggle').style.background=window.allowChangeDeadline?'var(--accent)':'var(--glass-border-h)'; document.getElementById('allowChangeKnob').style.transform=window.allowChangeDeadline?'translateX(16px)':'translateX(2px)'; }
 function updateDuration() { const v=document.getElementById('plannedDuration').value,info=document.getElementById('durationInfo'); if(!v||isNaN(parseInt(v))){info.style.display='none';return;} const h=parseInt(v),d=Math.ceil(h/8),n=new Date(),e=new Date(n.getTime()+h*3600*1000),dt=d===1?'день':d<5?'дня':'дней'; info.innerHTML=`<div style="margin-bottom:4px"><span style="color:var(--accent)">~ ${d} раб. ${dt}</span> <span style="color:var(--text-dim)">(по 8ч = ${h}ч)</span></div><div style="color:var(--text-dim)">Старт: ${n.toLocaleDateString('ru-RU')} — Финиш: ${e.toLocaleDateString('ru-RU')} в ${e.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</div>`; info.style.display='block'; }
 
-function buildDescription() { const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';}; const p=[]; if(g('fieldGoal'))p.push('Цель:\n'+g('fieldGoal')); if(g('fieldTodo'))p.push('Что сделать:\n'+g('fieldTodo')); if(g('fieldDeps'))p.push('Зависимости:\n'+g('fieldDeps')); if(g('fieldDod'))p.push('Критерии приёмки:\n'+g('fieldDod')); if(g('fieldMaterials'))p.push('Материалы:\n'+g('fieldMaterials')); if(g('fieldContact'))p.push('Контакт:\n'+g('fieldContact')); return p.join('\n\n'); }
+function buildDescription() {
+  const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const p = [];
+  if (g('fieldGoal')) p.push('Цель:\n' + g('fieldGoal'));
+  if (g('fieldTodo')) p.push('Что сделать:\n' + g('fieldTodo'));
+  if (g('fieldDeps')) p.push('Зависимости:\n' + g('fieldDeps'));
+  if (g('fieldDod')) p.push('Критерии приёмки:\n' + g('fieldDod'));
+  if (g('fieldMaterials')) p.push('Материалы:\n' + g('fieldMaterials'));
+  if (g('fieldContact')) p.push('Контакт:\n' + g('fieldContact'));
+  return p.join('\n\n');
+}
 function updatePreview() { const d=buildDescription(),el=document.getElementById('descPreview'); if(d){el.textContent=d;el.classList.add('has-content');}else{el.textContent='Заполни поля выше — здесь появится итоговый текст задачи';el.classList.remove('has-content');} }
 function validate() { let ok=true; const t=document.getElementById('taskTitle'); if(!t.value.trim()){t.classList.add('error');document.getElementById('titleError').classList.add('show');ok=false;} if(!window.tags.length){document.getElementById('tagsWrap').classList.add('error');document.getElementById('tagsError').classList.add('show');ok=false;} return ok; }
 
