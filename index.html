@@ -106,18 +106,12 @@
     gap: 28px; align-items: start;
   }
 
-  /* ═══════════════════════════════════
-     SIDEBAR — парящая
-     ═══════════════════════════════════ */
   .sidebar { position: sticky; top: 76px; }
   .sidebar-card {
     background: rgba(18, 21, 31, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 10px; overflow: hidden;
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.2),
-      0 12px 28px rgba(0, 0, 0, 0.3),
-      0 32px 64px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 12px 28px rgba(0,0,0,0.3), 0 32px 64px rgba(0,0,0,0.2);
   }
   .sidebar-head { background: var(--surface2); border-bottom: 1px solid var(--glass-border); padding: 11px 14px; display: flex; align-items: center; gap: 8px; }
   .sidebar-head-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
@@ -150,29 +144,18 @@
   .api-name { color: var(--accent); font-weight: 700; min-width: 80px; }
   .api-val { color: var(--text-dim); }
 
-  /* ═══════════════════════════════════
-     КАРТОЧКИ — парящие
-     ═══════════════════════════════════ */
   .card {
     background: rgba(18, 21, 31, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 10px; overflow: hidden;
     animation: fadeUp 0.4s ease both;
-
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.2),
-      0 12px 28px rgba(0, 0, 0, 0.3),
-      0 32px 64px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 12px 28px rgba(0,0,0,0.3), 0 32px 64px rgba(0,0,0,0.2);
     transform: translateY(0);
-    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
   }
   .card:hover {
     transform: translateY(-4px);
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.25),
-      0 18px 40px rgba(0, 0, 0, 0.35),
-      0 44px 80px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 18px 40px rgba(0,0,0,0.35), 0 44px 80px rgba(0,0,0,0.25);
   }
   .card + .card { margin-top: 14px; }
   .card-header {
@@ -251,21 +234,6 @@
   }
   .tag-hint { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
 
-  .priority-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .priority-option { position: relative; }
-  .priority-option input[type="radio"] { position: absolute; opacity: 0; width: 0; }
-  .priority-option label {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 11px; background: rgba(10, 12, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 6px; cursor: pointer; transition: all 0.15s;
-    text-transform: none; letter-spacing: 0; font-size: 13px;
-    color: var(--text-muted); user-select: none;
-  }
-  .priority-option input[type="radio"]:checked + label { border-color: var(--accent); background: var(--accent-glow-strong); color: var(--text); }
-  .priority-option.important input[type="radio"]:checked + label { border-color: var(--warning); background: rgba(245,158,11,0.1); color: var(--warning); }
-  .priority-option label:hover { border-color: var(--glass-border-h); color: var(--text); }
-  .priority-option label svg { flex-shrink: 0; }
-
   .file-upload-area {
     border: 1px dashed var(--glass-border); border-radius: 6px;
     padding: 14px; text-align: center; cursor: pointer;
@@ -317,9 +285,9 @@
     border-radius: 6px; padding: 15px 24px; cursor: pointer;
     transition: all 0.15s; display: flex; align-items: center;
     justify-content: center; gap: 10px;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 16px rgba(16,185,129,0.2);
   }
-  .btn-submit:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16, 185, 129, 0.35); }
+  .btn-submit:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,0.35); }
   .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn-submit .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
   .btn-submit.loading .spinner { display: block; }
@@ -342,7 +310,79 @@
   .toast-title { font-weight: 700; margin-bottom: 2px; }
   .toast-msg { font-size: 11px; opacity: 0.8; line-height: 1.5; }
 
-  .planning-box { background: rgba(10, 12, 18, 0.6); border: 1px solid var(--glass-border); border-radius: 6px; padding: 12px; margin-top: 8px; }
+  .planning-box { background: rgba(10,12,18,0.6); border: 1px solid var(--glass-border); border-radius: 6px; padding: 12px; margin-top: 8px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     ОГОНОК ВАЖНОСТИ — 4-слойный, без filter, без свечения
+     Цвет через CSS-класс .lit + transition
+     Transform через @keyframes (только transform)
+     ═══════════════════════════════════════════════════════════ */
+  .flame-btn {
+    display: flex; align-items: center; gap: 8px;
+    margin-left: auto;
+  }
+  .flame-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim);
+    pointer-events: none; user-select: none;
+    transition: color 0.3s ease;
+  }
+  .flame-label.on { color: #ff3d00; }
+
+  .flame-wrap {
+    width: 26px; height: 30px; flex-shrink: 0;
+  }
+
+  .flame-icon {
+    display: block; width: 22px; height: 26px;
+    transform-origin: 50% 88%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Слой 1 — самый большой, снаружи */
+  .flame-l1 { fill: #3a3f52; opacity: 0.45; transition: fill 0.3s ease; }
+  /* Слой 2 — средний */
+  .flame-l2 { fill: #3a3f52; opacity: 0.65; transition: fill 0.3s ease; }
+  /* Слой 3 — поменьше */
+  .flame-l3 { fill: #3a3f52; opacity: 0.82; transition: fill 0.3s ease; }
+  /* Слой 4 — жёлтая серединка */
+  .flame-l4 { fill: #3a3f52; opacity: 1; transition: fill 0.3s ease; }
+
+  /* Hover — чуть светлее, только когда выключен */
+  .flame-icon:not(.lit):hover .flame-l1 { fill: #5f657d; }
+  .flame-icon:not(.lit):hover .flame-l2 { fill: #5f657d; }
+  .flame-icon:not(.lit):hover .flame-l3 { fill: #5f657d; }
+  .flame-icon:not(.lit):hover .flame-l4 { fill: #5f657d; }
+
+  /* Зажжён — каждый слой свой цвет */
+  .flame-icon.lit .flame-l1 { fill: #8b1a00; }
+  .flame-icon.lit .flame-l2 { fill: #e63e00; }
+  .flame-icon.lit .flame-l3 { fill: #ff6d00; }
+  .flame-icon.lit .flame-l4 { fill: #ffab00; }
+
+  /* Плавный bounce */
+  .flame-icon.igniting {
+    animation: ignite 0.45s cubic-bezier(0.25, 1.2, 0.5, 1);
+  }
+  @keyframes ignite {
+    0%   { transform: scale(0.88) rotate(-1.5deg); }
+    30%  { transform: scale(1.12) rotate(1deg); }
+    55%  { transform: scale(0.95) rotate(-0.5deg); }
+    80%  { transform: scale(1.04) rotate(0.3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* Плавное затухание */
+  .flame-icon.extinguishing {
+    animation: extinguish 0.3s ease;
+  }
+  @keyframes extinguish {
+    0%   { transform: scale(1) rotate(0deg); }
+    50%  { transform: scale(0.92) rotate(-0.8deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -394,7 +434,7 @@
       <div class="sidebar-body">
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Вебхук</div><div class="step-desc">Нажми шестерёнку справа вверху, вставь URL вебхука из Bitrix24, сохрани.</div></div></div>
-          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название</div><div class="step-desc">Кратко о задаче. Станет заголовком в Bitrix24.</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название</div><div class="step-desc">Кратко о задаче. Огонёк — важность.</div></div></div>
           <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Тег проекта</div><div class="step-desc">Пиши название проекта — <code>Enter</code>.</div></div></div>
           <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Срок</div><div class="step-desc">Необязательно. Без даты Bitrix ставит +7 дней.</div></div></div>
           <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание</div><div class="step-desc">Заполни нужные секции — пустые не попадут в задачу.</div></div></div>
@@ -421,11 +461,22 @@
   <div>
     <form id="taskForm" novalidate>
 
+      <!-- Карточка 1 — Название + огонёк -->
       <div class="card" style="animation-delay:0.04s">
         <div class="card-header">
           <div class="card-num">1</div>
           <div class="card-title">Название задачи</div>
-          <div style="margin-left:auto"><span class="badge badge-new"><span class="badge-dot"></span>Новая</span></div>
+          <div class="flame-btn">
+            <span class="flame-label" id="flameLabel">Важность</span>
+            <div class="flame-wrap">
+              <svg class="flame-icon" id="flameIcon" viewBox="0 0 20 24" onclick="toggleFlame()">
+                <path class="flame-l1" d="M10 0C6.2 4.2 1.2 8.2 1.2 13a8.8 8.8 0 0017.6 0C18.8 8.2 13.8 4.2 10 0z"/>
+                <path class="flame-l2" d="M9.5 2.5C7 5.5 3.5 8.5 3.5 12.5a6.5 6.5 0 0013 0C16.5 8.5 12 5.5 9.5 2.5z"/>
+                <path class="flame-l3" d="M10.5 5C8.8 7 6 9 6 11.5a4 4 0 008 0C14 9 11.2 7 10.5 5z"/>
+                <path class="flame-l4" d="M10 7.5C9.2 8.5 7.8 9.8 7.8 11.2a2.2 2.2 0 004.4 0c0-1.4-1.4-2.7-2.2-3.7z"/>
+              </svg>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="field">
@@ -439,6 +490,7 @@
         </div>
       </div>
 
+      <!-- Карточка 2 — Проект и сроки -->
       <div class="card" style="animation-delay:0.08s">
         <div class="card-header">
           <div class="card-num">2</div>
@@ -480,6 +532,7 @@
         </div>
       </div>
 
+      <!-- Карточка 3 — Описание -->
       <div class="card" style="animation-delay:0.12s">
         <div class="card-header">
           <div class="card-num">3</div>
@@ -536,28 +589,10 @@
         </div>
       </div>
 
+      <!-- Карточка 4 — Проект -->
       <div class="card" style="animation-delay:0.16s">
         <div class="card-header">
           <div class="card-num">4</div>
-          <div class="card-title">Приоритет</div>
-        </div>
-        <div class="card-body">
-          <div class="priority-wrap">
-            <div class="priority-option">
-              <input type="radio" name="priority" id="prioNormal" value="0" checked>
-              <label for="prioNormal"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="10" height="10" rx="2"/></svg>Обычная</label>
-            </div>
-            <div class="priority-option important">
-              <input type="radio" name="priority" id="prioImportant" value="2">
-              <label for="prioImportant"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="7,1.5 8.5,5 12.5,5.5 9.5,8 10.5,12 7,10 3.5,12 4.5,8 1.5,5.5 5.5,5"/></svg>Важная</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="animation-delay:0.2s">
-        <div class="card-header">
-          <div class="card-num">5</div>
           <div class="card-title">Проект</div>
         </div>
         <div class="card-body">
@@ -596,6 +631,35 @@
 </div>
 
 <script>
+/* ═══════════════════════════════════════
+   ОГОНОК — простой toggle
+   ═══════════════════════════════════════ */
+let flameOn = false;
+
+function toggleFlame() {
+  const icon  = document.getElementById('flameIcon');
+  const label = document.getElementById('flameLabel');
+
+  if (icon.classList.contains('igniting') || icon.classList.contains('extinguishing')) return;
+
+  if (!flameOn) {
+    flameOn = true;
+    icon.classList.add('lit', 'igniting');
+    label.classList.add('on');
+    setTimeout(() => icon.classList.remove('igniting'), 460);
+  } else {
+    flameOn = false;
+    icon.classList.remove('lit');
+    icon.classList.add('extinguishing');
+    label.classList.remove('on');
+    setTimeout(() => icon.classList.remove('extinguishing'), 320);
+  }
+}
+
+
+/* ═══════════════════════════════════════
+   ОСТАЛЬНАЯ ЛОГИКА
+   ═══════════════════════════════════════ */
 function autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 function updateFieldIcons() {
   document.querySelectorAll('.section-field').forEach(sf => {
@@ -691,14 +755,16 @@ async function handleSubmit(e) {
   const gid=document.getElementById('groupId').value.trim(); if(!gid){showToast('error','Укажи GROUP_ID','Нужен ID проекта «Бэклог»');return;}
   const rid=document.getElementById('responsibleId').value.trim(); if(!rid){showToast('error','Укажи RESPONSIBLE_ID','Нажми «Узнать мой ID»');return;}
   const hook=cw.endsWith('/')?cw:cw+'/'; const dl=document.getElementById('taskDeadline').value; const pd=document.getElementById('plannedDuration').value;
-  const payload={fields:{TITLE:document.getElementById('taskTitle').value.trim(),DESCRIPTION:buildDescription(),GROUP_ID:parseInt(gid),RESPONSIBLE_ID:parseInt(rid),PRIORITY:parseInt(document.querySelector('input[name="priority"]:checked').value),STATUS:2,TAGS:window.tags}};
+  const priority = flameOn ? 2 : 0;
+
+  const payload={fields:{TITLE:document.getElementById('taskTitle').value.trim(),DESCRIPTION:buildDescription(),GROUP_ID:parseInt(gid),RESPONSIBLE_ID:parseInt(rid),PRIORITY:priority,STATUS:2,TAGS:window.tags}};
   if(dl)payload.fields.DEADLINE=dl+'T18:00:00+03:00';
   if(window.allowChangeDeadline!==undefined)payload.fields.ALLOW_CHANGE_DEADLINE=window.allowChangeDeadline?'Y':'N';
   if(pd){const h=parseInt(pd);payload.fields.DURATION_PLAN_SECONDS=h*3600;if(!dl)payload.fields.END_DATE_PLAN=new Date(Date.now()+h*3600*1000).toISOString();}
   localStorage.setItem('bx_group_id',gid);localStorage.setItem('bx_responsible_id',rid);
   const btn=document.getElementById('submitBtn'),bt=btn.querySelector('.btn-text'); btn.classList.add('loading');btn.disabled=true;bt.textContent='Создаём задачу...';
   try{const res=await fetch(hook+'tasks.task.add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();
-    if(data.result?.task?.id){const tid=data.result.task.id;if(window.selectedFiles.length){bt.textContent=`Загружаем файлы (${window.selectedFiles.length})...`;await uploadFiles(hook,tid);}showToast('success',`Задача #${tid} создана`,`Теги: ${window.tags.join(', ')} — Бэклог`);resetForm();}
+    if(data.result?.task?.id){const tid=data.result.task.id;if(window.selectedFiles.length){bt.textContent=`Загружаем файлы (${window.selectedFiles.length})...`;await uploadFiles(hook,tid);}showToast('success',`Задача #${tid} создана`,`Теги: ${window.tags.join(', ')} — Бэклог${flameOn?' — важная':''}`);resetForm();}
     else if(data.error){showToast('error','Ошибка Bitrix24',data.error_description||data.error);}
     else{showToast('error','Неизвестный ответ',JSON.stringify(data).slice(0,120));}
   }catch(err){if(err.name==='TypeError')showToast('error','CORS ошибка','Открой через Live Server или python -m http.server');else showToast('error','Сетевая ошибка',err.message);}
@@ -710,7 +776,12 @@ async function fetchMyId() { const h=document.getElementById('webhookUrl').value
 function resetForm() {
   document.querySelectorAll('textarea[data-icon-field]').forEach(ta=>{ta.value='';ta.style.height='auto';});
   document.getElementById('taskTitle').value=''; document.getElementById('taskDeadline').value='';
-  document.getElementById('prioNormal').checked=true; document.getElementById('titleCount').textContent='0 / 255';
+  document.getElementById('titleCount').textContent='0 / 255';
+  if (flameOn) {
+    flameOn = false;
+    document.getElementById('flameIcon').className = 'flame-icon';
+    document.getElementById('flameLabel').classList.remove('on');
+  }
   window.tags=[];renderTags();window.selectedFiles=[];renderFileList();updateFieldIcons();updatePreview();
   const ff=document.querySelectorAll('.section-field')[5];if(ff)ff.dataset.state='empty';
 }
