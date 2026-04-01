@@ -470,7 +470,7 @@ async function hS(e){
         obsMsg=await addObs(hook,tid,selectedObsId);
       }
 
-      if(selectedFiles.length){bt.textContent=`Файлы (${selectedFiles.length})...`;const fCount=await uFL(hook,tid);if(fCount>0)obsMsg+=(obsMsg?'':'')+' · '+fCount+'/'+selectedFiles.length+' файл(ов) не загружены'}
+      if(selectedFiles.length){bt.textContent=`Файлы (${selectedFiles.length})...`;await uFL(hook,tid)}
 
       const dn=document.querySelector(`#devGrid .crew-chip[data-id="${selectedDevId}"] span:nth-child(2)`)?.textContent||'#'+selectedDevId;
       const pn=PROJS.find(p=>p.id===selectedProjId)?.name||'#'+selectedProjId;
@@ -523,109 +523,96 @@ async function uFL(hook,tid){
   if(!selectedFiles.length)return;
   document.getElementById('uploadProgress').classList.add('show');
   let failCount=0;
+  const failNames=[];
+
   for(let i=0;i<selectedFiles.length;i++){
     const f=selectedFiles[i],s=document.getElementById(`fs-${i}`);
     if(s)s.textContent='…';
+    let ok=false;
+    let lastErr='';
+
+    // === Способ 1: disk.file.upload (самый надёжный для вебхуков) ===
     try{
-      const b=await tB(f);
-      const base64=b;
-      const fileName=f.name;
+      console.log('Файл "'+f.name+'" ('+fSz(f.size)+'): пробуем disk.file.upload...');
+      // Шаг 1: получить URL для загрузки
+      const infoRes=await fetch(hook+'disk.file.upload?generateUploadUrl=Y',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})
+      });
+      const infoData=await infoRes.json();
+      console.log('Шаг 1 (upload URL):',JSON.stringify(infoData).slice(0,300));
 
-      // Пробуем несколько вариантов формата
-      const variants=[
-        // Вариант 1: tasks.task.files.append (документированный для вебхуков)
-        {endpoint:'tasks.task.files.append', body:{TASK_ID:tid, FILE_CONTENT:[[fileName, base64]]}},
-        // Вариант 2: tasks.task.files.attach
-        {endpoint:'tasks.task.files.attach', body:{TASK_ID:tid, FILE_CONTENT:[[fileName, base64]]}},
-        // Вариант 3: task.files.attach
-        {endpoint:'task.files.attach', body:{TASK_ID:tid, FILE_CONTENT:[[fileName, base64]]}},
-        // Вариант 4: tasks.task.files.append lowercase
-        {endpoint:'tasks.task.files.append', body:{taskId:tid, fileContent:[[fileName, base64]]}},
-        // Вариант 5: tasks.task.files.attach lowercase
-        {endpoint:'tasks.task.files.attach', body:{taskId:tid, fileContent:[[fileName, base64]]}},
-        // Вариант 6: disk.file.upload (через диск)
-        {endpoint:'disk.file.upload', body:[]},
-      ];
+      if(!infoData.error && infoData.result){
+        const uploadHref=infoData.result.uploadUrl||infoData.result.uploadUrl;
+        if(typeof uploadHref==='string'&&uploadHref.startsWith('http')){
+          // Шаг 2: загрузить файл multipart
+          const fd=new FormData();
+          fd.append('file',f);
+          const upRes=await fetch(uploadHref,{method:'POST',body:fd});
+          const upData=await upRes.json();
+          console.log('Шаг 2 (upload file):',JSON.stringify(upData).slice(0,300));
 
-      let ok=false;
-      for(const v of variants){
-        if(v.endpoint==='disk.file.upload'){continue}
-        try{
-          const r=await fetch(hook+v.endpoint,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(v.body)
-          });
-          const d=await r.json();
-          console.log('Файл',fileName,'→',v.endpoint,':',JSON.stringify(d).slice(0,200));
-          if(!d.error && d.result){
-            if(s)s.textContent='✓';
-            ok=true;
-            break;
-          }
-          if(d.error){
-            console.warn('Файл ошибка',v.endpoint,':',d.error,'-',d.error_description);
-          }
-        }catch(err){
-          console.warn('Файл network error',v.endpoint,':',err.message);
-        }
-      }
-
-      // Вариант 7: disk.file.upload через multipart — самый надёжный метод
-      if(!ok){
-        try{
-          console.log('Файл: пробуем disk.file.upload через multipart...');
-          const uploadUrl=hook+'disk.file.upload';
-          // Шаг 1: получаем URL для загрузки
-          const uploadInfo=await fetch(uploadUrl+'?generateUploadUrl=Y',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ID:null})
-          });
-          const uploadData=await uploadInfo.json();
-          console.log('disk.file.upload ответ:',JSON.stringify(uploadData).slice(0,300));
-
-          if(uploadData.result){
-            const uploadHref=uploadData.result.uploadUrl || uploadData.result;
-            if(typeof uploadHref==='string' && uploadHref.startsWith('http')){
-              // Шаг 2: загружаем файл на полученный URL
-              const formData=new FormData();
-              formData.append('file',f);
-              const uploadRes=await fetch(uploadHref,{method:'POST',body:formData});
-              const uploadJson=await uploadRes.json();
-              console.log('Загрузка на диск:',JSON.stringify(uploadJson).slice(0,300));
-
-              if(uploadJson.result){
-                // Шаг 3: прикрепляем файл к задаче
-                const attachRes=await fetch(hook+'tasks.task.files.attach',{
-                  method:'POST',
-                  headers:{'Content-Type':'application/json'},
-                  body:JSON.stringify({TASK_ID:tid, FILE_ID:[uploadJson.result]})
-                });
-                const attachData=await attachRes.json();
-                console.log('Прикрепление:',JSON.stringify(attachData).slice(0,200));
-                if(!attachData.error && attachData.result){
-                  if(s)s.textContent='✓';
-                  ok=true;
-                }
-              }
+          if(!upData.error && upData.result){
+            // Шаг 3: прикрепить к задаче
+            const attachBody={TASK_ID:tid};
+            // upData.result может быть строкой (ID) или объектом с ID/FILE_ID
+            const fileId=typeof upData.result==='string'?upData.result:(upData.result.ID||upData.result.FILE_ID||upData.result.id);
+            if(fileId){
+              attachBody.FILE_ID=[fileId];
+              const atRes=await fetch(hook+'tasks.task.files.attach',{
+                method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(attachBody)
+              });
+              const atData=await atRes.json();
+              console.log('Шаг 3 (attach):',JSON.stringify(atData).slice(0,200));
+              if(!atData.error&&atData.result){ok=true}else{lastErr=atData.error_description||atData.error}
+            }else{
+              lastErr='Не получили FILE_ID из ответа диска: '+JSON.stringify(upData.result).slice(0,100);
+              console.warn(lastErr);
             }
+          }else{
+            lastErr=upData.error_description||upData.error||'Ошибка загрузки на диск';
+            console.warn('Шаг 2 ошибка:',lastErr);
           }
-        }catch(diskErr){
-          console.warn('disk.file.upload ошибка:',diskErr.message);
+        }else{
+          lastErr='Нет uploadUrl в ответе';
+          console.warn(lastErr);
         }
+      }else{
+        lastErr=infoData.error_description||infoData.error;
+        console.warn('Шаг 1 ошибка:',lastErr);
       }
+    }catch(diskErr){
+      lastErr='disk.file.upload: '+diskErr.message;
+      console.error('Disk upload crash:',diskErr);
+    }
 
-      if(!ok){
-        if(s)s.textContent='✕';
-        failCount++;
-      }
-    }catch(err){
-      console.error('Файл critical error:',err);
-      if(s)s.textContent='!';
+    // === Способ 2: tasks.task.files.append (фоллбэк) ===
+    if(!ok){
+      try{
+        const b=await tB(f);
+        const r=await fetch(hook+'tasks.task.files.append',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({TASK_ID:tid,FILE_CONTENT:[[f.name,b]]})
+        });
+        const d=await r.json();
+        console.log('Fallback tasks.task.files.append:',JSON.stringify(d).slice(0,200));
+        if(!d.error&&d.result){ok=true;lastErr=''}
+        else{lastErr=(d.error_description||d.error)+' (append)'}
+      }catch(fbErr){lastErr='append: '+fbErr.message}
+    }
+
+    if(!ok){
+      if(s)s.textContent='✕';
       failCount++;
+      failNames.push(f.name+': '+lastErr);
+    }else{
+      if(s)s.textContent='✓';
     }
     document.getElementById('uploadBar').style.width=Math.round(((i+1)/selectedFiles.length)*100)+'%';
+  }
+  // Показываем ошибки в тосте
+  if(failCount>0&&failNames.length){
+    const detail=failNames[0]; // первую ошибку
+    showT('error','Файлы не загружены ('+failCount+'/'+selectedFiles.length+')',detail);
   }
   return failCount;
 }
