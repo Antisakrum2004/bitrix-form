@@ -226,7 +226,7 @@
           <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
           <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2.</div></div></div>
           <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
-          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Тег + дедлайн</div><div class="step-desc">Тег <span class="sb-req">*</span> — Enter. Дедлайн — дата или <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
+          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Теги + дедлайн</div><div class="step-desc">Теги — Enter. Необязательны. Дедлайн — дата или <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
           <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
           <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Проект <span class="sb-req">*</span></div><div class="step-desc">Один клик = GROUP_ID. 14 проектов.</div></div></div>
           <div class="step-item"><div class="step-num">7</div><div><div class="step-title">Отправка</div><div class="step-desc">«Создать» или <span class="sb-key">Ctrl</span>+<span class="sb-key">Enter</span>. «Повторить» — копия прошлой.</div></div></div>
@@ -295,7 +295,7 @@
         <div class="card-header"><div class="card-num">3</div><div class="card-title">Проект и сроки</div></div>
         <div class="card-body">
           <div class="field">
-            <label class="fl">Тег проекта <span class="req">*</span></label>
+            <label class="fl">Теги</label>
             <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()"><input type="text" id="tagInput" class="tag-input" placeholder="Название проекта — Enter" /></div>
             <div class="tag-hint">Enter или запятая — добавить · Backspace — удалить последний</div>
             <div class="error-msg" id="tagsError">Добавь хотя бы один тег</div>
@@ -398,10 +398,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   ufi();
 });
 
-function renderChips(id,list){const c=document.getElementById(id);c.innerHTML=list.map(d=>`<div class="crew-chip" data-id="${d.id}" data-grid="${id}"><span class="crew-dot"></span><span>${esc(d.name)}</span><span class="crew-id">#${d.id}</span></div>`).join('');c.querySelectorAll('.crew-chip').forEach(ch=>ch.addEventListener('click',()=>sC(ch)))}
+function renderChips(id,list){const c=document.getElementById(id);c.innerHTML=list.map(d=>`<div class="crew-chip" data-id="${d.id}" data-grid="${id}"><span class="crew-dot"></span><span>${esc(d.name)}</span></div>`).join('');c.querySelectorAll('.crew-chip').forEach(ch=>ch.addEventListener('click',()=>sC(ch)))}
 function sC(ch){const grid=ch.dataset.grid,was=ch.classList.contains('active');ch.parentElement.querySelectorAll('.crew-chip').forEach(c=>c.classList.remove('active','dimmed'));if(was){if(grid==='devGrid')selectedDevId=null;else if(grid==='mgrGrid')selectedMgrId=null;else selectedObsId=null}else{ch.classList.add('active');ch.parentElement.querySelectorAll('.crew-chip').forEach(c=>{if(c!==ch)c.classList.add('dimmed')});if(grid==='devGrid')selectedDevId=ch.dataset.id;else if(grid==='mgrGrid')selectedMgrId=ch.dataset.id;else selectedObsId=ch.dataset.id}}
 
-function renderProjs(){const g=document.getElementById('projGrid');g.innerHTML=PROJS.map(p=>`<div class="proj-chip" data-id="${p.id}"><span class="proj-dot"></span><span>${esc(p.name)}</span><span class="proj-id">#${p.id}</span></div>`).join('');g.querySelectorAll('.proj-chip').forEach(ch=>ch.addEventListener('click',()=>sP(ch)))}
+function renderProjs(){const g=document.getElementById('projGrid');g.innerHTML=PROJS.map(p=>`<div class="proj-chip" data-id="${p.id}"><span class="proj-dot"></span><span>${esc(p.name)}</span></div>`).join('');g.querySelectorAll('.proj-chip').forEach(ch=>ch.addEventListener('click',()=>sP(ch)))}
 function sP(ch){const was=ch.classList.contains('active');ch.parentElement.querySelectorAll('.proj-chip').forEach(c=>c.classList.remove('active','dimmed'));if(was)selectedProjId=null;else{ch.classList.add('active');ch.parentElement.querySelectorAll('.proj-chip').forEach(c=>{if(c!==ch)c.classList.add('dimmed')});selectedProjId=ch.dataset.id}}
 
 function oS(){settingsOpen=true;document.getElementById('settingsPanel').classList.add('open');document.getElementById('gearBtn').classList.add('active');setTimeout(()=>document.getElementById('webhookUrl').focus(),350)}
@@ -425,10 +425,10 @@ function tF(){const i=document.getElementById('flameIcon'),l=document.getElement
 function bD(){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():''};const p=[];if(g('fieldGoal'))p.push('Цель:\n'+g('fieldGoal'));if(g('fieldTodo'))p.push('Что сделать:\n'+g('fieldTodo'));if(g('fieldDod'))p.push('Критерии приёмки:\n'+g('fieldDod'));if(g('fieldMaterials'))p.push('Материалы:\n'+g('fieldMaterials'));return p.join('\n\n')}
 function up(){const d=bD(),el=document.getElementById('descPreview');if(d){el.textContent=d;el.classList.add('has-content')}else{el.textContent='Заполни поля — здесь появится текст';el.classList.remove('has-content')}}
 
-function val(){let ok=true;const t=document.getElementById('taskTitle');if(!t.value.trim()){t.classList.add('error');document.getElementById('titleError').classList.add('show');ok=false}if(!tags.length){document.getElementById('tagsWrap').classList.add('error');document.getElementById('tagsError').classList.add('show');ok=false}return ok}
+function val(){let ok=true;const t=document.getElementById('taskTitle');if(!t.value.trim()){t.classList.add('error');document.getElementById('titleError').classList.add('show');ok=false}return ok}
 
 async function hS(e){
-  e.preventDefault();if(!val()){showT('error','Заполни обязательные','Название и тег');return}
+  e.preventDefault();if(!val()){showT('error','Заполни обязательные','Название задачи обязательно');return}
   const cw=document.getElementById('webhookUrl').value.trim()||window.webhookUrl;
   if(!cw){showT('error','Вебхук не указан','Шестерёнка → URL → Сохрани');return}
   if(!selectedDevId){showT('error','Выбери разработчика','');return}
