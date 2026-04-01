@@ -41,9 +41,14 @@
 
   .sidebar{position:sticky;top:76px}
   .sidebar-card{background:rgba(18,21,31,0.72);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.3),0 32px 64px rgba(0,0,0,.2)}
-  .sidebar-head{background:var(--surface2);border-bottom:1px solid var(--glass-border);padding:11px 14px;display:flex;align-items:center;gap:8px}
-  .sidebar-head-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-m)}
-  .sidebar-body{padding:14px}
+  .sidebar-toggle{background:var(--surface2);border:none;border-bottom:1px solid var(--glass-border);padding:13px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;font-family:var(--mono);transition:background .15s}
+  .sidebar-toggle:hover{background:var(--accent-glow)}
+  .sidebar-toggle-left{display:flex;align-items:center;gap:8px}
+  .sidebar-toggle-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-m)}
+  .sidebar-chevron{width:14px;height:14px;transition:transform .3s ease;color:var(--text-d);flex-shrink:0}
+  .sidebar-chevron.open{transform:rotate(180deg)}
+  .sidebar-body{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s ease;padding:0 14px}
+  .sidebar-body.open{max-height:2000px;padding:14px}
   .step-list{display:flex;flex-direction:column}
   .step-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--glass-border)}
   .step-item:first-child{padding-top:0}.step-item:last-child{border-bottom:none;padding-bottom:0}
@@ -54,6 +59,15 @@
   .sidebar-tip{margin-top:10px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:6px;padding:9px 11px}
   .sidebar-tip-label{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
   .sidebar-tip-text{font-size:10px;color:var(--text-m);line-height:1.6}
+  .sb-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);background:rgba(18,21,31,0.4);color:var(--text-d);font-size:10px;margin:2px 2px 2px 0;vertical-align:middle}
+  .sb-chip .sb-dot{width:5px;height:5px;border-radius:50%;background:var(--text-d)}
+  .sb-key{display:inline-block;background:var(--surface2);border:1px solid var(--glass-border);border-radius:3px;padding:0 5px;font-size:10px;color:var(--accent)}
+  .sb-req{color:var(--danger);font-size:9px;font-weight:700}
+  .sb-opt{color:var(--text-d);font-size:9px}
+  .sb-tbl{width:100%;border-collapse:collapse;margin:8px 0 0;font-size:10px}
+  .sb-tbl th{text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);padding:5px 0;border-bottom:1px solid var(--glass-border);font-size:9px}
+  .sb-tbl td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text-m)}
+  .sb-tbl tr:last-child td{border-bottom:none}
 
   .card{background:rgba(18,21,31,0.72);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;animation:fu .4s ease both;box-shadow:0 2px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.3),0 32px 64px rgba(0,0,0,.2);transform:translateY(0);transition:transform .4s cubic-bezier(.25,.46,.45,.94),box-shadow .4s cubic-bezier(.25,.46,.45,.94)}
   .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,.25),0 18px 40px rgba(0,0,0,.35),0 44px 80px rgba(0,0,0,.25)}
@@ -200,22 +214,33 @@
 <div class="outer">
   <aside class="sidebar">
     <div class="sidebar-card">
-      <div class="sidebar-head">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#8892a8" stroke-width="1.2" stroke-linecap="round"><path d="M2 3h9M2 6.5h9M2 10h6"/><circle cx="10" cy="10" r="1.5"/></svg>
-        <div class="sidebar-head-title">Гайд</div>
-      </div>
-      <div class="sidebar-body">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button">
+        <div class="sidebar-toggle-left">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#8892a8" stroke-width="1.2" stroke-linecap="round"><path d="M2 3h9M2 6.5h9M2 10h6"/><circle cx="10" cy="10" r="1.5"/></svg>
+          <div class="sidebar-toggle-title">Гайд по форме</div>
+        </div>
+        <svg class="sidebar-chevron" id="sidebarChevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg>
+      </button>
+      <div class="sidebar-body" id="sidebarBody">
         <div class="step-list">
-          <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройки</div><div class="step-desc">Шестерёнка → вебхук (один раз).</div></div></div>
-          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название</div><div class="step-desc">Огонёк — важность.</div></div></div>
-          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Разработчик → исполнитель.<br>Постановщик → CREATED_BY.<br>Наблюдатель → отдельный запрос.</div></div></div>
-          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Тег + срок</div><div class="step-desc">+3д +7д +14д.</div></div></div>
-          <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Проект</div><div class="step-desc">GROUP_ID.</div></div></div>
-          <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Отправить</div><div class="step-desc"><kbd>Ctrl+Enter</kbd></div></div></div>
+          <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2.</div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
+          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Тег + дедлайн</div><div class="step-desc">Тег <span class="sb-req">*</span> — Enter. Дедлайн — дата или <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
+          <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
+          <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Проект <span class="sb-req">*</span></div><div class="step-desc">Один клик = GROUP_ID. 14 проектов.</div></div></div>
+          <div class="step-item"><div class="step-num">7</div><div><div class="step-title">Отправка</div><div class="step-desc">«Создать» или <span class="sb-key">Ctrl</span>+<span class="sb-key">Enter</span>. «Повторить» — копия прошлой.</div></div></div>
         </div>
         <div class="sidebar-tip">
-          <div class="sidebar-tip-label">Как работает</div>
-          <div class="sidebar-tip-text">RESPONSIBLE_ID = разработчик<br>CREATED_BY = постановщик<br>Наблюдатель = task.observers.add (после создания)</div>
+          <div class="sidebar-tip-label">Что куда попадает</div>
+          <table class="sb-tbl">
+            <tr><th>В форме</th><th>Поле API</th></tr>
+            <tr><td style="color:var(--text)">Разработчик</td><td>RESPONSIBLE_ID</td></tr>
+            <tr><td style="color:var(--text)">Постановщик</td><td>CREATED_BY</td></tr>
+            <tr><td style="color:var(--text)">Наблюдатель</td><td>observers.add</td></tr>
+            <tr><td style="color:var(--text)">Проект</td><td>GROUP_ID</td></tr>
+            <tr><td style="color:var(--text)">Пламя</td><td>PRIORITY = 2</td></tr>
+          </table>
         </div>
       </div>
     </div>
@@ -364,6 +389,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.key==='Escape'&&settingsOpen)cS();
   });
   document.addEventListener('click',e=>{if(settingsOpen&&!e.target.closest('#settingsPanel')&&!e.target.closest('#gearBtn'))cS()});
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{
+    const body=document.getElementById('sidebarBody'),chev=document.getElementById('sidebarChevron');
+    const isOpen=body.classList.toggle('open');
+    chev.classList.toggle('open',isOpen);
+  });
   ufi();
 });
 
