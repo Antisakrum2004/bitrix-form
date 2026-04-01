@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Документация — Bitrix24 Task Creator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e11;
+    --bg2: #131318;
+    --surface: rgba(18, 21, 31, 0.72);
+    --surface2: rgba(18, 21, 31, 0.4);
+    --glass-border: rgba(255,255,255,0.06);
+    --glass-border-h: rgba(255,255,255,0.12);
+    --accent: #10b981;
+    --accent-dark: #0ea472;
+    --accent-dim: rgba(16,185,129,0.3);
+    --accent-glow: rgba(16,185,129,0.12);
+    --accent-glow-s: rgba(16,185,129,0.2);
+    --warn: #f59e0b;
+    --danger: #ff4f4f;
+    --success: #22c55e;
+    --text: #e2e8f8;
+    --text-m: #8892a8;
+    --text-d: #4a5270;
+    --code-bg: rgba(10,12,18,0.8);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Unbounded', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--mono); font-size: 13px;
+    line-height: 1.7; min-height: 100vh;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 30%, rgba(16,185,129,0.04) 0%, transparent 100%),
+      radial-gradient(ellipse 50% 60% at 90% 70%, rgba(16,185,129,0.025) 0%, transparent 100%);
+  }
+
+  /* ─── Навигация ─── */
+  .doc-nav {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 260px;
+    background: var(--bg2); border-right: 1px solid var(--glass-border);
+    z-index: 100; overflow-y: auto; padding: 24px 0;
+    scrollbar-width: thin; scrollbar-color: var(--glass-border-h) transparent;
+  }
+  .doc-nav::-webkit-scrollbar { width: 4px; }
+  .doc-nav::-webkit-scrollbar-thumb { background: var(--glass-border-h); border-radius: 2px; }
+  .nav-logo {
+    padding: 0 20px 20px; border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 16px;
+  }
+  .nav-logo-text { font-family: var(--display); font-size: 13px; font-weight: 700; }
+  .nav-logo-text span { color: var(--accent); }
+  .nav-logo-sub { font-size: 10px; color: var(--text-d); margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .nav-section { padding: 0 12px; margin-bottom: 16px; }
+  .nav-section-title {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-d); padding: 0 8px;
+    margin-bottom: 6px;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 5px; font-size: 12px;
+    color: var(--text-m); text-decoration: none;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface2); }
+  .nav-link.active { color: var(--accent); background: var(--accent-glow); }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-d); flex-shrink: 0; transition: background 0.15s; }
+  .nav-link.active .nav-dot { background: var(--accent); }
+  .nav-link:hover .nav-dot { background: var(--text-m); }
+
+  /* ─── Контент ─── */
+  .doc-content { margin-left: 260px; position: relative; z-index: 1; }
+  .doc-hero {
+    padding: 60px 48px 48px;
+    border-bottom: 1px solid var(--glass-border);
+    background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, transparent 100%);
+  }
+  .doc-hero h1 {
+    font-family: var(--display); font-size: 32px; font-weight: 700;
+    letter-spacing: -0.03em; margin-bottom: 12px; line-height: 1.2;
+  }
+  .doc-hero h1 span { color: var(--accent); }
+  .doc-hero p { color: var(--text-m); font-size: 14px; max-width: 640px; line-height: 1.8; }
+  .hero-badges { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  .hero-badge {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 4px 10px; border-radius: 4px;
+    border: 1px solid;
+  }
+  .hb-green { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-glow); }
+  .hb-yellow { color: var(--warn); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+  .hb-red { color: var(--danger); border-color: rgba(255,79,79,0.3); background: rgba(255,79,79,0.08); }
+  .hb-dim { color: var(--text-m); border-color: var(--glass-border-h); background: var(--surface2); }
+
+  .doc-section { padding: 40px 48px; border-bottom: 1px solid var(--glass-border); }
+  .doc-section:last-child { border-bottom: none; }
+  .section-id { display: block; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
+  .doc-section h2 {
+    font-family: var(--display); font-size: 22px; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 20px; line-height: 1.3;
+  }
+  .doc-section h3 {
+    font-family: var(--display); font-size: 15px; font-weight: 600;
+    margin: 28px 0 12px; color: var(--text); display: flex; align-items: center; gap: 8px;
+  }
+  .doc-section h3 .h3-num {
+    font-size: 11px; width: 22px; height: 22px; border-radius: 5px;
+    background: var(--accent); color: #fff; display: inline-flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .doc-section p { color: var(--text-m); margin-bottom: 14px; max-width: 720px; }
+  .doc-section ul, .doc-section ol { color: var(--text-m); margin-bottom: 14px; padding-left: 20px; }
+  .doc-section li { margin-bottom: 6px; }
+  .doc-section li strong { color: var(--text); font-weight: 600; }
+
+  /* ─── Блоки кода ─── */
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--glass-border);
+    border-radius: 8px; margin: 16px 0; overflow: hidden;
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; border-bottom: 1px solid var(--glass-border);
+    background: var(--surface2);
+  }
+  .code-lang { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+  .code-copy {
+    font-size: 10px; color: var(--text-d); background: none; border: 1px solid var(--glass-border);
+    border-radius: 4px; padding: 2px 8px; cursor: pointer; font-family: var(--mono);
+    transition: all 0.15s;
+  }
+  .code-copy:hover { color: var(--text-m); border-color: var(--glass-border-h); }
+  .code-block pre {
+    padding: 14px 16px; overflow-x: auto; font-size: 12px; line-height: 1.7;
+    scrollbar-width: thin; scrollbar-color: var(--glass-border-h) transparent;
+  }
+  .code-block pre::-webkit-scrollbar { height: 4px; }
+  .code-block pre::-webkit-scrollbar-thumb { background: var(--glass-border-h); border-radius: 2px; }
+  .code-block code { color: var(--text-m); }
+  .code-kw { color: #c792ea; }
+  .code-str { color: #c3e88d; }
+  .code-num { color: #f78c6c; }
+  .code-cm { color: #546e7a; font-style: italic; }
+  .code-fn { color: #82aaff; }
+  .code-prop { color: #ffcb6b; }
+  .code-tag { color: #f07178; }
+  .code-attr { color: #ffcb6b; }
+  .code-punct { color: #89ddff; }
+
+  .inline-code {
+    background: var(--code-bg); border: 1px solid var(--glass-border);
+    border-radius: 3px; padding: 1px 6px; font-size: 12px; color: var(--accent);
+  }
+
+  /* ─── Информационные блоки ─── */
+  .info-box {
+    border-radius: 8px; padding: 14px 16px; margin: 16px 0;
+    border-left: 3px solid; font-size: 12px; line-height: 1.7;
+  }
+  .info-box p { margin-bottom: 0; }
+  .info-box.tip { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+  .info-box.warn { background: rgba(245,158,11,0.08); border-color: var(--warn); color: var(--warn); }
+  .info-box.err { background: rgba(255,79,79,0.08); border-color: var(--danger); color: var(--danger); }
+  .info-box .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .info-box.note { background: var(--surface2); border-color: var(--glass-border-h); color: var(--text-m); }
+
+  /* ─── Таблицы ─── */
+  .doc-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+  .doc-table th {
+    text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-d);
+    border-bottom: 1px solid var(--glass-border-h); background: var(--surface2);
+  }
+  .doc-table td {
+    padding: 10px 14px; border-bottom: 1px solid var(--glass-border);
+    color: var(--text-m); vertical-align: top;
+  }
+  .doc-table tr:hover td { background: var(--surface2); }
+  .doc-table td:first-child { color: var(--text); font-weight: 500; white-space: nowrap; }
+
+  /* ─── Палитра ─── */
+  .palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 16px 0; }
+  .palette-item { border: 1px solid var(--glass-border); border-radius: 8px; overflow: hidden; }
+  .palette-swatch { height: 48px; }
+  .palette-info { padding: 8px 10px; background: var(--surface2); }
+  .palette-name { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .palette-val { font-size: 10px; color: var(--text-d); }
+
+  /* ─── Дерево файлов ─── */
+  .file-tree { background: var(--code-bg); border: 1px solid var(--glass-border); border-radius: 8px; padding: 16px 20px; margin: 16px 0; font-size: 12px; line-height: 2; }
+  .ft-dir { color: var(--accent); font-weight: 700; }
+  .ft-file { color: var(--text-m); }
+  .ft-comment { color: var(--text-d); font-style: italic; }
+
+  /* ─── Токены ─── */
+  .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 16px 0; }
+  .token-item { display: flex; align-items: center; gap: 10px; background: var(--code-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 10px 12px; }
+  .token-swatch { width: 32px; height: 32px; border-radius: 5px; flex-shrink: 0; border: 1px solid var(--glass-border); }
+  .token-label { font-size: 11px; font-weight: 700; color: var(--text); }
+  .token-val { font-size: 10px; color: var(--text-d); }
+
+  /* ─── Схема ─── */
+  .flow-diagram { display: flex; flex-direction: column; gap: 0; margin: 20px 0; max-width: 480px; }
+  .flow-step {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--code-bg); border: 1px solid var(--glass-border); position: relative;
+  }
+  .flow-step:first-child { border-radius: 8px 8px 0 0; }
+  .flow-step:last-child { border-radius: 0 0 8px 8px; }
+  .flow-step + .flow-step { border-top: none; }
+  .flow-num {
+    width: 24px; height: 24px; border-radius: 5px; background: var(--accent);
+    color: #fff; font-size: 11px; font-weight: 700; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .flow-num.warn-num { background: var(--warn); }
+  .flow-text { font-size: 12px; color: var(--text-m); flex: 1; }
+  .flow-text strong { color: var(--text); }
+  .flow-arrow { color: var(--text-d); font-size: 10px; flex-shrink: 0; }
+
+  /* ─── Toast ─── */
+  .doc-toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 12px 18px;
+    border-radius: 8px; font-family: var(--mono); font-size: 12px;
+    z-index: 999; transform: translateY(12px); opacity: 0;
+    transition: all 0.25s ease; border: 1px solid;
+    background: var(--surface); backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); color: var(--success);
+    border-color: rgba(34,197,94,0.4);
+  }
+  .doc-toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ─── Мобильная навигация ─── */
+  .mobile-nav-btn {
+    display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+    width: 40px; height: 40px; border-radius: 8px; background: var(--surface);
+    border: 1px solid var(--glass-border); cursor: pointer;
+    align-items: center; justify-content: center;
+  }
+  .mobile-nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
+  .mobile-nav-overlay.show { display: block; }
+
+  @media (max-width: 860px) {
+    .doc-nav { transform: translateX(-100%); transition: transform 0.3s ease; }
+    .doc-nav.open { transform: translateX(0); }
+    .mobile-nav-btn { display: flex; }
+    .doc-content { margin-left: 0; }
+    .doc-hero { padding: 60px 20px 32px; }
+    .doc-hero h1 { font-size: 24px; }
+    .doc-section { padding: 28px 20px; }
+    .palette-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .token-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<button class="mobile-nav-btn" onclick="toggleMobileNav()">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="5" x2="15" y2="5"/><line x1="3" y1="9" x2="15" y2="9"/><line x1="3" y1="13" x2="15" y2="13"/></svg>
+</button>
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileNav()"></div>
+
+<nav class="doc-nav" id="docNav">
+  <div class="nav-logo">
+    <div class="nav-logo-text">Bitrix24 <span>Tasks</span></div>
+    <div class="nav-logo-sub">Документация v1.0</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Введение</div>
+    <a class="nav-link active" href="#overview" onclick="navTo(event,'overview')"><span class="nav-dot"></span>Обзор</a>
+    <a class="nav-link" href="#features" onclick="navTo(event,'features')"><span class="nav-dot"></span>Возможности</a>
+    <a class="nav-link" href="#stack" onclick="navTo(event,'stack')"><span class="nav-dot"></span>Стек технологий</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Архитектура</div>
+    <a class="nav-link" href="#structure" onclick="navTo(event,'structure')"><span class="nav-dot"></span>Структура файла</a>
+    <a class="nav-link" href="#flow" onclick="navTo(event,'flow')"><span class="nav-dot"></span>Поток данных</a>
+    <a class="nav-link" href="#components" onclick="navTo(event,'components')"><span class="nav-dot"></span>Компоненты</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Дизайн-система</div>
+    <a class="nav-link" href="#palette" onclick="navTo(event,'palette')"><span class="nav-dot"></span>Цветовая палитра</a>
+    <a class="nav-link" href="#tokens" onclick="navTo(event,'tokens')"><span class="nav-dot"></span>Дизайн-токены</a>
+    <a class="nav-link" href="#typography" onclick="navTo(event,'typography')"><span class="nav-dot"></span>Типографика</a>
+    <a class="nav-link" href="#glass" onclick="navTo(event,'glass')"><span class="nav-dot"></span>Glass-морфизм</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Интерактив</div>
+    <a class="nav-link" href="#flame" onclick="navTo(event,'flame')"><span class="nav-dot"></span>Огонёк важности</a>
+    <a class="nav-link" href="#tags" onclick="navTo(event,'tags')"><span class="nav-dot"></span>Тег-инпут</a>
+    <a class="nav-link" href="#upload" onclick="navTo(event,'upload')"><span class="nav-dot"></span>Загрузка файлов</a>
+    <a class="nav-link" href="#autosize" onclick="navTo(event,'autosize')"><span class="nav-dot"></span>Авто-размер textarea</a>
+    <a class="nav-link" href="#validation" onclick="navTo(event,'validation')"><span class="nav-dot"></span>Валидация</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">API-интеграция</div>
+    <a class="nav-link" href="#webhook" onclick="navTo(event,'webhook')"><span class="nav-dot"></span>Вебхук</a>
+    <a class="nav-link" href="#api-create" onclick="navTo(event,'api-create')"><span class="nav-dot"></span>Создание задачи</a>
+    <a class="nav-link" href="#api-upload" onclick="navTo(event,'api-upload')"><span class="nav-dot"></span>Загрузка файлов</a>
+    <a class="nav-link" href="#api-profile" onclick="navTo(event,'api-profile')"><span class="nav-dot"></span>Профиль пользователя</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Хранение</div>
+    <a class="nav-link" href="#storage" onclick="navTo(event,'storage')"><span class="nav-dot"></span>LocalStorage</a>
+    <a class="nav-link" href="#security" onclick="navTo(event,'security')"><span class="nav-dot"></span>Безопасность</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Развёртывание</div>
+    <a class="nav-link" href="#deploy" onclick="navTo(event,'deploy')"><span class="nav-dot"></span>Запуск</a>
+    <a class="nav-link" href="#cors" onclick="navTo(event,'cors')"><span class="nav-dot"></span>CORS</a>
+  </div>
+</nav>
+
+<main class="doc-content">
+
+  <!-- ═══ ОБЗОР ═══ -->
+  <section class="doc-hero" id="overview">
+    <h1>Bitrix24 <span>Task Creator</span><br>Полная документация</h1>
+    <p>Одностраничное приложение для создания задач в Bitrix24 через REST API. Чистый HTML + CSS + JS без зависимостей. Тёмная тема с glass-морфизмом и анимированным огоньком важности.</p>
+    <div class="hero-badges">
+      <span class="hero-badge hb-green">Zero Dependencies</span>
+      <span class="hero-badge hb-dim">Single HTML</span>
+      <span class="hero-badge hb-yellow">Bitrix24 REST</span>
+      <span class="hero-badge hb-red">Dark Theme</span>
+      <span class="hero-badge hb-dim">LocalStorage</span>
+    </div>
+  </section>
+
+  <!-- ═══ ВОЗМОЖНОСТИ ═══ -->
+  <section class="doc-section" id="features">
+    <span class="section-id">01 — Возможности</span>
+    <h2>Что умеет форма</h2>
+    <ul>
+      <li><strong>Создание задач</strong> через <code class="inline-code">tasks.task.add</code> с полной параметризацией</li>
+      <li><strong>7 секций описания</strong> — цель, что сделать, зависимости, критерии приёмки, материалы (ссылки), материалы (файлы), контакт</li>
+      <li><strong>Тег-инпут</strong> для проектов с чипами и управлением через клавиатуру</li>
+      <li><strong>Огонёк важности</strong> — 4-слойная SVG-иконка с анимацией зажигания/тушения, переключает PRIORITY 0↔2</li>
+      <li><strong>Планирование сроков</strong> — ввод часов, автокалькуляция рабочих дней и END_DATE_PLAN</li>
+      <li><strong>Загрузка файлов</strong> — drag & drop или выбор, Base64-кодирование, прикрепление через <code class="inline-code">tasks.task.files.attach</code></li>
+      <li><strong>Предпросмотр описания</strong> — живая сборка из заполненных секций</li>
+      <li><strong>Настройки вебхука</strong> — выдвижная панель, сохранение в LocalStorage</li>
+      <li><strong>Автоопределение ID</strong> — кнопка «Узнать мой ID» через <code class="inline-code">profile.json</code></li>
+      <li><strong>Авто-размер textarea</strong> — поля растут по содержимому</li>
+      <li><strong>Индикаторы секций</strong> — SVG-иконки меняют цвет при заполнении</li>
+      <li><strong>Валидация</strong> — обязательные поля с inline-ошибками и toast-уведомлениями</li>
+      <li><strong>Адаптивность</strong> — на мобильных sidebar скрывается, сетка перестраивается</li>
+    </ul>
+  </section>
+
+  <!-- ═══ СТЕК ═══ -->
+  <section class="doc-section" id="stack">
+    <span class="section-id">02 — Стек</span>
+    <h2>Технологии</h2>
+    <table class="doc-table">
+      <thead><tr><th>Слой</th><th>Технология</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>Разметка</td><td>HTML5</td><td>Семантическая структура, form с novalidate</td></tr>
+        <tr><td>Стили</td><td>CSS3</td><td>Custom Properties, Grid, Flexbox, backdrop-filter, keyframes</td></tr>
+        <tr><td>Логика</td><td>Vanilla JS</td><td>ES6+, async/await, FileReader API, Fetch API</td></tr>
+        <tr><td>Шрифты</td><td>Google Fonts</td><td>JetBrains Mono + Unbounded</td></tr>
+        <tr><td>Иконки</td><td>Inline SVG</td><td>Ручные векторные иконки без библиотек</td></tr>
+        <tr><td>Хранение</td><td>LocalStorage</td><td>Вебхук, GROUP_ID, RESPONSIBLE_ID</td></tr>
+        <tr><td>API</td><td>Bitrix24 REST</td><td>tasks.task.add, tasks.task.files.attach, profile.json</td></tr>
+      </tbody>
+    </table>
+    <div class="info-box note"><div class="box-title">Почему без фреймворков</div><p>Форма — единственная страница. Реактивность не нужна, состояние минимально. Vanilla JS даёт полный контроль, нулевой бандл, мгновенную загрузку.</p></div>
+  </section>
+
+  <!-- ═══ СТРУКТУРА ═══ -->
+  <section class="doc-section" id="structure">
+    <span class="section-id">03 — Структура</span>
+    <h2>Структура HTML-файла</h2>
+    <div class="file-tree">
+      <span class="ft-dir">index.html</span><br>
+      ├── <span class="ft-dir">&lt;head&gt;</span><br>
+      │   ├── meta charset, viewport<br>
+      │   ├── title<br>
+      │   ├── Google Fonts link<br>
+      │   └── <span class="ft-dir">&lt;style&gt;</span> <span class="ft-comment">← все стили, ~280 строк</span><br>
+      ├── <span class="ft-dir">&lt;body&gt;</span><br>
+      │   ├── <span class="ft-dir">.topbar</span> <span class="ft-comment">← логотип + шестерёнка + бейдж</span><br>
+      │   ├── <span class="ft-dir">.settings-panel</span> <span class="ft-comment">← выдвижная панель вебхука</span><br>
+      │   ├── <span class="ft-dir">.outer</span> <span class="ft-comment">← CSS Grid 252px + 1fr</span><br>
+      │   │   ├── <span class="ft-dir">.sidebar</span> <span class="ft-comment">← sticky-гайд + API-справка</span><br>
+      │   │   └── <span class="ft-dir">form#taskForm</span><br>
+      │   │       ├── Card 1: Название + Огонёк<br>
+      │   │       ├── Card 2: Проект + Сроки + Планирование<br>
+      │   │       ├── Card 3: Описание (7 секций) + Предпросмотр<br>
+      │   │       ├── Card 4: GROUP_ID + RESPONSIBLE_ID<br>
+      │   │       └── <span class="ft-dir">button.btn-submit</span><br>
+      │   ├── <span class="ft-dir">.toast</span> <span class="ft-comment">← уведомления</span><br>
+      │   └── <span class="ft-dir">&lt;script&gt;</span> <span class="ft-comment">← вся логика, ~180 строк</span><br>
+    </div>
+
+    <h3><span class="h3-num">G</span>Grid-система</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS</span></div>
+      <pre><code><span class="code-prop">.outer</span> {
+  <span class="code-prop">display</span>: <span class="code-fn">grid</span>;
+  <span class="code-prop">grid-template-columns</span>: <span class="code-num">252px</span> <span class="code-num">1fr</span>;
+  <span class="code-prop">gap</span>: <span class="code-num">28px</span>;
+  <span class="code-prop">align-items</span>: <span class="code-fn">start</span>;
+  <span class="code-prop">max-width</span>: <span class="code-num">944px</span>;
+}
+
+<span class="code-cm">/* Мобильная версия — sidebar убирается */</span>
+<span class="code-kw">@media</span> (<span class="code-prop">max-width</span>: <span class="code-num">800px</span>) {
+  <span class="code-prop">.outer</span> { <span class="code-prop">grid-template-columns</span>: <span class="code-num">1fr</span>; }
+  <span class="code-prop">.sidebar</span> { <span class="code-prop">display</span>: <span class="code-kw">none</span>; }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══ ПОТОК ДАННЫХ ═══ -->
+  <section class="doc-section" id="flow">
+    <span class="section-id">04 — Поток</span>
+    <h2>Поток данных при создании задачи</h2>
+    <div class="flow-diagram">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-text"><strong>Заполнение формы</strong> — пользователь вводит данные</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-text"><strong>validate()</strong> — проверка title и tags</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num warn-num">3</div><div class="flow-text"><strong>Проверка вебхука</strong> — наличие в localStorage или поле</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>buildDescription()</strong> — сборка секций в строку</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-text"><strong>Построение payload</strong> — TITLE, DESCRIPTION, GROUP_ID, RESPONSIBLE_ID, PRIORITY, TAGS, DEADLINE, ALLOW_CHANGE_DEADLINE, DURATION_PLAN_SECONDS, END_DATE_PLAN</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">6</div><div class="flow-text"><strong>fetch(tasks.task.add)</strong> — POST JSON к вебхуку</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">7</div><div class="flow-text"><strong>Проверка ответа</strong> — data.result.task.id</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">8</div><div class="flow-text"><strong>uploadFiles()</strong> — цикл по файлам, Base64 → tasks.task.files.attach</div><span class="flow-arrow">↓</span></div>
+      <div class="flow-step"><div class="flow-num">9</div><div class="flow-text"><strong>resetForm()</strong> — очистка всех полей</div></div>
+    </div>
+    <div class="info-box warn"><div class="box-title">Порядок важен</div><p>Файлы загружаются <strong>после</strong> создания задачи — нужен task.id для привязки. Без ID прикрепить файл нельзя.</p></div>
+  </section>
+
+  <!-- ═══ КОМПОНЕНТЫ ═══ -->
+  <section class="doc-section" id="components">
+    <span class="section-id">05 — Компоненты</span>
+    <h2>UI-компоненты</h2>
+
+    <h3><span class="h3-num">1</span>Card — карточка секции</h3>
+    <p>Основной контейнер формы. Glass-фон, тень в 3 слоя, hover-подъём на 4px с замедлением.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS — анимации и тени</span></div>
+      <pre><code><span class="code-prop">.card</span> {
+  <span class="code-prop">background</span>: <span class="code-fn">rgba</span>(<span class="code-num">18, 21, 31, 0.72</span>);
+  <span class="code-prop">border</span>: <span class="code-num">1px</span> <span class="code-kw">solid</span> <span class="code-fn">rgba</span>(<span class="code-num">255,255,255,0.07</span>);
+  <span class="code-prop">border-radius</span>: <span class="code-num">10px</span>;
+  <span class="code-prop">animation</span>: <span class="code-fn">fadeUp</span> <span class="code-num">0.4s</span> <span class="code-fn">ease</span> <span class="code-kw">both</span>;
+  <span class="code-prop">box-shadow</span>:
+    <span class="code-num">0 2px 8px</span>   <span class="code-fn">rgba</span>(<span class="code-num">0,0,0,0.2</span>),   <span class="code-cm">/* ближний */</span>
+    <span class="code-num">0 12px 28px</span> <span class="code-fn">rgba</span>(<span class="code-num">0,0,0,0.3</span>),   <span class="code-cm">/* средний */</span>
+    <span class="code-num">0 32px 64px</span> <span class="code-fn">rgba</span>(<span class="code-num">0,0,0,0.2</span>);   <span class="code-cm">/* дальний */</span>
+  <span class="code-prop">transition</span>: <span class="code-fn">transform</span> <span class="code-num">0.4s</span> <span class="code-fn">cubic-bezier</span>(<span class="code-num">0.25,0.46,0.45,0.94</span>),
+              <span class="code-fn">box-shadow</span> <span class="code-num">0.4s</span> <span class="code-fn">cubic-bezier</span>(<span class="code-num">0.25,0.46,0.45,0.94</span>);
+}
+<span class="code-prop">.card:hover</span> {
+  <span class="code-prop">transform</span>: <span class="code-fn">translateY</span>(<span class="code-num">-4px</span>);
+  <span class="code-cm">/* тени увеличиваются параллельно */</span>
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">2</span>Section Field — секция описания</h3>
+    <p>Блок с SVG-иконкой, заголовком и textarea. Иконка меняет цвет через <code class="inline-code">data-state</code> атрибут — <code class="inline-code">empty</code> (dim) или <code class="inline-code">filled</code> (success).</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">HTML — структура секции</span></div>
+      <pre><code><span class="code-tag">&lt;div</span> <span class="code-attr">class</span>=<span class="code-str">"section-field"</span> <span class="code-attr">data-state</span>=<span class="code-str">"empty"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;div</span> <span class="code-attr">class</span>=<span class="code-str">"section-icon"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;svg</span> <span class="code-attr">viewBox</span>=<span class="code-str">"0 0 16 16"</span> <span class="code-attr">stroke-width</span>=<span class="code-str">"1.2"</span><span class="code-tag">&gt;</span>...<span class="code-tag">&lt;/svg&gt;</span>
+  <span class="code-tag">&lt;/div&gt;</span>
+  <span class="code-tag">&lt;div</span> <span class="code-attr">class</span>=<span class="code-str">"section-content"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;div</span> <span class="code-attr">class</span>=<span class="code-str">"section-label"</span><span class="code-tag">&gt;</span>Цель<span class="code-tag">&lt;/div&gt;</span>
+    <span class="code-tag">&lt;textarea</span> <span class="code-attr">data-icon-field</span><span class="code-tag">&gt;&lt;/textarea&gt;</span>
+  <span class="code-tag">&lt;/div&gt;</span>
+<span class="code-tag">&lt;/div&gt;</span></code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS — переключение состояния</span></div>
+      <pre><code><span class="code-prop">.section-field[data-state="empty"]</span>   <span class="code-prop">svg</span> { <span class="code-prop">stroke</span>: <span class="code-fn">var</span>(<span class="code-str">--accent-dim</span>); }
+<span class="code-prop">.section-field[data-state="filled"]</span>  <span class="code-prop">svg</span> { <span class="code-prop">stroke</span>: <span class="code-fn">var</span>(<span class="code-str">--success</span>); }</code></pre>
+    </div>
+
+    <h3><span class="h3-num">3</span>Toast — уведомления</h3>
+    <p>Фиксированный в правом нижнем углу. Два типа: <code class="inline-code">success</code> (зелёный) и <code class="inline-code">error</code> (красный). Автоскрытие через 5 секунд.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — showToast()</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">showToast</span>(type, title, msg) {
+  <span class="code-kw">const</span> t = <span class="code-fn">document.getElementById</span>(<span class="code-str">'toast'</span>);
+  <span class="code-fn">document.getElementById</span>(<span class="code-str">'toastIcon'</span>).textContent =
+    type === <span class="code-str">'success'</span> ? <span class="code-str">'✓'</span> : <span class="code-str">'✕'</span>;
+  <span class="code-cm">// ... установка title, msg, класса ...</span>
+  t.className = <span class="code-str">'toast '</span> + type + <span class="code-str">' show'</span>;
+  <span class="code-fn">clearTimeout</span>(toastTimer);
+  toastTimer = <span class="code-fn">setTimeout</span>(() => t.classList.<span class="code-fn">remove</span>(<span class="code-str">'show'</span>), <span class="code-num">5000</span>);
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">4</span>Settings Panel — панель вебхука</h3>
+    <p>Выдвижная панель через <code class="inline-code">max-height</code> анимацию. Sticky-позиция сразу под topbar.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS — анимация раскрытия</span></div>
+      <pre><code><span class="code-prop">.settings-panel</span> {
+  <span class="code-prop">position</span>: <span class="code-fn">sticky</span>;
+  <span class="code-prop">top</span>: <span class="code-num">56px</span>;  <span class="code-cm">/* высота topbar */</span>
+  <span class="code-prop">max-height</span>: <span class="code-num">0</span>;
+  <span class="code-prop">overflow</span>: <span class="code-kw">hidden</span>;
+  <span class="code-prop">transition</span>: <span class="code-fn">max-height</span> <span class="code-num">0.3s</span> <span class="code-fn">ease</span>,
+              <span class="code-fn">padding</span> <span class="code-num">0.3s</span> <span class="code-fn">ease</span>;
+  <span class="code-prop">padding</span>: <span class="code-num">0 32px</span>;
+}
+<span class="code-prop">.settings-panel.open</span> {
+  <span class="code-prop">max-height</span>: <span class="code-num">130px</span>;
+  <span class="code-prop">padding</span>: <span class="code-num">16px 32px</span>;
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">5</span>Toggle — переключатель</h3>
+    <p>Кастомный тоггл «Разрешить изменить дедлайн» без checkbox, через div с внутренним knob.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — переключение</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">toggleAllowChange</span>() {
+  window.allowChangeDeadline = !window.allowChangeDeadline;
+  <span class="code-kw">const</span> toggle = <span class="code-fn">document.getElementById</span>(<span class="code-str">'allowChangeToggle'</span>);
+  <span class="code-kw">const</span> knob   = <span class="code-fn">document.getElementById</span>(<span class="code-str">'allowChangeKnob'</span>);
+  toggle.style.background = allowChangeDeadline
+    ? <span class="code-str">'var(--accent)'</span> : <span class="code-str">'var(--glass-border-h)'</span>;
+  knob.style.transform = allowChangeDeadline
+    ? <span class="code-str">'translateX(16px)'</span> : <span class="code-str">'translateX(2px)'</span>;
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══ ПАЛИТРА ═══ -->
+  <section class="doc-section" id="palette">
+    <span class="section-id">06 — Палитра</span>
+    <h2>Цветовая палитра</h2>
+    <p>Тёмная тема с изумрудным акцентом. 4 фоновых слоя через <code class="inline-code">radial-gradient</code> создают глубину без плоских заливок.</p>
+    <div class="palette-grid">
+      <div class="palette-item"><div class="palette-swatch" style="background:#161616"></div><div class="palette-info"><div class="palette-name">--bg</div><div class="palette-val">#161616</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:rgba(18,21,31,0.72)"></div><div class="palette-info"><div class="palette-name">--glass</div><div class="palette-val">rgba(18,21,31,0.72)</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#12151f"></div><div class="palette-info"><div class="palette-name">--glass-solid</div><div class="palette-val">#12151f</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)"></div><div class="palette-info"><div class="palette-name">--glass-border</div><div class="palette-val">rgba(255,255,255,0.06)</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#10b981"></div><div class="palette-info"><div class="palette-name">--accent</div><div class="palette-val">#10b981</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#0ea472"></div><div class="palette-info"><div class="palette-name">--accent-dark</div><div class="palette-val">#0ea472</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:rgba(16,185,129,0.3)"></div><div class="palette-info"><div class="palette-name">--accent-dim</div><div class="palette-val">rgba(16,185,129,0.3)</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:rgba(16,185,129,0.12)"></div><div class="palette-info"><div class="palette-name">--accent-glow</div><div class="palette-val">rgba(16,185,129,0.12)</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#e2e8f8"></div><div class="palette-info"><div class="palette-name">--text</div><div class="palette-val">#e2e8f8</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#8892a8"></div><div class="palette-info"><div class="palette-name">--text-muted</div><div class="palette-val">#8892a8</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#4a5270"></div><div class="palette-info"><div class="palette-name">--text-dim</div><div class="palette-val">#4a5270</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#ff4f4f"></div><div class="palette-info"><div class="palette-name">--danger</div><div class="palette-val">#ff4f4f</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#22c55e"></div><div class="palette-info"><div class="palette-name">--success</div><div class="palette-val">#22c55e</div></div></div>
+      <div class="palette-item"><div class="palette-swatch" style="background:#f59e0b"></div><div class="palette-info"><div class="palette-name">--warning</div><div class="palette-val">#f59e0b</div></div></div>
+    </div>
+  </section>
+
+  <!-- ═══ ТОКЕНЫ ═══ -->
+  <section class="doc-section" id="tokens">
+    <span class="section-id">07 — Токены</span>
+    <h2>Дизайн-токены</h2>
+    <h3><span class="h3-num">S</span>Размеры и отступы</h3>
+    <table class="doc-table">
+      <thead><tr><th>Токен</th><th>Значение</th><th>Где используется</th></tr></thead>
+      <tbody>
+        <tr><td>border-radius карточек</td><td>10px</td><td>.card, .sidebar-card</td></tr>
+        <tr><td>border-radius инпутов</td><td>6px</td><td>input, textarea, .tags-wrap</td></tr>
+        <tr><td>border-radius чипов</td><td>4px</td><td>.tag-chip, .badge</td></tr>
+        <tr><td>padding карточки body</td><td>18px</td><td>.card-body</td></tr>
+        <tr><td>padding карточки header</td><td>12px 18px</td><td>.card-header</td></tr>
+        <tr><td>gap между картами</td><td>14px</td><td>.card + .card margin-top</td></tr>
+        <tr><td>gap сетки</td><td>28px</td><td>.outer grid gap</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="h3-num">A</span>Анимации</h3>
+    <table class="doc-table">
+      <thead><tr><th>Имя</th><th>Длительность</th><th>Кривая</th><th>Применение</th></tr></thead>
+      <tbody>
+        <tr><td>fadeUp</td><td>0.4s</td><td>ease</td><td>Появление карточек</td></tr>
+        <tr><td>hover lift</td><td>0.4s</td><td>cubic-bezier(.25,.46,.45,.94)</td><td>Подъём карточек</td></tr>
+        <tr><td>ignite</td><td>0.45s</td><td>cubic-bezier(.25,1.2,.5,1)</td><td>Зажигание огонька</td></tr>
+        <tr><td>extinguish</td><td>0.3s</td><td>ease</td><td>Тушение огонька</td></tr>
+        <tr><td>focus ring</td><td>0.15s</td><td>ease</td><td>box-shadow инпутов</td></tr>
+        <tr><td>toast</td><td>0.25s</td><td>ease</td><td>Появление уведомлений</td></tr>
+        <tr><td>settings panel</td><td>0.3s</td><td>ease</td><td>Раскрытие панели</td></tr>
+        <tr><td>spin</td><td>0.7s</td><td>linear</td><td>Спиннер кнопки</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ ТИПОГРАФИКА ═══ -->
+  <section class="doc-section" id="typography">
+    <span class="section-id">08 — Типографика</span>
+    <h2>Шрифты и текст</h2>
+    <table class="doc-table">
+      <thead><tr><th>Роль</th><th>Семейство</th><th>Вес</th><th>Размер</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td>Логотип</td><td>Unbounded</td><td>700</td><td>14px</td><td style="font-family:'Unbounded';font-weight:700;color:var(--text)">Bitrix24</td></tr>
+        <tr><td>Заголовок карточки</td><td>JetBrains Mono</td><td>700</td><td>11px uppercase</td><td style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11px">НАЗВАНИЕ ЗАДАЧИ</td></tr>
+        <tr><td>Текст инпута</td><td>JetBrains Mono</td><td>400</td><td>13px</td><td>Текст задачи</td></tr>
+        <tr><td>Лейбл поля</td><td>JetBrains Mono</td><td>500</td><td>11px uppercase</td><td style="font-weight:500;text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--text-muted)">Крайний срок</td></tr>
+        <tr><td>Подсказка</td><td>JetBrains Mono</td><td>400</td><td>10px</td><td style="font-size:10px;color:var(--text-d)">Дополнительная информация</td></tr>
+        <tr><td>Кнопка отправки</td><td>Unbounded</td><td>700</td><td>13px uppercase</td><td style="font-family:'Unbounded';font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em">Создать задачу</td></tr>
+      </tbody>
+    </table>
+    <div class="info-box note"><div class="box-title">Почему моноширинный</div><p>Форма — инструмент, а не журнал. Моноширинный шрифт даёт чёткое выравнивание, лучше подходит для URL, ID, кода в описаниях. Unbounded для логотипа и CTA создаёт контраст.</p></div>
+  </section>
+
+  <!-- ═══ GLASS ═══ -->
+  <section class="doc-section" id="glass">
+    <span class="section-id">09 — Glass-морфизм</span>
+    <h2>Стекломорфная система</h2>
+    <p>Три уровня полупрозрачности поверх тёмного фона. Никаких сплошных заливок кроме инпутов.</p>
+    <table class="doc-table">
+      <thead><tr><th>Уровень</th><th>Формула</th><th>Применение</th></tr></thead>
+      <tbody>
+        <tr><td>Поверхностный</td><td>rgba(18,21,31, 0.4)</td><td>.card-header, .sidebar-head, тоггл-фон</td></tr>
+        <tr><td>Карточка</td><td>rgba(18,21,31, 0.72)</td><td>.card, .sidebar-card</td></tr>
+        <tr><td>Инпут</td><td>rgba(10,12,18, 0.6)</td><td>input, textarea, .file-upload-area</td></tr>
+      </tbody>
+    </table>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS — фоновые слои тела</span></div>
+      <pre><code><span class="code-prop">body::before</span> {
+  <span class="code-prop">content</span>: <span class="code-str">''</span>;
+  <span class="code-prop">position</span>: <span class="code-kw">fixed</span>;
+  <span class="code-prop">inset</span>: <span class="code-num">0</span>;
+  <span class="code-prop">background</span>:
+    <span class="code-fn">radial-gradient</span>(ellipse <span class="code-num">60%</span> <span class="code-num">50%</span> at <span class="code-num">15%</span> <span class="code-num">45%</span>,
+      <span class="code-fn">rgba</span>(<span class="code-num">16,185,129,0.05</span>), transparent),
+    <span class="code-fn">radial-gradient</span>(ellipse <span class="code-num">50%</span> <span class="code-num">60%</span> at <span class="code-num">85%</span> <span class="code-num">25%</span>,
+      <span class="code-fn">rgba</span>(<span class="code-num">16,185,129,0.03</span>), transparent),
+    <span class="code-fn">radial-gradient</span>(ellipse <span class="code-num">70%</span> <span class="code-num">40%</span> at <span class="code-num">50%</span> <span class="code-num">85%</span>,
+      <span class="code-fn">rgba</span>(<span class="code-num">16,185,129,0.025</span>), transparent),
+    <span class="code-fn">radial-gradient</span>(ellipse <span class="code-num">40%</span> <span class="code-num">50%</span> at <span class="code-num">70%</span> <span class="code-num">60%</span>,
+      <span class="code-fn">rgba</span>(<span class="code-num">34,197,94,0.015</span>), transparent),
+    <span class="code-fn">radial-gradient</span>(ellipse <span class="code-num">55%</span> <span class="code-num">45%</span> at <span class="code-num">30%</span> <span class="code-num">15%</span>,
+      <span class="code-fn">rgba</span>(<span class="code-num">16,185,129,0.03</span>), transparent);
+  <span class="code-prop">pointer-events</span>: <span class="code-kw">none</span>;
+  <span class="code-prop">z-index</span>: <span class="code-num">0</span>;
+}</code></pre>
+    </div>
+    <div class="info-box tip"><div class="box-title">Нет filter: blur на фоне</div><p>Размытие фона — через <code class="inline-code">backdrop-filter</code> только на topbar и settings-panel. body::before — статические градиенты без blur, чтобы не тормозить рендер.</p></div>
+  </section>
+
+  <!-- ═══ ОГОНЁК ═══ -->
+  <section class="doc-section" id="flame">
+    <span class="section-id">10 — Огонёк</span>
+    <h2>Огонёк важности</h2>
+    <p>4-слойная SVG-иконка пламени. Без фильтров, без свечения — только <code class="inline-code">fill</code> и <code class="inline-code">opacity</code>. Анимация через <code class="inline-code">transform-origin</code> у основания пламени.</p>
+
+    <h3><span class="h3-num">S</span>Слои SVG</h3>
+    <table class="doc-table">
+      <thead><tr><th>Слой</th><th>CSS-класс</th><th>Погашен</th><th>Зажжён</th><th>Opacity</th></tr></thead>
+      <tbody>
+        <tr><td>Внешний контур</td><td>.flame-l1</td><td>#3a3f52</td><td>#8b1a00</td><td>0.45</td></tr>
+        <tr><td>Средний</td><td>.flame-l2</td><td>#3a3f52</td><td>#e63e00</td><td>0.65</td></tr>
+        <tr><td>Внутренний</td><td>.flame-l3</td><td>#3a3f52</td><td>#ff6d00</td><td>0.82</td></tr>
+        <tr><td>Ядро</td><td>.flame-l4</td><td>#3a3f52</td><td>#ffab00</td><td>1.0</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="h3-num">A</span>Анимация зажигания</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">CSS — @keyframes ignite</span></div>
+      <pre><code><span class="code-prop">.flame-icon</span> {
+  <span class="code-prop">transform-origin</span>: <span class="code-num">50%</span> <span class="code-num">88%</span>;  <span class="code-cm">/* основание пламени */</span>
+}
+<span class="code-kw">@keyframes</span> <span class="code-fn">ignite</span> {
+  <span class="code-num">0%</span>   { <span class="code-prop">transform</span>: <span class="code-fn">scale</span>(<span class="code-num">0.88</span>) <span class="code-fn">rotate</span>(<span class="code-num">-1.5deg</span>); }
+  <span class="code-num">30%</span>  { <span class="code-prop">transform</span>: <span class="code-fn">scale</span>(<span class="code-num">1.12</span>) <span class="code-fn">rotate</span>(<span class="code-num">1deg</span>); }
+  <span class="code-num">55%</span>  { <span class="code-prop">transform</span>: <span class="code-fn">scale</span>(<span class="code-num">0.95</span>) <span class="code-fn">rotate</span>(<span class="code-num">-0.5deg</span>); }
+  <span class="code-num">80%</span>  { <span class="code-prop">transform</span>: <span class="code-fn">scale</span>(<span class="code-num">1.04</span>) <span class="code-fn">rotate</span>(<span class="code-num">0.3deg</span>); }
+  <span class="code-num">100%</span> { <span class="code-prop">transform</span>: <span class="code-fn">scale</span>(<span class="code-num">1</span>) <span class="code-fn">rotate</span>(<span class="code-num">0deg</span>); }
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">L</span>Логика переключения</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — toggleFlame()</span></div>
+      <pre><code><span class="code-kw">let</span> flameOn = <span class="code-kw">false</span>;
+
+<span class="code-kw">function</span> <span class="code-fn">toggleFlame</span>() {
+  <span class="code-kw">const</span> icon = <span class="code-fn">document.getElementById</span>(<span class="code-str">'flameIcon'</span>);
+  <span class="code-cm">// Блокировка на время анимации</span>
+  <span class="code-kw">if</span> (icon.classList.<span class="code-fn">contains</span>(<span class="code-str">'igniting'</span>) ||
+      icon.classList.<span class="code-fn">contains</span>(<span class="code-str">'extinguishing'</span>)) <span class="code-kw">return</span>;
+
+  <span class="code-kw">if</span> (!flameOn) {
+    flameOn = <span class="code-kw">true</span>;
+    icon.classList.<span class="code-fn">add</span>(<span class="code-str">'lit'</span>, <span class="code-str">'igniting'</span>);
+    <span class="code-fn">setTimeout</span>(() => icon.classList.<span class="code-fn">remove</span>(<span class="code-str">'igniting'</span>), <span class="code-num">460</span>);
+  } <span class="code-kw">else</span> {
+    flameOn = <span class="code-kw">false</span>;
+    icon.classList.<span class="code-fn">remove</span>(<span class="code-str">'lit'</span>);
+    icon.classList.<span class="code-fn">add</span>(<span class="code-str">'extinguishing'</span>);
+    <span class="code-fn">setTimeout</span>(() => icon.classList.<span class="code-fn">remove</span>(<span class="code-str">'extinguishing'</span>), <span class="code-num">320</span>);
+  }
+}</code></pre>
+    </div>
+    <div class="info-box note"><div class="box-title">Связь с API</div><p>Когда <code class="inline-code">flameOn === true</code>, в payload отправляется <code class="inline-code">PRIORITY: 2</code> (высокий). Когда <code class="inline-code">false</code> — <code class="inline-code">PRIORITY: 0</code> (низкий). Никаких промежуточных значений.</p></div>
+  </section>
+
+  <!-- ═══ ТЕГИ ═══ -->
+  <section class="doc-section" id="tags">
+    <span class="section-id">11 — Тег-инпут</span>
+    <h2>Система тегов</h2>
+    <p>Кастомный инпут с чипами внутри flex-контейнера. Без библиотек — чистый DOM.</p>
+
+    <h3><span class="h3-num">K</span>Клавиатурное управление</h3>
+    <table class="doc-table">
+      <thead><tr><th>Клавиша</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td>Enter</td><td>Добавить тег из инпута</td></tr>
+        <tr><td>Запятая</td><td>То же, что Enter</td></tr>
+        <tr><td>Backspace (пустой инпут)</td><td>Удалить последний тег</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="h3-num">R</span>Рендеринг</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — renderTags()</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">renderTags</span>() {
+  <span class="code-kw">const</span> wrap  = <span class="code-fn">document.getElementById</span>(<span class="code-str">'tagsWrap'</span>);
+  <span class="code-kw">const</span> input = <span class="code-fn">document.getElementById</span>(<span class="code-str">'tagInput'</span>);
+  wrap.innerHTML = <span class="code-str">''</span>;
+
+  window.tags.<span class="code-fn">forEach</span>((tag, i) => {
+    <span class="code-kw">const</span> chip = document.<span class="code-fn">createElement</span>(<span class="code-str">'span'</span>);
+    chip.className = <span class="code-str">'tag-chip'</span>;
+    chip.innerHTML = <span class="code-str">`${escHtml(tag)}`</span> +
+      <span class="code-str">` &lt;span class="tag-chip-remove"`</span> +
+      <span class="code-str">` onclick="removeTag(${i})"&gt;×&lt;/span&gt;`</span>;
+    wrap.<span class="code-fn">appendChild</span>(chip);
+  });
+
+  wrap.<span class="code-fn">appendChild</span>(input);  <span class="code-cm">// инпут всегда в конце</span>
+}</code></pre>
+    </div>
+    <div class="info-box tip"><div class="box-title">Дедупликация</div><p>Функция <code class="inline-code">addTag()</code> проверяет <code class="inline-code">!window.tags.includes(t)</code> перед добавлением. Пустые строки и дубли игнорируются.</p></div>
+  </section>
+
+  <!-- ═══ ЗАГРУЗКА ФАЙЛОВ ═══ -->
+  <section class="doc-section" id="upload">
+    <span class="section-id">12 — Файлы</span>
+    <h2>Загрузка файлов</h2>
+    <p>Двухэтапный процесс: сначала создание задачи, потом прикрепление файлов по полученному ID.</p>
+
+    <h3><span class="h3-num">1</span>Выбор файлов</h3>
+    <p>Поддерживаются два способа: <strong>drag & drop</strong> на зону и <strong>клик</strong> для вызова системного диалога. Обработчики:</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — обработчики</span></div>
+      <pre><code><span class="code-cm">// Клик — скрытый input[type=file]</span>
+fileInput.<span class="code-fn">addEventListener</span>(<span class="code-str">'change'</span>, e => {
+  <span class="code-fn">handleFiles</span>(Array.<span class="code-fn">from</span>(e.target.files));
+  fileInput.value = <span class="code-str">''</span>;  <span class="code-cm">// сброс для повторного выбора</span>
+});
+
+<span class="code-cm">// Drag & drop</span>
+dropZone.<span class="code-fn">addEventListener</span>(<span class="code-str">'dragover'</span>, e => {
+  e.<span class="code-fn">preventDefault</span>();
+  dropZone.classList.<span class="code-fn">add</span>(<span class="code-str">'drag-over'</span>);
+});
+dropZone.<span class="code-fn">addEventListener</span>(<span class="code-str">'drop'</span>, e => {
+  e.<span class="code-fn">preventDefault</span>();
+  dropZone.classList.<span class="code-fn">remove</span>(<span class="code-str">'drag-over'</span>);
+  <span class="code-fn">handleFiles</span>(Array.<span class="code-fn">from</span>(e.dataTransfer.files));
+});</code></pre>
+    </div>
+
+    <h3><span class="h3-num">2</span>Base64-кодирование</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — toB64()</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">toB64</span>(file) {
+  <span class="code-kw">return new</span> <span class="code-fn">Promise</span>((resolve, reject) => {
+    <span class="code-kw">const</span> reader = <span class="code-kw">new</span> <span class="code-fn">FileReader</span>();
+    reader.onload = () =>
+      <span class="code-fn">resolve</span>(reader.result.<span class="code-fn">split</span>(<span class="code-str">','</span>)[<span class="code-num">1</span>]);
+    reader.onerror = reject;
+    reader.<span class="code-fn">readAsDataURL</span>(file);
+  });
+}</code></pre>
+    </div>
+    <div class="info-box warn"><div class="box-title">Ограничение Base64</div><p>Base64 увеличивает размер файла на ~33%. Для файлов больше 5 МБ может быть медленно. Bitrix24 REST через вебхук имеет свои лимиты — обычно до 5 МБ на файл.</p></div>
+
+    <h3><span class="h3-num">3</span>Прогресс-бар</h3>
+    <p>Линейный прогресс через CSS <code class="inline-code">transition: width 0.3s ease</code>. Обновляется после каждого файла в цикле. Показывается через класс <code class="inline-code">.show</code>, прячется после завершения.</p>
+  </section>
+
+  <!-- ═══ AUTOSIZE ═══ -->
+  <section class="doc-section" id="autosize">
+    <span class="section-id">13 — Autosize</span>
+    <h2>Автоматический размер textarea</h2>
+    <p>Классический паттерн без библиотек. Сброс высоты → чтение scrollHeight → установка.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — autoGrow()</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">autoGrow</span>(el) {
+  el.style.height = <span class="code-str">'auto'</span>;     <span class="code-cm">// сброс → минимальная</span>
+  el.style.height = el.scrollHeight + <span class="code-str">'px'</span>;  <span class="code-cm">// по содержимому</span>
+}</code></pre>
+    </div>
+    <p>Вызывается на <code class="inline-code">input</code> и <code class="inline-code">paste</code> (paste через setTimeout для ожидания вставки). Начальная высота через <code class="inline-code">min-height: 38px</code> и <code class="inline-code">rows="1"</code>.</p>
+  </section>
+
+  <!-- ═══ ВАЛИДАЦИЯ ═══ -->
+  <section class="doc-section" id="validation">
+    <span class="section-id">14 — Валидация</span>
+    <h2>Система валидации</h2>
+    <p>Форма использует <code class="inline-code">novalidate</code> — полная кастомная валидация без браузерных подсказок.</p>
+
+    <h3><span class="h3-num">F</span>Правила</h3>
+    <table class="doc-table">
+      <thead><tr><th>Поле</th><th>Правило</th><th>Индикатор ошибки</th></tr></thead>
+      <tbody>
+        <tr><td>taskTitle</td><td>trim() !== ''</td><td>Красная рамка + текст «Обязательное поле»</td></tr>
+        <tr><td>tags[]</td><td>length > 0</td><td>Красная рамка + текст «Добавь хотя бы один тег»</td></tr>
+        <tr><td>webhookUrl</td><td>Строка с 'bitrix24'</td><td>Toast «Вебхук не указан»</td></tr>
+        <tr><td>groupId</td><td>trim() !== ''</td><td>Toast «Укажи GROUP_ID»</td></tr>
+        <tr><td>responsibleId</td><td>trim() !== ''</td><td>Toast «Укажи RESPONSIBLE_ID»</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="h3-num">C</span>Очистка ошибок</h3>
+    <p>Ошибки title и tags снимаются в реальном времени при вводе. Остальные — только при повторной отправке.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — live-очистка title</span></div>
+      <pre><code>taskTitle.<span class="code-fn">addEventListener</span>(<span class="code-str">'input'</span>, <span class="code-kw">function</span>() {
+  <span class="code-kw">if</span> (<span class="code-kw">this</span>.value.<span class="code-fn">trim</span>()) {
+    <span class="code-kw">this</span>.classList.<span class="code-fn">remove</span>(<span class="code-str">'error'</span>);
+    titleError.classList.<span class="code-fn">remove</span>(<span class="code-str">'show'</span>);
+  }
+});</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══ ВЕБХУК ═══ -->
+  <section class="doc-section" id="webhook">
+    <span class="section-id">15 — Вебхук</span>
+    <h2>Настройка вебхука</h2>
+    <p>Вебхук — URL вида <code class="inline-code">https://ПОРТАЛ.bitrix24.ru/rest/USER_ID/WEBHOOK_TOKEN/</code>. Получается в Bitrix24: DevOps → Вебхуки → Входящий вебхук → права: задача (полный доступ).</p>
+
+    <h3><span class="h3-num">V</span>Валидация при сохранении</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — saveWebhook()</span></div>
+      <pre><code><span class="code-kw">function</span> <span class="code-fn">saveWebhook</span>() {
+  <span class="code-kw">const</span> v = document.<span class="code-fn">getElementById</span>(<span class="code-str">'webhookUrl'</span>).value.<span class="code-fn">trim</span>();
+  <span class="code-kw">if</span> (!v || !v.<span class="code-fn">includes</span>(<span class="code-str">'bitrix24'</span>)) {
+    <span class="code-fn">showToast</span>(<span class="code-str">'error'</span>, <span class="code-str">'Неверный вебхук'</span>,
+      <span class="code-str">'URL должен содержать bitrix24.ru/rest/...'</span>);
+    <span class="code-kw">return</span>;
+  }
+  <span class="code-cm">// Гарантируем завершающий слеш</span>
+  window.webhookUrl = v.<span class="code-fn">endsWith</span>(<span class="code-str">'/'</span>) ? v : v + <span class="code-str">'/'</span>;
+  localStorage.<span class="code-fn">setItem</span>(<span class="code-str">'bx_webhook'</span>, window.webhookUrl);
+  <span class="code-fn">setWebhookSaved</span>(<span class="code-kw">true</span>);
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">I</span>Индикаторы состояния</h3>
+    <table class="doc-table">
+      <thead><tr><th>Состояние</th><th>Шестерёнка</th><th>Точка</th><th>Бейдж</th><th>Текст статуса</th></tr></thead>
+      <tbody>
+        <tr><td>Не сохранён</td><td>Обычная</td><td>Жёлтая точка</td><td>Скрыт</td><td>«Вставь URL вебхука...»</td></tr>
+        <tr><td>Сохранён</td><td>Обычная</td><td>Скрыта</td><td>Зелёный «Подключено»</td><td>«Вебхук сохранён» (зелёный)</td></tr>
+        <tr><td>Панель открыта</td><td>Жёлтая рамка</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ API CREATE ═══ -->
+  <section class="doc-section" id="api-create">
+    <span class="section-id">16 — Создание задачи</span>
+    <h2>tasks.task.add</h2>
+
+    <h3><span class="h3-num">E</span>Endpoint</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">HTTP</span></div>
+      <pre><code><span class="code-fn">POST</span> <span class="code-str">{WEBHOOK_URL}tasks.task.add</span>
+<span class="code-prop">Content-Type</span>: <span class="code-str">application/json</span></code></pre>
+    </div>
+
+    <h3><span class="h3-num">P</span>Payload — полная структура</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JSON</span></div>
+      <pre><code>{
+  <span class="code-prop">"fields"</span>: {
+    <span class="code-prop">"TITLE"</span>:                <span class="code-str">"Название задачи"</span>,
+    <span class="code-prop">"DESCRIPTION"</span>:          <span class="code-str">"Цель:\n...\n\nЧто сделать:\n..."</span>,
+    <span class="code-prop">"GROUP_ID"</span>:             <span class="code-num">78</span>,
+    <span class="code-prop">"RESPONSIBLE_ID"</span>:       <span class="code-num">116</span>,
+    <span class="code-prop">"PRIORITY"</span>:             <span class="code-num">0</span>,          <span class="code-cm">// 0 = низкий, 2 = высокий</span>
+    <span class="code-prop">"STATUS"</span>:               <span class="code-num">2</span>,          <span class="code-cm">// 2 = "Новая"</span>
+    <span class="code-prop">"TAGS"</span>:                 [<span class="code-str">"Проект"</span>],
+    <span class="code-prop">"DEADLINE"</span>:             <span class="code-str">"2025-02-15T18:00:00+03:00"</span>,  <span class="code-cm">// опционально</span>
+    <span class="code-prop">"ALLOW_CHANGE_DEADLINE"</span>: <span class="code-str">"Y"</span>,       <span class="code-cm">// тоггл</span>
+    <span class="code-prop">"DURATION_PLAN_SECONDS"</span>: <span class="code-num">86400</span>,     <span class="code-cm">// опционально: часы × 3600</span>
+    <span class="code-prop">"END_DATE_PLAN"</span>:        <span class="code-str">"2025-01-20T..."</span>  <span class="code-cm">// опционально: если нет DEADLINE</span>
+  }
+}</code></pre>
+    </div>
+
+    <h3><span class="h3-num">M</span>Маппинг полей формы → API</h3>
+    <table class="doc-table">
+      <thead><tr><th>Элемент формы</th><th>API-поле</th><th>Тип</th><th>Обязательное</th></tr></thead>
+      <tbody>
+        <tr><td>#taskTitle</td><td>TITLE</td><td>string</td><td>Да</td></tr>
+        <tr><td>Секции описания</td><td>DESCRIPTION</td><td>string (markdown)</td><td>Нет</td></tr>
+        <tr><td>#groupId</td><td>GROUP_ID</td><td>integer</td><td>Да</td></tr>
+        <tr><td>#responsibleId</td><td>RESPONSIBLE_ID</td><td>integer</td><td>Да</td></tr>
+        <tr><td>Огонёк (flameOn)</td><td>PRIORITY</td><td>0 | 2</td><td>Нет (default: 0)</td></tr>
+        <tr><td>window.tags[]</td><td>TAGS</td><td>string[]</td><td>Да</td></tr>
+        <tr><td>#taskDeadline</td><td>DEADLINE</td><td>ISO datetime</td><td>Нет</td></tr>
+        <tr><td>Тоггл «Разрешить»</td><td>ALLOW_CHANGE_DEADLINE</td><td>'Y' | 'N'</td><td>Нет (default: 'Y')</td></tr>
+        <tr><td>#plannedDuration</td><td>DURATION_PLAN_SECONDS</td><td>integer</td><td>Нет</td></tr>
+        <tr><td>#plannedDuration</td><td>END_DATE_PLAN</td><td>ISO datetime</td><td>Нет (если нет DEADLINE)</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="h3-num">R</span>Ответ</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JSON — успех</span></div>
+      <pre><code>{
+  <span class="code-prop">"result"</span>: {
+    <span class="code-prop">"task"</span>: {
+      <span class="code-prop">"id"</span>: <span class="code-num">12345</span>
+    }
+  }
+}</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JSON — ошибка</span></div>
+      <pre><code>{
+  <span class="code-prop">"error"</span>: <span class="code-str">"ERROR_TASK_NOT_FOUND"</span>,
+  <span class="code-prop">"error_description"</span>: <span class="code-str">"Задача не найдена"</span>
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══ API UPLOAD ═══ -->
+  <section class="doc-section" id="api-upload">
+    <span class="section-id">17 — Загрузка файлов</span>
+    <h2>tasks.task.files.attach</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">HTTP</span></div>
+      <pre><code><span class="code-fn">POST</span> <span class="code-str">{WEBHOOK_URL}tasks.task.files.attach</span>
+<span class="code-prop">Content-Type</span>: <span class="code-str">application/json</span></code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JSON — payload</span></div>
+      <pre><code>{
+  <span class="code-prop">"taskId"</span>: <span class="code-num">12345</span>,
+  <span class="code-prop">"fileContent"</span>: [<span class="code-str">"filename.ext"</span>, <span class="code-str">"base64encodedstring..."</span>],
+  <span class="code-prop">"fileName"</span>: <span class="code-str">"filename.ext"</span>
+}</code></pre>
+    </div>
+    <div class="info-box err"><div class="box-title">Важный нюанс</div><p>Формат <code class="inline-code">fileContent</code> — массив из двух элементов: [имя файла, base64-строка]. Это специфичный формат Bitrix24, отличается от стандартного multipart.</p></div>
+  </section>
+
+  <!-- ═══ API PROFILE ═══ -->
+  <section class="doc-section" id="api-profile">
+    <span class="section-id">18 — Профиль</span>
+    <h2>profile.json — определение ID</h2>
+    <p>Кнопка «Узнать мой ID» вызывает endpoint профиля и извлекает ID текущего пользователя вебхука.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">HTTP</span></div>
+      <pre><code><span class="code-fn">GET</span> <span class="code-str">{WEBHOOK_URL}profile.json</span></code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — fetchMyId()</span></div>
+      <pre><code><span class="code-kw">async function</span> <span class="code-fn">fetchMyId</span>() {
+  <span class="code-kw">const</span> hook = <span class="code-fn">getWebhook</span>();
+  <span class="code-kw">const</span> res = <span class="code-kw">await</span> <span class="code-fn">fetch</span>(hook + <span class="code-str">'profile.json'</span>);
+  <span class="code-kw">const</span> data = <span class="code-kw">await</span> res.<span class="code-fn">json</span>();
+
+  <span class="code-kw">if</span> (data.result?.ID) {
+    document.<span class="code-fn">getElementById</span>(<span class="code-str">'responsibleId'</span>).value = data.result.ID;
+    localStorage.<span class="code-fn">setItem</span>(<span class="code-str">'bx_responsible_id'</span>, data.result.ID);
+    <span class="code-fn">showToast</span>(<span class="code-str">'success'</span>, <span class="code-str">'ID получен: '</span> + data.result.ID,
+      data.result.NAME + <span class="code-str">' '</span> + (data.result.LAST_NAME || <span class="code-str">''</span>));
+  }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══ STORAGE ═══ -->
+  <section class="doc-section" id="storage">
+    <span class="section-id">19 — Хранение</span>
+    <h2>LocalStorage</h2>
+    <p>4 ключа для персистентности между сессиями:</p>
+    <table class="doc-table">
+      <thead><tr><th>Ключ</th><th>Тип</th><th>Пример</th><th>Когда записывается</th></tr></thead>
+      <tbody>
+        <tr><td>bx_webhook</td><td>string</td><td>https://p.bitrix24.ru/rest/1/abc/</td><td>Кнопка «Сохранить» в настройках</td></tr>
+        <tr><td>bx_group_id</td><td>string</td><td>78</td><td>Успешное создание задачи</td></tr>
+        <tr><td>bx_responsible_id</td><td>string</td><td>116</td><td>Успешное создание задачи или «Узнать мой ID»</td></tr>
+        <tr><td>—</td><td>—</td><td>—</td><td>Теги, описание, файлы НЕ сохраняются</td></tr>
+      </tbody>
+    </table>
+    <div class="info-box note"><div class="box-title">Почему не всё в localStorage</div><p>Теги, описание и файлы — одноразовые данные. Задача создана — форма очищается. Хранить их бессмысленно и может запутать пользователя при следующем открытии.</p></div>
+  </section>
+
+  <!-- ═══ БЕЗОПАСНОСТЬ ═══ -->
+  <section class="doc-section" id="security">
+    <span class="section-id">20 — Безопасность</span>
+    <h2>Соображения безопасности</h2>
+    <ul>
+      <li><strong>Вебхук в localStorage</strong> — доступен через DevTools любой вкладки на этом домене. Для продакшена нужен серверный прокси.</li>
+      <li><strong>XSS в описании</strong> — текст из textarea не рендерится как HTML (textContent в превью), но отправляется в Bitrix24 как есть. Bitrix24 сам экранирует при отображении.</li>
+      <li><strong>Base64 файлов</strong> — отправляется в открытом виде. Без HTTPS перехват возможен.</li>
+      <li><strong>CORS</strong> — Bitrix24 разрешает кросс-доменные запросы к вебхукам. Это официальная функция, не баг.</li>
+      <li><strong>Нет CSRF-защиты</strong> — вебхук-токен выполняет роль аутентификации. Если утечёт — полный доступ по правам вебхука.</li>
+    </ul>
+    <div class="info-box err"><div class="box-title">Для продакшена</div><p>Сделайте серверный прокси (Node/Python/PHP), который хранит вебхук в env-переменных. Фронтенд отправляет данные на ваш сервер, а сервер — в Bitrix24. Это исключает утечку токена из браузера.</p></div>
+  </section>
+
+  <!-- ═══ DEPLOY ═══ -->
+  <section class="doc-section" id="deploy">
+    <span class="section-id">21 — Запуск</span>
+    <h2>Развёртывание</h2>
+    <p>Один HTML-файл, без сборки. Три варианта запуска:</p>
+
+    <h3><span class="h3-num">1</span>Python HTTP Server</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Bash</span></div>
+      <pre><code><span class="code-fn">cd</span> /path/to/folder
+python3 -m http.server <span class="code-num">8080</span>
+<span class="code-cm"># → http://localhost:8080</span></code></pre>
+    </div>
+
+    <h3><span class="h3-num">2</span>Node.js (npx)</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Bash</span></div>
+      <pre><code>npx serve <span class="code-str">.</span>
+<span class="code-cm"># → http://localhost:3000</span></code></pre>
+    </div>
+
+    <h3><span class="h3-num">3</span>VS Code Live Server</h3>
+    <p>Расширение «Live Server» — клик правой кнопкой → «Open with Live Server». Автоперезагрузка при сохранении.</p>
+  </section>
+
+  <!-- ═══ CORS ═══ -->
+  <section class="doc-section" id="cors">
+    <span class="section-id">22 — CORS</span>
+    <h2>Проблема CORS и её решение</h2>
+    <div class="info-box err"><div class="box-title">Не открывай файл:// напрямую</div><p>Если открыть <code class="inline-code">file:///path/index.html</code> — fetch к Bitrix24 упадёт с CORS-ошибкой. Браузер блокирует cross-origin запросы из файловой системы.</p></div>
+    <p>Форма определяет TypeError и показывает понятное сообщение:</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JS — обработка CORS</span></div>
+      <pre><code>} <span class="code-kw">catch</span>(err) {
+  <span class="code-kw">if</span> (err.name === <span class="code-str">'TypeError'</span>)
+    <span class="code-fn">showToast</span>(<span class="code-str">'error'</span>, <span class="code-str">'CORS ошибка'</span>,
+      <span class="code-str">'Открой через Live Server или python -m http.server'</span>);
+  <span class="code-kw">else</span>
+    <span class="code-fn">showToast</span>(<span class="code-str">'error'</span>, <span class="code-str">'Сетевая ошибка'</span>, err.message);
+}</code></pre>
+    </div>
+    <div class="info-box tip"><div class="box-title">Почему Bitrix24 пропускает</div><p>Bitrix24 устанавливает <code class="inline-code">Access-Control-Allow-Origin: *</code> для REST-вебхуков. Запросы с <code class="inline-code">http://localhost:*</code> или <code class="inline-code">http://127.0.0.1:*</code> проходят. С <code class="inline-code">file://</code> — нет, это особенность браузера.</p></div>
+  </section>
+
+</main>
+
+<script>
+  /* ─── Навигация: подсветка активной секции ─── */
+  const sections = document.querySelectorAll('.doc-section[id], .doc-hero[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  function navTo(e, id) {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Закрыть мобильное меню
+    document.getElementById('docNav').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('show');
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(l => l.classList.remove('active'));
+        const match = document.querySelector(`.nav-link[href="#${id}"]`);
+        if (match) match.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+
+  /* ─── Мобильная навигация ─── */
+  function toggleMobileNav() {
+    document.getElementById('docNav').classList.toggle('open');
+    document.getElementById('mobileOverlay').classList.toggle('show');
+  }
+
+  /* ─── Копирование кода ─── */
+  document.querySelectorAll('.code-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.closest('.code-block');
+      const code = block.querySelector('code')?.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Скопировано';
+        setTimeout(() => btn.textContent = 'Копировать', 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
