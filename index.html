@@ -527,7 +527,6 @@ async function uFL(hook,tid){
   const failNames=[];
   const diskIds=[];
 
-  // Шаг 1: загрузить ВСЕ файлы на диск параллельно
   for(let i=0;i<selectedFiles.length;i++){
     const f=selectedFiles[i],s=document.getElementById(`fs-${i}`);
     if(s)s.textContent='…';
@@ -535,35 +534,63 @@ async function uFL(hook,tid){
     let lastErr='';
 
     try{
-      // Получить upload URL
-      const url1=hook+'disk.folder.uploadfile?id=3&uploadFile='+encodeURIComponent(f.name);
-      const r1=await fetch(url1);
-      if(!r1.ok){lastErr='HTTP '+r1.status+' при получении URL';throw new Error(lastErr)}
+      // Читаем файл в base64
+      const b64=await new Promise((res,rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result.split(',')[1]);
+        r.onerror=()=>rej(new Error('Не удалось прочитать файл'));
+        r.readAsDataURL(f);
+      });
+      console.log('[Upload] base64 ready ('+f.name+'): '+Math.round(b64.length/1024)+' KB');
+
+      // Метод 1: disk.file.upload через JSON/base64 (один запрос, без multipart)
+      const r1=await fetch(hook+'disk.file.upload',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          id:3,
+          generateUniqueName:'Y',
+          data:{NAME:f.name},
+          fileContent:[f.name,b64]
+        })
+      });
       const d1=await r1.json();
-      console.log('[Upload] Шаг 1 ('+f.name+'):',JSON.stringify(d1).slice(0,200));
+      console.log('[Upload] disk.file.upload ('+f.name+'):',JSON.stringify(d1).slice(0,300));
+
+      let diskId=null;
+
+      if(!d1.error&&d1.result){
+        // Одношаговый результат — файл сразу на диске
+        if(d1.result.ID||d1.result.id){
+          diskId=d1.result.ID||d1.result.id;
+        }
+        // Двухшаговый результат — сервер вернул uploadUrl
+        else if(d1.result.uploadUrl||d1.result.UPLOAD_URL){
+          const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
+          const fieldName=d1.result.field||d1.result.fieldId||'file';
+          console.log('[Upload] Two-step upload ('+f.name+'), using XHR to',upUrl.slice(0,80));
+
+          // Используем XMLHttpRequest вместо fetch для multipart
+          const d2=await new Promise((res,rej)=>{
+            const fd=new FormData();
+            fd.append(fieldName,f,f.name);
+            const xhr=new XMLHttpRequest();
+            xhr.open('POST',upUrl,true);
+            xhr.onload=()=>{
+              try{res(JSON.parse(xhr.responseText))}
+              catch(e){rej(new Error('Non-JSON: '+xhr.responseText.slice(0,120)))}
+            };
+            xhr.onerror=()=>rej(new Error('XHR network error'));
+            xhr.send(fd);
+          });
+          console.log('[Upload] XHR result ('+f.name+'):',JSON.stringify(d2).slice(0,300));
+          if(d2.error){lastErr=d2.error_description||d2.error;throw new Error(lastErr)}
+          diskId=d2.result?.ID||d2.result?.id;
+          if(!diskId)throw new Error('Нет ID после multipart загрузки');
+        }
+      }
 
       if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
-      if(!d1.result){lastErr='Пустой результат';throw new Error(lastErr)}
-
-      const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
-      const fieldName=d1.result.field||d1.result.fieldId||'file';
-      if(!upUrl){lastErr='Нет uploadUrl в ответе';throw new Error(lastErr)}
-
-      // Multipart POST файла на uploadUrl
-      const fd=new FormData();
-      fd.append(fieldName,f,f.name);
-      const r2=await fetch(upUrl,{method:'POST',body:fd});
-      if(!r2.ok){lastErr='HTTP '+r2.status+' при загрузке';throw new Error(lastErr)}
-      const t2=await r2.text();
-      let d2;
-      try{d2=JSON.parse(t2)}catch(e){lastErr='Ответ не JSON: '+t2.slice(0,100);throw new Error(lastErr)}
-      console.log('[Upload] Шаг 2 ('+f.name+'):',JSON.stringify(d2).slice(0,200));
-
-      if(d2.error){lastErr=d2.error_description||d2.error;throw new Error(lastErr)}
-      if(!d2.result){lastErr='Файл не загружен (пустой результат)';throw new Error(lastErr)}
-
-      const diskId=d2.result.ID||d2.result.id;
-      if(!diskId){lastErr='Нет ID файла в ответе диска';throw new Error(lastErr)}
+      if(!diskId){lastErr='Загрузка не удалась (нет ID)';throw new Error(lastErr)}
 
       diskIds.push(diskId);
       ok=true;
@@ -577,7 +604,7 @@ async function uFL(hook,tid){
     document.getElementById('uploadBar').style.width=Math.round(((i+1)/selectedFiles.length)*100)+'%';
   }
 
-  // Шаг 2: привязать загруженные файлы к задаче одним запросом
+  // Привязка загруженных файлов к задаче
   if(diskIds.length>0){
     try{
       const nIds=diskIds.map(id=>'n'+id);
@@ -589,7 +616,6 @@ async function uFL(hook,tid){
       const d3=await r3.json();
       console.log('[Attach] Результат:',JSON.stringify(d3).slice(0,300));
       if(d3.error){
-        // Если один запрос не прошёл — привязываем по одному
         console.log('[Attach] Массовая привязка не удалась, пробуем по одному...');
         for(const did of diskIds){
           try{
