@@ -190,7 +190,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v3</span></div>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v4</span></div>
   <div class="topbar-right">
     <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
@@ -534,69 +534,78 @@ async function uFL(hook,tid){
     let lastErr='';
 
     try{
-      // Читаем файл в base64
-      const b64=await new Promise((res,rej)=>{
-        const r=new FileReader();
-        r.onload=()=>res(r.result.split(',')[1]);
-        r.onerror=()=>rej(new Error('Не удалось прочитать файл'));
-        r.readAsDataURL(f);
-      });
-      console.log('[Upload] base64 ready ('+f.name+'): '+Math.round(b64.length/1024)+' KB');
-
-      // Метод 1: disk.file.upload через JSON/base64 (один запрос, без multipart)
-      const r1=await fetch(hook+'disk.file.upload',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          id:3,
-          generateUniqueName:'Y',
-          data:{NAME:f.name},
-          fileContent:[f.name,b64]
-        })
-      });
+      // Шаг 1: получить upload URL через disk.folder.uploadfile
+      const url1=hook+'disk.folder.uploadfile?id=3&uploadFile='+encodeURIComponent(f.name);
+      const r1=await fetch(url1);
+      if(!r1.ok){lastErr='HTTP '+r1.status+' при получении URL';throw new Error(lastErr)}
       const d1=await r1.json();
-      console.log('[Upload] disk.file.upload ('+f.name+'):',JSON.stringify(d1).slice(0,300));
+      console.log('[Upload v4] Step 1 ('+f.name+'):',JSON.stringify(d1).slice(0,300));
+      if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
+      if(!d1.result){lastErr='Пустой результат';throw new Error(lastErr)}
 
+      const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
+      const fieldName=d1.result.field||d1.result.fieldId||'file';
+      if(!upUrl){lastErr='Нет uploadUrl';throw new Error(lastErr)}
+
+      // Шаг 2: пробуем 3 метода загрузки на uploadUrl — первый рабочий побеждает
       let diskId=null;
 
-      if(!d1.error&&d1.result){
-        // Одношаговый результат — файл сразу на диске
-        if(d1.result.ID||d1.result.id){
-          diskId=d1.result.ID||d1.result.id;
+      // Метод A: сырой бинарник через fetch (Content-Type = MIME файла)
+      try{
+        const buf=await f.arrayBuffer();
+        console.log('[Upload v4] Method A: raw binary ('+f.name+')');
+        const rA=await fetch(upUrl,{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:buf});
+        const tA=await rA.text();
+        let dA;try{dA=JSON.parse(tA)}catch(_){dA=null}
+        console.log('[Upload v4] Method A response ('+f.name+'):',rA.status,tA.slice(0,200));
+        if(rA.ok&&dA&&!dA.error&&dA.result){
+          diskId=dA.result.ID||dA.result.id;
+          if(diskId){console.log('[Upload v4] Method A OK! diskId='+diskId+' ('+f.name+')')}
         }
-        // Двухшаговый результат — сервер вернул uploadUrl
-        else if(d1.result.uploadUrl||d1.result.UPLOAD_URL){
-          const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
-          const fieldName=d1.result.field||d1.result.fieldId||'file';
-          console.log('[Upload] Two-step upload ('+f.name+'), using XHR to',upUrl.slice(0,80));
+      }catch(eA){console.warn('[Upload v4] Method A failed ('+f.name+'):',eA.message)}
 
-          // Используем XMLHttpRequest вместо fetch для multipart
-          const d2=await new Promise((res,rej)=>{
-            const fd=new FormData();
-            fd.append(fieldName,f,f.name);
+      // Метод B: XHR + FormData
+      if(!diskId){
+        try{
+          console.log('[Upload v4] Method B: XHR+FormData ('+f.name+')');
+          const dB=await new Promise((res,rej)=>{
+            const fd=new FormData();fd.append(fieldName,f,f.name);
             const xhr=new XMLHttpRequest();
             xhr.open('POST',upUrl,true);
-            xhr.onload=()=>{
-              try{res(JSON.parse(xhr.responseText))}
-              catch(e){rej(new Error('Non-JSON: '+xhr.responseText.slice(0,120)))}
-            };
+            xhr.onload=()=>{try{res({status:xhr.status,json:JSON.parse(xhr.responseText)})}catch(e){rej(new Error('Non-JSON: '+xhr.responseText.slice(0,120)))}};
             xhr.onerror=()=>rej(new Error('XHR network error'));
             xhr.send(fd);
           });
-          console.log('[Upload] XHR result ('+f.name+'):',JSON.stringify(d2).slice(0,300));
-          if(d2.error){lastErr=d2.error_description||d2.error;throw new Error(lastErr)}
-          diskId=d2.result?.ID||d2.result?.id;
-          if(!diskId)throw new Error('Нет ID после multipart загрузки');
-        }
+          console.log('[Upload v4] Method B response ('+f.name+'):',dB.status,JSON.stringify(dB.json).slice(0,200));
+          if(dB.status<400&&!dB.json.error&&dB.json.result){
+            diskId=dB.json.result.ID||dB.json.result.id;
+            if(diskId)console.log('[Upload v4] Method B OK! diskId='+diskId+' ('+f.name+')');
+          }
+        }catch(eB){console.warn('[Upload v4] Method B failed ('+f.name+'):',eB.message)}
       }
 
-      if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
-      if(!diskId){lastErr='Загрузка не удалась (нет ID)';throw new Error(lastErr)}
+      // Метод C: fetch + FormData
+      if(!diskId){
+        try{
+          console.log('[Upload v4] Method C: fetch+FormData ('+f.name+')');
+          const fd=new FormData();fd.append(fieldName,f,f.name);
+          const rC=await fetch(upUrl,{method:'POST',body:fd});
+          const tC=await rC.text();
+          let dC;try{dC=JSON.parse(tC)}catch(_){dC=null}
+          console.log('[Upload v4] Method C response ('+f.name+'):',rC.status,tC.slice(0,200));
+          if(rC.ok&&dC&&!dC.error&&dC.result){
+            diskId=dC.result.ID||dC.result.id;
+            if(diskId)console.log('[Upload v4] Method C OK! diskId='+diskId+' ('+f.name+')');
+          }
+        }catch(eC){console.warn('[Upload v4] Method C failed ('+f.name+'):',eC.message)}
+      }
 
+      if(!diskId){lastErr='Все методы загрузки провалились';throw new Error(lastErr)}
       diskIds.push(diskId);
       ok=true;
     }catch(e){
       lastErr=e.message;
-      console.error('[Upload] ERROR ('+f.name+'):',e);
+      console.error('[Upload v4] ERROR ('+f.name+'):',e);
     }
 
     if(!ok){if(s)s.textContent='✕';failCount++;failNames.push(f.name+': '+lastErr)}
