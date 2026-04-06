@@ -225,7 +225,7 @@
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
           <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2.</div></div></div>
-          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span><span class="sb-chip"><span class="sb-dot"></span>Тест</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
           <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Теги + дедлайн</div><div class="step-desc">Теги — Enter. Необязательны. Дедлайн — дата или <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
           <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
           <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Проект <span class="sb-req">*</span></div><div class="step-desc">Один клик = GROUP_ID. 14 проектов.</div></div></div>
@@ -346,7 +346,7 @@
 let flameOn=false,tags=[],selectedFiles=[],settingsOpen=false;
 let selectedDevId=null,selectedMgrId=null,selectedObsId=null,selectedProjId=null;
 
-const DEVS=[{name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},{name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'}];
+const DEVS=[{name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},{name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},{name:'Тест',id:'94'}];
 const MGRS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const OBSS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const PROJS=[
@@ -525,71 +525,88 @@ async function uFL(hook,tid){
   document.getElementById('uploadProgress').classList.add('show');
   let failCount=0;
   const failNames=[];
+  const diskIds=[];
 
+  // Шаг 1: загрузить ВСЕ файлы на диск параллельно
   for(let i=0;i<selectedFiles.length;i++){
     const f=selectedFiles[i],s=document.getElementById(`fs-${i}`);
     if(s)s.textContent='…';
     let ok=false;
     let lastErr='';
 
-    // === disk.folder.uploadfile → multipart POST → UF_TASK_WEBDAV_FILES ===
     try{
-      // Шаг 1: получить uploadUrl
+      // Получить upload URL
       const url1=hook+'disk.folder.uploadfile?id=3&uploadFile='+encodeURIComponent(f.name);
       const r1=await fetch(url1);
+      if(!r1.ok){lastErr='HTTP '+r1.status+' при получении URL';throw new Error(lastErr)}
       const d1=await r1.json();
-      console.log('Upload step 1:',JSON.stringify(d1).slice(0,300));
+      console.log('[Upload] Шаг 1 ('+f.name+'):',JSON.stringify(d1).slice(0,200));
 
-      if(!d1.error&&d1.result){
-        const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
-        const fieldName=d1.result.field||d1.result.fieldId||'file';
+      if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
+      if(!d1.result){lastErr='Пустой результат';throw new Error(lastErr)}
 
-        if(upUrl){
-          // Шаг 2: multipart POST
-          const fd=new FormData();
-          fd.append(fieldName,f);
-          const r2=await fetch(upUrl,{method:'POST',body:fd});
-          const t2=await r2.text();
-          let d2;
-          try{d2=JSON.parse(t2)}catch(e){lastErr='Ответ не JSON: '+t2.slice(0,100);throw new Error(lastErr)}
-          console.log('Upload step 2:',JSON.stringify(d2).slice(0,400));
+      const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
+      const fieldName=d1.result.field||d1.result.fieldId||'file';
+      if(!upUrl){lastErr='Нет uploadUrl в ответе';throw new Error(lastErr)}
 
-          if(!d2.error&&d2.result){
-            const diskId=d2.result.ID||d2.result.id;
-            if(diskId){
-              // Шаг 3: прикрепить через UF_TASK_WEBDAV_FILES
-              const r3=await fetch(hook+'tasks.task.update',{
-                method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({taskId:tid,fields:{UF_TASK_WEBDAV_FILES:['n'+diskId]}})
-              });
-              const d3=await r3.json();
-              console.log('Upload step 3 (attach):',JSON.stringify(d3).slice(0,300));
-              if(!d3.error){ok=true}else{
-                // Фоллбэк: пробуем tasks.task.files.attach
-                const r4=await fetch(hook+'tasks.task.files.attach',{
-                  method:'POST',headers:{'Content-Type':'application/json'},
-                  body:JSON.stringify({TASK_ID:tid,FILE_ID:[parseInt(diskId)]})
-                });
-                const d4=await r4.json();
-                if(!d4.error){ok=true}else{lastErr=d4.error_description||d4.error}
-              }
-            }else{lastErr='Нет ID в ответе диска'}
-          }else{lastErr=d2.error_description||d2.error||'Ошибка загрузки'}
-        }else{lastErr='Нет uploadUrl'}
-      }else{lastErr=d1.error_description||d1.error}
-    }catch(e){lastErr=e.message;console.error('Upload error:',e)}
+      // Multipart POST файла на uploadUrl
+      const fd=new FormData();
+      fd.append(fieldName,f,f.name);
+      const r2=await fetch(upUrl,{method:'POST',body:fd});
+      if(!r2.ok){lastErr='HTTP '+r2.status+' при загрузке';throw new Error(lastErr)}
+      const t2=await r2.text();
+      let d2;
+      try{d2=JSON.parse(t2)}catch(e){lastErr='Ответ не JSON: '+t2.slice(0,100);throw new Error(lastErr)}
+      console.log('[Upload] Шаг 2 ('+f.name+'):',JSON.stringify(d2).slice(0,200));
 
-    if(!ok){
-      if(s)s.textContent='✕';
-      failCount++;
-      failNames.push(f.name+': '+lastErr);
-    }else{
-      if(s)s.textContent='✓';
+      if(d2.error){lastErr=d2.error_description||d2.error;throw new Error(lastErr)}
+      if(!d2.result){lastErr='Файл не загружен (пустой результат)';throw new Error(lastErr)}
+
+      const diskId=d2.result.ID||d2.result.id;
+      if(!diskId){lastErr='Нет ID файла в ответе диска';throw new Error(lastErr)}
+
+      diskIds.push(diskId);
+      ok=true;
+    }catch(e){
+      lastErr=e.message;
+      console.error('[Upload] ERROR ('+f.name+'):',e);
     }
+
+    if(!ok){if(s)s.textContent='✕';failCount++;failNames.push(f.name+': '+lastErr)}
+    else{if(s)s.textContent='✓'}
     document.getElementById('uploadBar').style.width=Math.round(((i+1)/selectedFiles.length)*100)+'%';
   }
+
+  // Шаг 2: привязать загруженные файлы к задаче одним запросом
+  if(diskIds.length>0){
+    try{
+      const nIds=diskIds.map(id=>'n'+id);
+      console.log('[Attach] Привязка файлов:',nIds.join(', '),'к задаче #'+tid);
+      const r3=await fetch(hook+'tasks.task.update',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({taskId:tid,fields:{UF_TASK_WEBDAV_FILES:nIds}})
+      });
+      const d3=await r3.json();
+      console.log('[Attach] Результат:',JSON.stringify(d3).slice(0,300));
+      if(d3.error){
+        // Если один запрос не прошёл — привязываем по одному
+        console.log('[Attach] Массовая привязка не удалась, пробуем по одному...');
+        for(const did of diskIds){
+          try{
+            const r4=await fetch(hook+'tasks.task.update',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({taskId:tid,fields:{UF_TASK_WEBDAV_FILES:['n'+did]}})
+            });
+            const d4=await r4.json();
+            if(d4.error)console.warn('[Attach] Ошибка привязки n'+did+':',d4.error_description);
+          }catch(e2){console.warn('[Attach] Ошибка привязки n'+did+':',e2.message)}
+        }
+      }
+    }catch(e){console.error('[Attach] ERROR:',e)}
+  }
+
   if(failCount>0&&failNames.length){
-    showT('error','Файлы: '+failCount+'/'+selectedFiles.length+' не загружено',failNames[0]);
+    showT('error','Файлы: '+failCount+'/'+selectedFiles.length+' не загружено',failNames.slice(0,3).join('\n'));
   }
   return failCount;
 }
