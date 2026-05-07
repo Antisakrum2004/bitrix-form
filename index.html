@@ -193,6 +193,7 @@
   .template-bar{display:flex;gap:6px;margin-left:12px;flex-shrink:0}
   .template-btn{font-size:9px;font-weight:700;padding:4px 8px;border-radius:4px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-d);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.04em}
   .template-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
+  .template-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow-s);box-shadow:0 0 8px var(--accent-dim)}
   /* END TEMPLATE CSS */
 
   .btn-wrap{margin-top:20px}
@@ -326,9 +327,9 @@
                ПРИЧИНА: ускорить заполнение типовых задач.
                ОТКАТ: удалить div.template-bar и его содержимое. -->
           <div class="template-bar">
-            <button type="button" class="template-btn" data-template="bug">🐞 Баг</button>
-            <button type="button" class="template-btn" data-template="feature">✨ Фича</button>
-            <button type="button" class="template-btn" data-template="refactor">🔧 Рефактор</button>
+            <button type="button" class="template-btn" data-template="bug">🐞 Исправление</button>
+            <button type="button" class="template-btn" data-template="feature">✨ Доработка</button>
+            <button type="button" class="template-btn" data-template="refactor">🔧 Реф</button>
           </div>
           <!-- END TEMPLATE HTML -->
           <button type="button" class="repeat-btn" id="repeatBtn" disabled>
@@ -456,21 +457,21 @@ const PROJS = [
 const TEMPLATES = {
   bug: {
     title: '[BUG] ',
-    goal: 'Исправить критический дефект, нарушающий работу функционала.',
-    todo: ['- Воспроизвести баг','- Найти причину','- Исправить','- Проверить на тестовом стенде'],
-    dod: ['- Баг не воспроизводится','- Нет регрессий','- QA проверил']
+    goal: 'Исправить критический/блокирующий дефект, нарушающий работу:',
+    todo: ['- Воспроизвести баг','- Найти причину','- Исправить','- Протестить'],
+    dod: ['- Баг не воспроизводится','- Нет регрессий','- Проверено']
   },
   feature: {
-    title: '[FEAT] ',
-    goal: 'Реализовать новый функционал согласно ТЗ.',
-    todo: ['- Изучить ТЗ','- Написать код','- Покрыть тестами','- Обновить документацию'],
-    dod: ['- Код ревью пройден','- Тесты проходят','- Деплой на стейдж']
+    title: '[IMP] ',
+    goal: 'Доработать функционал',
+    todo: [],
+    dod: ['- Протестировано','- Задеплоено в тест']
   },
   refactor: {
     title: '[REF] ',
     goal: 'Улучшить качество кода без изменения поведения.',
-    todo: ['- Проанализировать текущий код','- Внести улучшения','- Проверить тесты'],
-    dod: ['- Покрытие тестов не упало','- Линтер без ошибок','- Код ревью пройден']
+    todo: ['- Проанализировать текущий код','- Внести улучшения','- Протестировать'],
+    dod: ['- Покрытие тестов не упало','- Протестировано']
   }
 };
 
@@ -789,14 +790,18 @@ function applyTemplate(key) {
   }
   document.getElementById('fieldGoal').value = t.goal;
   resetDynamicFields('todo');
-  t.todo.forEach(v => addDynamicField('todo', v));
+  t.todo.forEach(v => addDynamicField('todo', v, false));
   resetDynamicFields('dod');
-  t.dod.forEach(v => addDynamicField('dod', v));
+  t.dod.forEach(v => addDynamicField('dod', v, false));
   document.querySelectorAll('textarea').forEach(autoGrow);
   updateFieldIcons();
   updatePreview();
   saveDraft();
-  showToast('success', 'Шаблон применён', key === 'bug' ? 'Баг' : key === 'feature' ? 'Фича' : 'Рефакторинг');
+  // Подсветка активного шаблона
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.template-btn[data-template="${key}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  showToast('success', 'Шаблон применён', key === 'bug' ? 'Исправление' : key === 'feature' ? 'Доработка' : 'Реф');
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -963,7 +968,7 @@ function addDynamicField(group, value) {
   autoGrow(ta);
   ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
   ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
-  ta.focus(); // ← AI-CHANGE: фокус на новое поле
+  if (focus !== false) ta.focus(); // ← AI-CHANGE: фокус на новое поле (пропускаем при applyTemplate)
   updateDynamicCount(group);
   updateFieldIcons();
   updatePreview();
@@ -1318,6 +1323,7 @@ function resetForm() {
   document.querySelectorAll('.quick-dl').forEach(b => b.classList.remove('flash'));
   document.getElementById('deadlineError').classList.remove('show');
   document.getElementById('taskDeadline').classList.remove('error');
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
