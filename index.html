@@ -868,23 +868,14 @@ function toggleFlame() {
 function buildDescription() {
   const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const p = [];
-  if (g('fieldGoal')) p.push('Цель:
-' + g('fieldGoal'));
+  if (g('fieldGoal')) p.push('Цель:\n' + g('fieldGoal'));
   const todoVals = getDynamicValues('todo');
-  if (todoVals.length) p.push('Что сделать:
-' + todoVals.join('
-'));
+  if (todoVals.length) p.push('Что сделать:\n' + todoVals.join('\n'));
   const dodVals = getDynamicValues('dod');
-  if (dodVals.length) p.push('Критерии приёмки:
-' + dodVals.join('
-'));
-  if (g('fieldContact')) p.push('Контакт:
-' + g('fieldContact'));
-  if (g('fieldMaterials')) p.push('Материалы:
-' + g('fieldMaterials'));
-  return p.join('
-
-');
+  if (dodVals.length) p.push('Критерии приёмки:\n' + dodVals.join('\n'));
+  if (g('fieldContact')) p.push('Контакт:\n' + g('fieldContact'));
+  if (g('fieldMaterials')) p.push('Материалы:\n' + g('fieldMaterials'));
+  return p.join('\n\n');
 }
 
 // AI-CHANGE: MODIFIED — updatePreview обёрнут в debounce.
@@ -1001,8 +992,7 @@ function resetDynamicFields(group) {
   ta.dataset.group = group;
   ta.dataset.iconField = '';
   ta.rows = 1;
-  ta.placeholder = group === 'todo' ? '- действие 1
-- действие 2' : '- что проверяем при сдаче';
+  ta.placeholder = group === 'todo' ? '- действие 1\n- действие 2' : '- что проверяем при сдаче';
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'add-field-btn';
@@ -1299,8 +1289,7 @@ async function uploadFiles(hook, tid) {
     } catch (e) { console.error('[Attach] ERROR:', e); }
   }
   if (failCount > 0 && failNames.length) {
-    showToast('error', 'Файлы: ' + failCount + '/' + selectedFiles.length + ' не загружено', failNames.slice(0, 3).join('
-'));
+    showToast('error', 'Файлы: ' + failCount + '/' + selectedFiles.length + ' не загружено', failNames.slice(0, 3).join('\n'));
   }
   return failCount;
 }
