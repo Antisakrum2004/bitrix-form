@@ -137,7 +137,9 @@
   .proj-chip.active .proj-id{color:var(--accent-dim)}
 
   .file-upload-area{border:1px dashed var(--glass-border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(10,12,18,0.6);position:relative}
-  .file-upload-area:hover,.file-upload-area.drag-over{border-color:var(--accent);background:var(--accent-glow)}
+  .file-upload-area:hover,.file-upload-area.drag-over,.file-upload-area.paste-flash{border-color:var(--accent);background:var(--accent-glow)}
+  .file-upload-area.paste-flash{animation:pasteFlash .6s ease}
+  @keyframes pasteFlash{0%{border-color:var(--accent);background:var(--accent-glow)}50%{border-color:var(--success);background:rgba(34,197,94,0.1)}100%{border-color:var(--accent);background:var(--accent-glow)}}
   .file-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
   .file-upload-text{font-size:12px;color:var(--text-m);line-height:1.6}.file-upload-text span{color:var(--accent)}
   .file-list{margin-top:7px;display:flex;flex-direction:column;gap:4px}
@@ -200,7 +202,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v5</span></div>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v6</span></div>
   <div class="topbar-right">
     <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
@@ -324,7 +326,7 @@
           <div class="section-field" data-state="empty" id="dodSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg></div><div class="section-content"><div class="section-label">Критерии приёмки</div><div class="dynamic-fields" id="dodDynamicFields"><div class="dynamic-field-row"><textarea class="dynamic-input" data-group="dod" data-icon-field rows="1" placeholder="- что проверяем при сдаче"></textarea><button type="button" class="add-field-btn" data-group="dod" title="Добавить поле">+</button></div></div><div class="dynamic-hint"><span class="dynamic-count" id="dodCount">1 / 10</span> · <span class="sb-key">Enter</span> — добавить · <span class="sb-key">Shift+Enter</span> — новая строка</div></div></div>
           <div class="section-field" data-state="empty" id="contactSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M2 8h8M2 12h10"/><circle cx="14" cy="12" r="2"/></svg></div><div class="section-content"><div class="section-label">Контакт</div><textarea id="fieldContact" data-icon-field rows="1" placeholder="Кому писать вопросы по задаче"></textarea></div></div>
           <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2a3.5 3.5 0 014.24 4.24l-1.2 1.2M9.5 14a3.5 3.5 0 01-4.24-4.24l1.2-1.2"/></svg></div><div class="section-content"><div class="section-label">Материалы</div><textarea id="fieldMaterials" data-icon-field rows="1" placeholder="https://..."></textarea></div></div>
-          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4v7a1 1 0 001 1h11a1 1 0 001-1V5a1 1 0 00-1-1H7.5L6.5 3H2.5a1 1 0 00-1 1z"/></svg></div><div class="section-content"><div class="section-label">Файлы</div><div class="file-upload-area" id="dropZone"><input type="file" id="fileInput" multiple /><div class="file-upload-text">Перетащи или <span>выбери</span></div></div><div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div><div class="file-list" id="fileList"></div></div></div>
+          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4v7a1 1 0 001 1h11a1 1 0 001-1V5a1 1 0 00-1-1H7.5L6.5 3H2.5a1 1 0 00-1 1z"/></svg></div><div class="section-content"><div class="section-label">Файлы</div><div class="file-upload-area" id="dropZone"><input type="file" id="fileInput" multiple /><div class="file-upload-text">Перетащи, <span>выбери</span> или <span>Ctrl+V</span></div></div><div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div><div class="file-list" id="fileList"></div></div></div>
           <div class="divider"></div>
           <div class="section-label" style="font-size:10px;color:var(--text-m);margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em">Предпросмотр</div>
           <div class="preview-wrap" id="descPreview">Заполни поля — здесь появится текст</div>
@@ -382,6 +384,31 @@ document.addEventListener('DOMContentLoaded',()=>{
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
   dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');hF(Array.from(e.dataTransfer.files))});
+
+  // Вставка изображений из буфера обмена (Ctrl+V)
+  let pasteCounter=0;
+  document.addEventListener('paste',e=>{
+    const items=e.clipboardData?.items;
+    if(!items)return;
+    const imageFiles=[];
+    for(let i=0;i<items.length;i++){
+      if(items[i].type.indexOf('image')!==-1){
+        const blob=items[i].getAsFile();
+        if(blob){
+          pasteCounter++;
+          const ext=blob.type.split('/')[1]||'png';
+          const name='clipboard-'+pasteCounter+'.'+ext;
+          const file=new File([blob],name,{type:blob.type});
+          imageFiles.push(file);
+        }
+      }
+    }
+    if(imageFiles.length){
+      hF(imageFiles);
+      dz.classList.add('paste-flash');
+      setTimeout(()=>dz.classList.remove('paste-flash'),600);
+    }
+  });
 
   document.querySelectorAll('.quick-dl').forEach(b=>b.addEventListener('click',function(){const d=parseInt(this.dataset.days),dt=new Date();dt.setDate(dt.getDate()+d);document.getElementById('taskDeadline').value=dt.toISOString().split('T')[0];document.querySelectorAll('.quick-dl').forEach(x=>x.classList.remove('flash'));this.classList.add('flash');setTimeout(()=>this.classList.remove('flash'),1500)}));
 
@@ -544,7 +571,7 @@ async function uFL(hook,tid){
       const r1=await fetch(url1);
       if(!r1.ok){lastErr='HTTP '+r1.status+' при получении URL';throw new Error(lastErr)}
       const d1=await r1.json();
-      console.log('[Upload v5] Step 1 ('+f.name+'):',JSON.stringify(d1).slice(0,300));
+      console.log('[Upload v6] Step 1 ('+f.name+'):',JSON.stringify(d1).slice(0,300));
       if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
       if(!d1.result){lastErr='Пустой результат';throw new Error(lastErr)}
 
@@ -558,21 +585,21 @@ async function uFL(hook,tid){
       // Метод A: сырой бинарник через fetch (Content-Type = MIME файла)
       try{
         const buf=await f.arrayBuffer();
-        console.log('[Upload v5] Method A: raw binary ('+f.name+')');
+        console.log('[Upload v6] Method A: raw binary ('+f.name+')');
         const rA=await fetch(upUrl,{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:buf});
         const tA=await rA.text();
         let dA;try{dA=JSON.parse(tA)}catch(_){dA=null}
-        console.log('[Upload v5] Method A response ('+f.name+'):',rA.status,tA.slice(0,200));
+        console.log('[Upload v6] Method A response ('+f.name+'):',rA.status,tA.slice(0,200));
         if(rA.ok&&dA&&!dA.error&&dA.result){
           diskId=dA.result.ID||dA.result.id;
-          if(diskId){console.log('[Upload v5] Method A OK! diskId='+diskId+' ('+f.name+')')}
+          if(diskId){console.log('[Upload v6] Method A OK! diskId='+diskId+' ('+f.name+')')}
         }
-      }catch(eA){console.warn('[Upload v5] Method A failed ('+f.name+'):',eA.message)}
+      }catch(eA){console.warn('[Upload v6] Method A failed ('+f.name+'):',eA.message)}
 
       // Метод B: XHR + FormData
       if(!diskId){
         try{
-          console.log('[Upload v5] Method B: XHR+FormData ('+f.name+')');
+          console.log('[Upload v6] Method B: XHR+FormData ('+f.name+')');
           const dB=await new Promise((res,rej)=>{
             const fd=new FormData();fd.append(fieldName,f,f.name);
             const xhr=new XMLHttpRequest();
@@ -581,28 +608,28 @@ async function uFL(hook,tid){
             xhr.onerror=()=>rej(new Error('XHR network error'));
             xhr.send(fd);
           });
-          console.log('[Upload v5] Method B response ('+f.name+'):',dB.status,JSON.stringify(dB.json).slice(0,200));
+          console.log('[Upload v6] Method B response ('+f.name+'):',dB.status,JSON.stringify(dB.json).slice(0,200));
           if(dB.status<400&&!dB.json.error&&dB.json.result){
             diskId=dB.json.result.ID||dB.json.result.id;
-            if(diskId)console.log('[Upload v5] Method B OK! diskId='+diskId+' ('+f.name+')');
+            if(diskId)console.log('[Upload v6] Method B OK! diskId='+diskId+' ('+f.name+')');
           }
-        }catch(eB){console.warn('[Upload v5] Method B failed ('+f.name+'):',eB.message)}
+        }catch(eB){console.warn('[Upload v6] Method B failed ('+f.name+'):',eB.message)}
       }
 
       // Метод C: fetch + FormData
       if(!diskId){
         try{
-          console.log('[Upload v5] Method C: fetch+FormData ('+f.name+')');
+          console.log('[Upload v6] Method C: fetch+FormData ('+f.name+')');
           const fd=new FormData();fd.append(fieldName,f,f.name);
           const rC=await fetch(upUrl,{method:'POST',body:fd});
           const tC=await rC.text();
           let dC;try{dC=JSON.parse(tC)}catch(_){dC=null}
-          console.log('[Upload v5] Method C response ('+f.name+'):',rC.status,tC.slice(0,200));
+          console.log('[Upload v6] Method C response ('+f.name+'):',rC.status,tC.slice(0,200));
           if(rC.ok&&dC&&!dC.error&&dC.result){
             diskId=dC.result.ID||dC.result.id;
-            if(diskId)console.log('[Upload v5] Method C OK! diskId='+diskId+' ('+f.name+')');
+            if(diskId)console.log('[Upload v6] Method C OK! diskId='+diskId+' ('+f.name+')');
           }
-        }catch(eC){console.warn('[Upload v5] Method C failed ('+f.name+'):',eC.message)}
+        }catch(eC){console.warn('[Upload v6] Method C failed ('+f.name+'):',eC.message)}
       }
 
       if(!diskId){lastErr='Все методы загрузки провалились';throw new Error(lastErr)}
@@ -610,7 +637,7 @@ async function uFL(hook,tid){
       ok=true;
     }catch(e){
       lastErr=e.message;
-      console.error('[Upload v5] ERROR ('+f.name+'):',e);
+      console.error('[Upload v6] ERROR ('+f.name+'):',e);
     }
 
     if(!ok){if(s)s.textContent='✕';failCount++;failNames.push(f.name+': '+lastErr)}
