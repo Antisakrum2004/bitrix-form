@@ -237,7 +237,7 @@
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
           <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2.</div></div></div>
-          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span><span class="sb-chip"><span class="sb-dot"></span>Тест</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span><span class="sb-chip"><span class="sb-dot"></span>АМ</span><span class="sb-chip"><span class="sb-dot"></span>ВМ</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
           <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Дедлайн</div><div class="step-desc">Дата или быстрые кнопки: <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
           <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
           <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Проект <span class="sb-req">*</span></div><div class="step-desc">Один клик = GROUP_ID. 14 проектов.</div></div></div>
@@ -354,7 +354,7 @@ let flameOn=false,tags=[],selectedFiles=[],settingsOpen=false;
 let selectedDevId=null,selectedMgrId=null,selectedObsId=null,selectedProjId=null;
 const MAX_DYNAMIC=10;
 
-const DEVS=[{name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},{name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},{name:'Тест',id:'94'}];
+const DEVS=[{name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},{name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const MGRS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const OBSS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const PROJS=[
