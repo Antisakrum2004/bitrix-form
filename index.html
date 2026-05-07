@@ -327,9 +327,9 @@
                ПРИЧИНА: ускорить заполнение типовых задач.
                ОТКАТ: удалить div.template-bar и его содержимое. -->
           <div class="template-bar">
-            <button type="button" class="template-btn" data-template="bug">🐞 Исправление</button>
-            <button type="button" class="template-btn" data-template="feature">✨ Доработка</button>
-            <button type="button" class="template-btn" data-template="refactor">🔧 Реф</button>
+            <button type="button" class="template-btn" data-template="bug">Исправление</button>
+            <button type="button" class="template-btn" data-template="feature">Доработка</button>
+            <button type="button" class="template-btn" data-template="refactor">Реф</button>
           </div>
           <!-- END TEMPLATE HTML -->
           <button type="button" class="repeat-btn" id="repeatBtn" disabled>
@@ -781,7 +781,16 @@ function repeatLastTask() {
 // AI-CHANGE: NEW-FUNCTION — применение шаблона задачи.
 // ПРИЧИНА: ускорить создание типовых задач (баг/фича/рефакторинг).
 // ОТКАТ: удалить функцию и обработчики .template-btn.
+let activeTemplateKey = null;
+
 function applyTemplate(key) {
+  // Тогл: повторный клик по активному шаблону — снимаем его
+  if (activeTemplateKey === key) {
+    clearTemplate();
+    return;
+  }
+  // Запоминаем позицию скролла, чтобы не прыгалo
+  const scrollY = window.scrollY;
   const t = TEMPLATES[key];
   if (!t) return;
   const titleEl = document.getElementById('taskTitle');
@@ -801,7 +810,15 @@ function applyTemplate(key) {
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.template-btn[data-template="${key}"]`);
   if (activeBtn) activeBtn.classList.add('active');
-  showToast('success', 'Шаблон применён', key === 'bug' ? 'Исправление' : key === 'feature' ? 'Доработка' : 'Реф');
+  activeTemplateKey = key;
+  // Возвращаем скролл на место
+  window.scrollTo(0, scrollY);
+}
+
+function clearTemplate() {
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  activeTemplateKey = null;
+  showToast('warn', 'Шаблон снят', '');
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1307,7 +1324,7 @@ function resetForm() {
     if (!ta.classList.contains('dynamic-input')) { ta.value = ''; ta.style.height = 'auto'; }
   });
   document.getElementById('taskTitle').value = '';
-  document.getElementById('taskDeadline').value = '';
+  document.getElementById('taskDeadline').value = new Date().toISOString().split('T')[0];
   document.getElementById('titleCount').textContent = '0 / 255';
   document.getElementById('fieldContact').value = '';
   document.getElementById('fieldContact').style.height = 'auto';
@@ -1324,6 +1341,7 @@ function resetForm() {
   document.getElementById('deadlineError').classList.remove('show');
   document.getElementById('taskDeadline').classList.remove('error');
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  activeTemplateKey = null;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1358,6 +1376,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initDynamicFields('todo');
   initDynamicFields('dod');
+
+  // Дедлайн по умолчанию — сегодня
+  const dlEl = document.getElementById('taskDeadline');
+  if (!dlEl.value) {
+    const today = new Date();
+    dlEl.value = today.toISOString().split('T')[0];
+  }
 
   // AI-CHANGE: NEW — восстановление черновика.
   loadDraft();
@@ -1422,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // AI-CHANGE: NEW — обработчики шаблонов.
   document.querySelectorAll('.template-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyTemplate(btn.dataset.template));
+    btn.addEventListener('click', e => { e.preventDefault(); applyTemplate(btn.dataset.template); });
   });
 
   document.getElementById('gearBtn').addEventListener('click', () => settingsOpen ? closeSettings() : openSettings());
