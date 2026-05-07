@@ -235,7 +235,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.1</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.2</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -581,7 +581,8 @@ function loadDraft() {
       return;
     }
     if (d.title) document.getElementById('taskTitle').value = d.title;
-    if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    // НЕ восстанавливаем дедлайн из черновика — всегда сегодня
+    // if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
     if (d.goal) document.getElementById('fieldGoal').value = d.goal;
     if (d.contact) document.getElementById('fieldContact').value = d.contact;
     if (d.materials) document.getElementById('fieldMaterials').value = d.materials;
@@ -760,7 +761,8 @@ function repeatLastTask() {
     document.getElementById('titleCount').textContent = (d.title || '').length + ' / 255';
     if (d.flameOn && !flameOn) toggleFlame();
     else if (!d.flameOn && flameOn) toggleFlame();
-    if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    // НЕ восстанавливаем дедлайн из черновика — всегда сегодня
+    // if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
     if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
     if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
     if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
@@ -1388,15 +1390,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initDynamicFields('todo');
   initDynamicFields('dod');
 
-  // Дедлайн по умолчанию — сегодня (локальное время)
+  // AI-CHANGE: NEW — восстановление черновика.
+  loadDraft();
+
+  // Дедлайн ВСЕГДА сегодня (локальное время) — ставим ПОСЛЕ loadDraft,
+  // чтобы черновик не мог восстановить старую дату
   const dlEl = document.getElementById('taskDeadline');
-  if (!dlEl.value) {
+  {
     const d = new Date();
     dlEl.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-
-  // AI-CHANGE: NEW — восстановление черновика.
-  loadDraft();
 
   document.querySelectorAll('textarea[data-icon-field]').forEach(ta => {
     ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
@@ -1449,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = parseInt(this.dataset.days);
     const dt = new Date();
     dt.setDate(dt.getDate() + d);
-    document.getElementById('taskDeadline').value = dt.toISOString().split('T')[0];
+    document.getElementById('taskDeadline').value = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
     document.querySelectorAll('.quick-dl').forEach(x => x.classList.remove('flash'));
     this.classList.add('flash');
     setTimeout(() => this.classList.remove('flash'), 1500);
