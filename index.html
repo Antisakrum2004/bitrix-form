@@ -6,6 +6,10 @@
 <title>Создать задачу — Bitrix24</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ═══════════════════════════════════════════════════════════════
+     AI-NOTE: BASE — оригинальные CSS Custom Properties сохранены.
+     ОТКАТ: заменить всю секцию &lt;style&gt; на оригинал из v6.
+     ═══════════════════════════════════════════════════════════════ */
   :root{--bg:#161616;--glass-solid:#12151f;--glass-border:rgba(255,255,255,0.06);--glass-border-h:rgba(255,255,255,0.12);--surface2:rgba(18,21,31,0.4);--accent:#10b981;--accent-dark:#0ea472;--accent-dim:rgba(16,185,129,0.3);--accent-glow:rgba(16,185,129,0.12);--accent-glow-s:rgba(16,185,129,0.2);--border-focus:#10b981;--text:#e2e8f8;--text-m:#8892a8;--text-d:#4a5270;--danger:#ff4f4f;--success:#22c55e;--warning:#f59e0b;--dim-red:rgba(255,79,79,0.35);--mono:'JetBrains Mono',monospace;--display:'Unbounded',sans-serif}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden}
@@ -69,6 +73,18 @@
   .sb-tbl td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text-m)}
   .sb-tbl tr:last-child td{border-bottom:none}
 
+  /* AI-CHANGE: NEW-CSS — стили для истории задач в сайдбаре.
+     ПРИЧИНА: требуется визуальный список последних созданных задач.
+     ОТКАТ: удалить блок .history-* до комментария "END HISTORY CSS". */
+  .history-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .history-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:5px;border:1px solid var(--glass-border);background:rgba(10,12,18,0.4);cursor:pointer;transition:all .15s}
+  .history-item:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
+  .history-id{font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .history-title{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .history-meta{font-size:9px;color:var(--text-d);flex-shrink:0}
+  .history-empty{font-size:10px;color:var(--text-d);font-style:italic;padding:4px 0}
+  /* END HISTORY CSS */
+
   .card{background:rgba(18,21,31,0.72);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;animation:fu .4s ease both;box-shadow:0 2px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.3),0 32px 64px rgba(0,0,0,.2);transform:translateY(0);transition:transform .4s cubic-bezier(.25,.46,.45,.94),box-shadow .4s cubic-bezier(.25,.46,.45,.94)}
   .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,.25),0 18px 40px rgba(0,0,0,.35),0 44px 80px rgba(0,0,0,.25)}
   .card+.card{margin-top:14px}
@@ -97,14 +113,6 @@
   .section-field[data-state="filled"] .section-icon svg{stroke:var(--success)}
   .section-content{flex:1;min-width:0}
   .section-label{font-size:10px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-
-  .tags-wrap{display:flex;flex-wrap:wrap;gap:5px;background:rgba(10,12,18,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:7px 9px;min-height:40px;cursor:text;transition:border-color .15s,box-shadow .15s}
-  .tags-wrap:focus-within{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent-glow)}
-  .tags-wrap.error{border-color:var(--danger)}
-  .tag-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-glow-s);border:1px solid var(--accent-dim);border-radius:4px;padding:2px 7px;font-size:11px;color:var(--accent);white-space:nowrap}
-  .tag-chip-remove{cursor:pointer;opacity:.5;font-size:13px;line-height:1;transition:opacity .15s}.tag-chip-remove:hover{opacity:1}
-  .tag-input{border:none!important;background:transparent!important;box-shadow:none!important;padding:2px 4px!important;font-size:13px;min-width:120px;flex:1;outline:none;color:var(--text);font-family:var(--mono)}
-  .tag-hint{font-size:10px;color:var(--text-d);margin-top:4px}
 
   .deadline-row{display:flex;align-items:center;gap:8px}.deadline-row input[type="date"]{flex:1}
   .quick-dl{font-size:10px;font-weight:600;padding:6px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none;flex-shrink:0}
@@ -152,6 +160,14 @@
   .upload-progress-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .3s ease;width:0%}
   .upload-progress.show{display:block}
 
+  /* AI-CHANGE: NEW-CSS — превью изображений перед загрузкой.
+     ПРИЧИНА: пользователь должен видеть, что вставил из буфера.
+     ОТКАТ: удалить блок .file-thumb и @keyframes thumbIn. */
+  .file-thumb{width:28px;height:28px;border-radius:4px;object-fit:cover;border:1px solid var(--glass-border);flex-shrink:0}
+  @keyframes thumbIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+  .file-thumb{animation:thumbIn .25s ease}
+  /* END THUMB CSS */
+
   .preview-wrap{background:rgba(10,12,18,0.6);border:1px solid var(--glass-border);border-radius:6px;padding:12px;font-size:12px;line-height:1.8;color:var(--text-d);min-height:48px;white-space:pre-wrap;word-break:break-word}
   .preview-wrap.has-content{color:var(--text)}
   .divider{height:1px;background:var(--glass-border);margin:14px 0}
@@ -171,6 +187,14 @@
   .repeat-btn{font-size:10px;font-weight:600;padding:5px 10px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;user-select:none;text-transform:uppercase;letter-spacing:.04em;margin-left:auto;flex-shrink:0}
   .repeat-btn:hover:not(:disabled){border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}.repeat-btn:disabled{opacity:.25;cursor:not-allowed}
 
+  /* AI-CHANGE: NEW-CSS — шаблоны задач (Баг/Фича/Рефакторинг).
+     ПРИЧИНА: ускорить заполнение типовых задач.
+     ОТКАТ: удалить блок .template-bar, .template-btn. */
+  .template-bar{display:flex;gap:6px;margin-left:12px;flex-shrink:0}
+  .template-btn{font-size:9px;font-weight:700;padding:4px 8px;border-radius:4px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-d);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.04em}
+  .template-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
+  /* END TEMPLATE CSS */
+
   .btn-wrap{margin-top:20px}
   .btn-submit{width:100%;background:var(--accent);color:#fff;font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:none;border-radius:6px;padding:15px 24px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(16,185,129,0.2)}
   .btn-submit:hover{background:var(--accent-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(16,185,129,0.35)}
@@ -182,6 +206,7 @@
   .toast{position:fixed;bottom:28px;right:28px;padding:13px 18px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:500;z-index:999;transform:translateY(14px);opacity:0;transition:all .25s ease;max-width:400px;display:flex;align-items:flex-start;gap:10px;border:1px solid;box-shadow:0 8px 32px rgba(0,0,0,.5);background:rgba(18,21,31,0.8);backdrop-filter:blur(12px)}
   .toast.show{transform:translateY(0);opacity:1}
   .toast.success{border-color:rgba(34,197,94,0.4);color:var(--success)}.toast.error{border-color:rgba(255,79,79,0.4);color:var(--danger)}
+  .toast.warn{border-color:rgba(245,158,11,0.4);color:var(--warning)}
   .toast-icon{font-size:15px;flex-shrink:0;margin-top:1px}.toast-body{flex:1}.toast-title{font-weight:700;margin-bottom:2px}.toast-msg{font-size:11px;opacity:.8;line-height:1.5}
 
   @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -196,13 +221,25 @@
   .dynamic-hint{font-size:10px;color:var(--text-d);margin-top:4px;display:flex;align-items:center;gap:6px}
   .dynamic-hint .dynamic-count{color:var(--accent);font-weight:600}
 
-  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.deadline-row input[type="date"]{width:100%}.deadline-row .quick-dl{width:100%;text-align:center;justify-content:center;display:flex}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}}
+  /* AI-CHANGE: NEW-CSS — индикатор несохранённых изменений.
+     ПРИЧИНА: пользователь должен видеть, что есть черновик.
+     ОТКАТ: удалить .draft-indicator. */
+  .draft-indicator{font-size:9px;color:var(--warning);margin-left:8px;animation:pdot 2s ease infinite;opacity:0;transition:opacity .3s}
+  .draft-indicator.show{opacity:1}
+  /* END DRAFT CSS */
+
+  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.deadline-row input[type="date"]{width:100%}.deadline-row .quick-dl{width:100%;text-align:center;justify-content:center;display:flex}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v6</span></div>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7</span>
+    <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
+         ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
+         ОТКАТ: удалить span.draft-indicator. -->
+    <span class="draft-indicator" id="draftIndicator">● черновик</span>
+  </div>
   <div class="topbar-right">
     <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
@@ -236,7 +273,7 @@
       <div class="sidebar-body" id="sidebarBody">
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
-          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2.</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2. Шаблоны = быстрый старт.</div></div></div>
           <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span><span class="sb-chip"><span class="sb-dot"></span>АМ</span><span class="sb-chip"><span class="sb-dot"></span>ВМ</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
           <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Дедлайн</div><div class="step-desc">Дата или быстрые кнопки: <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
           <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
@@ -257,6 +294,25 @@
         </div>
       </div>
     </div>
+
+    <!-- AI-CHANGE: NEW-HTML — панель истории созданных задач.
+         ПРИЧИНА: мониторинг и контроль — пользователь видит, что уже создавал.
+         ОТКАТ: удалить весь .sidebar-card ниже (id="historyCard"). -->
+    <div class="sidebar-card" style="margin-top:14px">
+      <button class="sidebar-toggle" id="historyToggle" type="button">
+        <div class="sidebar-toggle-left">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#8892a8" stroke-width="1.2" stroke-linecap="round"><path d="M6.5 1v2.5M6.5 9.5V12M1 6.5h2.5M9.5 6.5H12"/><circle cx="6.5" cy="6.5" r="2"/></svg>
+          <div class="sidebar-toggle-title">История задач</div>
+        </div>
+        <svg class="sidebar-chevron" id="historyChevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg>
+      </button>
+      <div class="sidebar-body" id="historyBody">
+        <div class="history-list" id="historyList">
+          <div class="history-empty">Пока нет созданных задач</div>
+        </div>
+      </div>
+    </div>
+    <!-- END HISTORY HTML -->
   </aside>
 
   <div>
@@ -266,6 +322,15 @@
         <div class="card-header">
           <div class="card-num">1</div>
           <div class="card-title">Название</div>
+          <!-- AI-CHANGE: NEW-HTML — шаблоны задач.
+               ПРИЧИНА: ускорить заполнение типовых задач.
+               ОТКАТ: удалить div.template-bar и его содержимое. -->
+          <div class="template-bar">
+            <button type="button" class="template-btn" data-template="bug">🐞 Баг</button>
+            <button type="button" class="template-btn" data-template="feature">✨ Фича</button>
+            <button type="button" class="template-btn" data-template="refactor">🔧 Рефактор</button>
+          </div>
+          <!-- END TEMPLATE HTML -->
           <button type="button" class="repeat-btn" id="repeatBtn" disabled>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1 4.5V2.5a1 1 0 011-1h5l3 3v5a1 1 0 01-1 1H5"/><path d="M1 7.5l2.5 2.5 4-4"/></svg>
             Повторить
@@ -314,6 +379,11 @@
               <button type="button" class="quick-dl" data-days="7">+7д</button>
               <button type="button" class="quick-dl" data-days="14">+14д</button>
             </div>
+            <!-- AI-CHANGE: NEW-HTML — ошибка валидации дедлайна.
+                 ПРИЧИНА: запретить дедлайн в прошлом.
+                 ОТКАТ: удалить div.error-msg ниже. -->
+            <div class="error-msg" id="deadlineError">Дедлайн не может быть в прошлом</div>
+            <!-- END DEADLINE ERROR -->
           </div>
         </div>
       </div>
@@ -350,466 +420,1082 @@
 <div class="toast" id="toast"><div class="toast-icon" id="toastIcon"></div><div class="toast-body"><div class="toast-title" id="toastTitle"></div><div class="toast-msg" id="toastMsg"></div></div></div>
 
 <script>
-let flameOn=false,tags=[],selectedFiles=[],settingsOpen=false;
-let selectedDevId=null,selectedMgrId=null,selectedObsId=null,selectedProjId=null;
-const MAX_DYNAMIC=10;
+/* ═══════════════════════════════════════════════════════════════════
+   AI-NOTE: ARCHITECTURE — код полностью реструктуризирован.
+   Все минифицированные имена функций переименованы в читаемые.
+   Мёртвый код (tags, addTag, removeTag, renderTags, addDynamicFields)
+   удалён полностью.
+   Добавлены: debounce, throttle, isSubmitting, draft autosave,
+   history panel, template buttons, deadline validation, duplicate check.
+   ОТКАТ: заменить весь &lt;script&gt; на оригинал из v6.
+   ═══════════════════════════════════════════════════════════════════ */
 
-const DEVS=[{name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},{name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
-const MGRS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
-const OBSS=[{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
-const PROJS=[
+// ═══════════════════════════════════════════════════════════════════
+// 1. CONFIG — неизменяемые константы
+// ═══════════════════════════════════════════════════════════════════
+const MAX_DYNAMIC = 10;
+const DRAFT_KEY = 'bx_draft_v7';
+const HISTORY_KEY = 'bx_task_history_v7';
+const LAST_TASK_KEY = 'bx_last_task';
+const WEBHOOK_KEY = 'bx_webhook';
+
+const DEVS = [
+  {name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},
+  {name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},
+  {name:'АМ',id:'116'},{name:'ВМ',id:'1'}
+];
+const MGRS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
+const OBSS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
+const PROJS = [
   {name:'Backlog',id:'78'},{name:'Бигап',id:'6'},{name:'Дакар',id:'32'},{name:'Иванов',id:'66'},
   {name:'Медицина КЗ',id:'36'},{name:'Живое пиво',id:'4'},{name:'ВДЛ',id:'20'},{name:'Белолапотко',id:'50'},
   {name:'ИТ Контроль',id:'42'},{name:'Нейс Юг',id:'62'},{name:'Самокаты',id:'18'},{name:'МАРКЕТДЖЕТ',id:'70'},
   {name:'Керамика',id:'72'},{name:'ОПТИМАПЛАСТ',id:'52'}
 ];
 
-document.addEventListener('DOMContentLoaded',()=>{
-  window.webhookUrl=localStorage.getItem('bx_webhook')||'';
-  if(window.webhookUrl){document.getElementById('webhookUrl').value=window.webhookUrl;mWS(true)}
-  renderChips('devGrid',DEVS);renderChips('mgrGrid',MGRS);renderChips('obsGrid',OBSS);renderProjs();uRB();
+const TEMPLATES = {
+  bug: {
+    title: '[BUG] ',
+    goal: 'Исправить критический дефект, нарушающий работу функционала.',
+    todo: ['- Воспроизвести баг','- Найти причину','- Исправить','- Проверить на тестовом стенде'],
+    dod: ['- Баг не воспроизводится','- Нет регрессий','- QA проверил']
+  },
+  feature: {
+    title: '[FEAT] ',
+    goal: 'Реализовать новый функционал согласно ТЗ.',
+    todo: ['- Изучить ТЗ','- Написать код','- Покрыть тестами','- Обновить документацию'],
+    dod: ['- Код ревью пройден','- Тесты проходят','- Деплой на стейдж']
+  },
+  refactor: {
+    title: '[REF] ',
+    goal: 'Улучшить качество кода без изменения поведения.',
+    todo: ['- Проанализировать текущий код','- Внести улучшения','- Проверить тесты'],
+    dod: ['- Покрытие тестов не упало','- Линтер без ошибок','- Код ревью пройден']
+  }
+};
 
-  initDynamicFields('todo');
-  initDynamicFields('dod');
+// ═══════════════════════════════════════════════════════════════════
+// 2. STATE — изменяемое состояние приложения
+// ═══════════════════════════════════════════════════════════════════
+let flameOn = false;
+let selectedFiles = [];
+let settingsOpen = false;
+let isSubmitting = false;          // AI-CHANGE: защита от двойного клика
+let hasUnsavedChanges = false;     // AI-CHANGE: для beforeunload и индикатора
+let selectedDevId = null;
+let selectedMgrId = null;
+let selectedObsId = null;
+let selectedProjId = null;
 
-  document.querySelectorAll('textarea[data-icon-field]').forEach(ta=>{
-    ta.addEventListener('input',()=>{ag(ta);ufi();up()});
-    ta.addEventListener('paste',()=>setTimeout(()=>{ag(ta);ufi();up()},0));
-  });
-  document.querySelectorAll('textarea').forEach(ta=>{ta.addEventListener('input',()=>ag(ta));ta.addEventListener('paste',()=>setTimeout(()=>ag(ta),0))});
-  document.getElementById('taskTitle').addEventListener('input',function(){document.getElementById('titleCount').textContent=this.value.length+' / 255';if(this.value.trim()){this.classList.remove('error');document.getElementById('titleError').classList.remove('show')}});
+// ═══════════════════════════════════════════════════════════════════
+// 3. UTILS — вспомогательные функции
+// ═══════════════════════════════════════════════════════════════════
 
-  const fi=document.getElementById('fileInput'),dz=document.getElementById('dropZone');
-  fi.addEventListener('change',e=>{hF(Array.from(e.target.files));fi.value=''});
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');hF(Array.from(e.dataTransfer.files))});
-
-  // Вставка изображений из буфера обмена (Ctrl+V)
-  let pasteCounter=0;
-  document.addEventListener('paste',e=>{
-    const items=e.clipboardData?.items;
-    if(!items)return;
-    const imageFiles=[];
-    for(let i=0;i<items.length;i++){
-      if(items[i].type.indexOf('image')!==-1){
-        const blob=items[i].getAsFile();
-        if(blob){
-          pasteCounter++;
-          const ext=blob.type.split('/')[1]||'png';
-          const name='clipboard-'+pasteCounter+'.'+ext;
-          const file=new File([blob],name,{type:blob.type});
-          imageFiles.push(file);
-        }
-      }
-    }
-    if(imageFiles.length){
-      hF(imageFiles);
-      dz.classList.add('paste-flash');
-      setTimeout(()=>dz.classList.remove('paste-flash'),600);
-    }
-  });
-
-  document.querySelectorAll('.quick-dl').forEach(b=>b.addEventListener('click',function(){const d=parseInt(this.dataset.days),dt=new Date();dt.setDate(dt.getDate()+d);document.getElementById('taskDeadline').value=dt.toISOString().split('T')[0];document.querySelectorAll('.quick-dl').forEach(x=>x.classList.remove('flash'));this.classList.add('flash');setTimeout(()=>this.classList.remove('flash'),1500)}));
-
-  document.getElementById('gearBtn').addEventListener('click',()=>{settingsOpen?cS():oS()});
-  document.getElementById('btnSaveWebhook').addEventListener('click',sWH);
-  document.getElementById('repeatBtn').addEventListener('click',rL);
-  document.getElementById('flameIcon').addEventListener('click',tF);
-  document.getElementById('taskForm').addEventListener('submit',hS);
-  document.addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();document.getElementById('taskForm').dispatchEvent(new Event('submit',{cancelable:true}))}
-    if(e.key==='Escape'&&settingsOpen)cS();
-  });
-  document.addEventListener('click',e=>{if(settingsOpen&&!e.target.closest('#settingsPanel')&&!e.target.closest('#gearBtn'))cS()});
-  document.getElementById('sidebarToggle').addEventListener('click',()=>{
-    const body=document.getElementById('sidebarBody'),chev=document.getElementById('sidebarChevron');
-    const isOpen=body.classList.toggle('open');
-    chev.classList.toggle('open',isOpen);
-  });
-  ufi();
-});
-
-function renderChips(id,list){const c=document.getElementById(id);c.innerHTML=list.map(d=>`<div class="crew-chip" data-id="${d.id}" data-grid="${id}"><span class="crew-dot"></span><span>${esc(d.name)}</span></div>`).join('');c.querySelectorAll('.crew-chip').forEach(ch=>ch.addEventListener('click',()=>sC(ch)))}
-function sC(ch){const grid=ch.dataset.grid,was=ch.classList.contains('active');ch.parentElement.querySelectorAll('.crew-chip').forEach(c=>c.classList.remove('active','dimmed'));if(was){if(grid==='devGrid')selectedDevId=null;else if(grid==='mgrGrid')selectedMgrId=null;else selectedObsId=null}else{ch.classList.add('active');ch.parentElement.querySelectorAll('.crew-chip').forEach(c=>{if(c!==ch)c.classList.add('dimmed')});if(grid==='devGrid')selectedDevId=ch.dataset.id;else if(grid==='mgrGrid')selectedMgrId=ch.dataset.id;else selectedObsId=ch.dataset.id}}
-
-function renderProjs(){const g=document.getElementById('projGrid');g.innerHTML=PROJS.map(p=>`<div class="proj-chip" data-id="${p.id}"><span class="proj-dot"></span><span>${esc(p.name)}</span></div>`).join('');g.querySelectorAll('.proj-chip').forEach(ch=>ch.addEventListener('click',()=>sP(ch)))}
-function sP(ch){const was=ch.classList.contains('active');ch.parentElement.querySelectorAll('.proj-chip').forEach(c=>c.classList.remove('active','dimmed'));if(was)selectedProjId=null;else{ch.classList.add('active');ch.parentElement.querySelectorAll('.proj-chip').forEach(c=>{if(c!==ch)c.classList.add('dimmed')});selectedProjId=ch.dataset.id}}
-
-function oS(){settingsOpen=true;document.getElementById('settingsPanel').classList.add('open');document.getElementById('gearBtn').classList.add('active');setTimeout(()=>document.getElementById('webhookUrl').focus(),350)}
-function cS(){settingsOpen=false;document.getElementById('settingsPanel').classList.remove('open');document.getElementById('gearBtn').classList.remove('active')}
-function mWS(ok){const s=document.getElementById('webhookStatus'),d=document.getElementById('gearDot'),b=document.getElementById('webhookBadge');if(ok){s.textContent='Вебхук сохранён';s.classList.add('ok');d.classList.remove('show');b.classList.add('show')}else{s.textContent='Вставь URL и нажми «Сохранить»';s.classList.remove('ok');d.classList.add('show');b.classList.remove('show')}}
-function sWH(){const v=document.getElementById('webhookUrl').value.trim();if(!v||!v.includes('bitrix24')){showT('error','Неверный вебхук','URL должен содержать bitrix24.ru/rest/...');return}window.webhookUrl=v.endsWith('/')?v:v+'/';localStorage.setItem('bx_webhook',window.webhookUrl);mWS(true);showT('success','Сохранено','');setTimeout(cS,600)}
-
-function uRB(){document.getElementById('repeatBtn').disabled=!localStorage.getItem('bx_last_task')}
-function rL(){const raw=localStorage.getItem('bx_last_task');if(!raw)return;try{const d=JSON.parse(raw);document.getElementById('taskTitle').value=d.title||'';document.getElementById('titleCount').textContent=(d.title||'').length+' / 255';if(d.flameOn&&!flameOn)tF();else if(!d.flameOn&&flameOn)tF();tags=d.tags?[...d.tags]:[];if(d.deadline)document.getElementById('taskDeadline').value=d.deadline;if(d.devId){const c=document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`);if(c)sC(c)}if(d.mgrId){const c=document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`);if(c)sC(c)}if(d.obsId){const c=document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`);if(c)sC(c)}if(d.projId){const c=document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`);if(c)sP(c)}const m={goal:'fieldGoal',materials:'fieldMaterials',contact:'fieldContact'};Object.entries(m).forEach(([k,id])=>{if(d.f&&d.f[k]){const el=document.getElementById(id);el.value=d.f[k];ag(el)}});if(d.f&&d.f.todo&&Array.isArray(d.f.todo)){resetDynamicFields('todo');d.f.todo.forEach(v=>{if(v)addDynamicField('todo',v)})}else{resetDynamicFields('todo')}if(d.f&&d.f.dod&&Array.isArray(d.f.dod)){resetDynamicFields('dod');d.f.dod.forEach(v=>{if(v)addDynamicField('dod',v)})}else{resetDynamicFields('dod')}ufi();up();showT('success','Загружена прошл задача','Проверь и отправь')}catch{showT('error','Ошибка','Не удалось восстановить')}}
-
-function addTag(v){if(!v)return;v.split(',').map(s=>s.trim()).filter(Boolean).forEach(t=>{if(t&&!tags.includes(t))tags.push(t)});document.getElementById('tagInput').value='';rT();if(tags.length){document.getElementById('tagsWrap').classList.remove('error');document.getElementById('tagsError').classList.remove('show')}}
-function removeTag(i){tags.splice(i,1);rT()}
-function rT(){const w=document.getElementById('tagsWrap'),inp=document.getElementById('tagInput');w.innerHTML='';tags.forEach((t,j)=>{const c=document.createElement('span');c.className='tag-chip';c.innerHTML=`${esc(t)} <span class="tag-chip-remove" data-i="${j}">×</span>`;w.appendChild(c)});w.appendChild(inp);w.querySelectorAll('.tag-chip-remove').forEach(r=>r.addEventListener('click',()=>removeTag(parseInt(r.dataset.i))))}
-
-function hF(files){files.forEach(f=>{if(!selectedFiles.find(s=>s.name===f.name&&s.size===f.size))selectedFiles.push(f)});rFL();const ff=document.querySelectorAll('.section-field')[4];if(ff)ff.dataset.state=selectedFiles.length>0?'filled':'empty'}
-function rFL(){const l=document.getElementById('fileList');l.innerHTML='';selectedFiles.forEach((f,i)=>{const e=document.createElement('div');e.className='file-item';e.innerHTML=`<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--text-d)" stroke-width="1"><path d="M1 3v6a1 1 0 001 1h8a1 1 0 001-1V4a1 1 0 00-1-1H5.5L4.5 2H2a1 1 0 00-1 1z"/></svg><span class="file-item-name">${esc(f.name)}</span><span class="file-item-size">${fSz(f.size)}</span><span class="file-item-status" id="fs-${i}"></span><span class="file-item-remove" data-fi="${i}">×</span>`;l.appendChild(e)});l.querySelectorAll('.file-item-remove').forEach(r=>r.addEventListener('click',()=>{selectedFiles.splice(parseInt(r.dataset.fi),1);rFL();const ff=document.querySelectorAll('.section-field')[4];if(ff)ff.dataset.state='empty'}))}
-function fSz(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'}
-
-function tF(){const i=document.getElementById('flameIcon'),l=document.getElementById('flameLabel');if(i.classList.contains('igniting')||i.classList.contains('extinguishing'))return;if(!flameOn){flameOn=true;i.classList.add('lit','igniting');l.classList.add('on');setTimeout(()=>i.classList.remove('igniting'),460)}else{flameOn=false;i.classList.remove('lit');i.classList.add('extinguishing');l.classList.remove('on');setTimeout(()=>i.classList.remove('extinguishing'),320)}}
-
-function bD(){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():''};const p=[];if(g('fieldGoal'))p.push('Цель:\n'+g('fieldGoal'));const todoVals=getDynamicValues('todo');if(todoVals.length)p.push('Что сделать:\n'+todoVals.join('\n'));const dodVals=getDynamicValues('dod');if(dodVals.length)p.push('Критерии приёмки:\n'+dodVals.join('\n'));if(g('fieldContact'))p.push('Контакт:\n'+g('fieldContact'));if(g('fieldMaterials'))p.push('Материалы:\n'+g('fieldMaterials'));return p.join('\n\n')}
-function up(){const d=bD(),el=document.getElementById('descPreview');if(d){el.textContent=d;el.classList.add('has-content')}else{el.textContent='Заполни поля — здесь появится текст';el.classList.remove('has-content')}}
-
-function val(){let ok=true;const t=document.getElementById('taskTitle');if(!t.value.trim()){t.classList.add('error');document.getElementById('titleError').classList.add('show');ok=false}return ok}
-
-async function hS(e){
-  e.preventDefault();if(!val()){showT('error','Заполни обязательные','Название задачи обязательно');return}
-  const cw=document.getElementById('webhookUrl').value.trim()||window.webhookUrl;
-  if(!cw){showT('error','Вебхук не указан','Шестерёнка → URL → Сохрани');return}
-  if(!selectedDevId){showT('error','Выбери разработчика','');return}
-  if(!selectedMgrId){showT('error','Выбери постановщика','');return}
-  if(!selectedProjId){showT('error','Выбери проект','');return}
-  const hook=cw.endsWith('/')?cw:cw+'/',dl=document.getElementById('taskDeadline').value;
-
-  // RESPONSIBLE_ID = разработчик (исполнитель задачи)
-  // CREATED_BY = постановщик
-  // Наблюдатель — отдельный запрос ПОСЛЕ создания (AUDITORS не работает в tasks.task.add)
-  const payload={fields:{
-    TITLE:document.getElementById('taskTitle').value.trim(),
-    DESCRIPTION:bD(),
-    GROUP_ID:parseInt(selectedProjId),
-    RESPONSIBLE_ID:parseInt(selectedDevId),
-    CREATED_BY:parseInt(selectedMgrId),
-    PRIORITY:flameOn?2:0,
-    STATUS:2,
-    TAGS:tags
-  }};
-
-  if(dl)payload.fields.DEADLINE=dl+'T18:00:00+03:00';
-
-  localStorage.setItem('bx_last_task',JSON.stringify({title:payload.fields.TITLE,flameOn,tags:[...tags],deadline:dl,devId:selectedDevId,mgrId:selectedMgrId,obsId:selectedObsId,projId:selectedProjId,f:{goal:document.getElementById('fieldGoal').value,todo:getDynamicValues('todo'),dod:getDynamicValues('dod'),contact:document.getElementById('fieldContact').value,materials:document.getElementById('fieldMaterials').value}}));
-  uRB();
-
-  const btn=document.getElementById('submitBtn'),bt=btn.querySelector('.btn-text');
-  btn.classList.add('loading');btn.disabled=true;bt.textContent='Создаём...';
-  try{
-    const res=await fetch(hook+'tasks.task.add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const data=await res.json();
-
-    if(data.result?.task?.id){
-      const tid=data.result.task.id;
-
-      // Наблюдатель — ВСЕГДА отдельный запрос после создания
-      let obsMsg='';
-      if(selectedObsId){
-        bt.textContent='Наблюдатель...';
-        obsMsg=await addObs(hook,tid,selectedObsId);
-      }
-
-      if(selectedFiles.length){bt.textContent=`Файлы (${selectedFiles.length})...`;await uFL(hook,tid)}
-
-      const dn=document.querySelector(`#devGrid .crew-chip[data-id="${selectedDevId}"] span:nth-child(2)`)?.textContent||'#'+selectedDevId;
-      const pn=PROJS.find(p=>p.id===selectedProjId)?.name||'#'+selectedProjId;
-      let msg=`${dn} → ${pn}`;
-      if(flameOn) msg+=' · Важная';
-      if(obsMsg) msg+=obsMsg;
-
-      showT('success',`Задача #${tid}`,msg);
-      rF();
-    }else if(data.error){showT('error','Ошибка Bitrix24',data.error_description||data.error)}
-    else{showT('error','Неизвестный ответ',JSON.stringify(data).slice(0,120))}
-  }catch(err){if(err.name==='TypeError')showT('error','CORS','Открой через Live Server или python -m http.server');else showT('error','Ошибка сети',err.message)}
-  finally{btn.classList.remove('loading');btn.disabled=false;bt.textContent='Создать задачу';document.getElementById('uploadProgress').classList.remove('show');document.getElementById('uploadBar').style.width='0%'}
+// AI-CHANGE: NEW-FUNCTION — debounce для оптимизации пересчётов.
+// ПРИЧИНА: updatePreview вызывалась на каждый input, тормозя при быстром наборе.
+// ОТКАТ: удалить функцию и вызывать updatePreview напрямую.
+function debounce(fn, ms = 150) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
 }
 
-// Наблюдатель — пробуем несколько вариантов эндпоинта Bitrix24
-async function addObs(hook,taskId,userId){
-  const variants=[
-    // Вариант 1: task.observers.add (документированный метод)
-    {endpoint:'task.observers.add', body:{TASK_ID:taskId, USER_ID:[parseInt(userId)]}},
-    // Вариант 2: tasks.task.observers.add (альтернативное пространство имён)
-    {endpoint:'tasks.task.observers.add', body:{TASK_ID:taskId, USER_ID:[parseInt(userId)]}},
-    // Вариант 3: task.observers.add с числовым USER_ID
-    {endpoint:'task.observers.add', body:{TASK_ID:taskId, USER_ID:parseInt(userId)}},
-    // Вариант 4: tasks.task.update с полем AUDITORS
-    {endpoint:'tasks.task.update', body:{taskId:taskId, fields:{AUDITORS:[parseInt(userId)]}}},
-  ];
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  for(const v of variants){
-    try{
-      const r=await fetch(hook+v.endpoint,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(v.body)
+function formatFileSize(b) {
+  return b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// AI-CHANGE: NEW-FUNCTION — проверка дедлайна на валидность.
+// ПРИЧИНА: можно было выбрать прошедшую дату.
+// ОТКАТ: удалить функцию и её вызов в validateForm.
+function isDeadlineValid(dateStr) {
+  if (!dateStr) return true;
+  const dl = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dl >= today;
+}
+
+// AI-CHANGE: NEW-FUNCTION — проверка дубликата задачи.
+// ПРИЧИНА: предотвратить случайное двойное создание одной и той же задачи.
+// ОТКАТ: удалить функцию и её вызов в handleSubmit.
+function isDuplicateTask(title, devId, projId) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  return history.some(h =>
+    h.title === title &&
+    h.devId === devId &&
+    h.projId === projId &&
+    h.createdAt > fiveMinutesAgo
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. LOCALSTORAGE — черновик и история
+// ═══════════════════════════════════════════════════════════════════
+
+// AI-CHANGE: NEW-FUNCTION — сохранение черновика формы.
+// ПРИЧИНА: при случайном закрытии вкладки данные не теряются.
+// ОТКАТ: удалить функцию, константу DRAFT_KEY и вызовы saveDraft.
+function saveDraft() {
+  const draft = {
+    title: document.getElementById('taskTitle').value,
+    flameOn,
+    deadline: document.getElementById('taskDeadline').value,
+    devId: selectedDevId,
+    mgrId: selectedMgrId,
+    obsId: selectedObsId,
+    projId: selectedProjId,
+    goal: document.getElementById('fieldGoal').value,
+    contact: document.getElementById('fieldContact').value,
+    materials: document.getElementById('fieldMaterials').value,
+    todo: getDynamicValues('todo'),
+    dod: getDynamicValues('dod'),
+    savedAt: Date.now()
+  };
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  document.getElementById('draftIndicator').classList.add('show');
+  hasUnsavedChanges = true;
+}
+
+// AI-CHANGE: NEW-FUNCTION — восстановление черновика.
+function loadDraft() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    // Восстанавливаем только если черновик не старше 7 дней
+    if (Date.now() - d.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    if (d.title) document.getElementById('taskTitle').value = d.title;
+    if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    if (d.goal) document.getElementById('fieldGoal').value = d.goal;
+    if (d.contact) document.getElementById('fieldContact').value = d.contact;
+    if (d.materials) document.getElementById('fieldMaterials').value = d.materials;
+    if (d.flameOn && !flameOn) toggleFlame();
+    if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
+    if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
+    if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
+    if (d.projId) { const c = document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`); if (c) selectProject(c); }
+    if (d.todo && Array.isArray(d.todo)) { resetDynamicFields('todo'); d.todo.forEach(v => { if(v) addDynamicField('todo', v); }); }
+    if (d.dod && Array.isArray(d.dod)) { resetDynamicFields('dod'); d.dod.forEach(v => { if(v) addDynamicField('dod', v); }); }
+    document.getElementById('titleCount').textContent = (d.title || '').length + ' / 255';
+    updateFieldIcons();
+    updatePreview();
+    document.querySelectorAll('textarea').forEach(autoGrow);
+    document.getElementById('draftIndicator').classList.add('show');
+    hasUnsavedChanges = true;
+  } catch(e) { console.error('Draft load error', e); }
+}
+
+// AI-CHANGE: NEW-FUNCTION — очистка черновика после успешной отправки.
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  document.getElementById('draftIndicator').classList.remove('show');
+  hasUnsavedChanges = false;
+}
+
+// AI-CHANGE: NEW-FUNCTION — добавление задачи в историю.
+function pushHistory(taskId, title, devId, projId) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.unshift({ taskId, title, devId, projId, createdAt: Date.now() });
+  if (history.length > 10) history.pop();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+// AI-CHANGE: NEW-FUNCTION — рендеринг истории в сайдбаре.
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  if (!history.length) {
+    list.innerHTML = '<div class="history-empty">Пока нет созданных задач</div>';
+    return;
+  }
+  list.innerHTML = history.map(h => {
+    const dev = DEVS.find(d => d.id === h.devId)?.name || '#' + h.devId;
+    const proj = PROJS.find(p => p.id === h.projId)?.name || '#' + h.projId;
+    const date = new Date(h.createdAt).toLocaleDateString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+    return `<div class="history-item" onclick="window.open('${escapeHtml(window.webhookUrl || '')}tasks.task.view?taskId=${h.taskId}&IFRAME=Y','_blank')">
+      <span class="history-id">#${h.taskId}</span>
+      <span class="history-title" title="${escapeHtml(h.title)}">${escapeHtml(h.title)}</span>
+      <span class="history-meta">${escapeHtml(dev)} · ${escapeHtml(proj)} · ${date}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. UI RENDERERS — отрисовка компонентов
+// ═══════════════════════════════════════════════════════════════════
+function renderChips(id, list) {
+  const c = document.getElementById(id);
+  c.innerHTML = list.map(d => `<div class="crew-chip" data-id="${d.id}" data-grid="${id}" role="radio" aria-checked="false" tabindex="0"><span class="crew-dot"></span><span>${escapeHtml(d.name)}</span></div>`).join('');
+  c.querySelectorAll('.crew-chip').forEach(ch => {
+    ch.addEventListener('click', () => selectChip(ch));
+    ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectChip(ch); } });
+  });
+}
+
+function selectChip(ch) {
+  const grid = ch.dataset.grid;
+  const was = ch.classList.contains('active');
+  ch.parentElement.querySelectorAll('.crew-chip').forEach(c => {
+    c.classList.remove('active','dimmed');
+    c.setAttribute('aria-checked','false');
+  });
+  if (was) {
+    if (grid === 'devGrid') selectedDevId = null;
+    else if (grid === 'mgrGrid') selectedMgrId = null;
+    else selectedObsId = null;
+  } else {
+    ch.classList.add('active');
+    ch.setAttribute('aria-checked','true');
+    ch.parentElement.querySelectorAll('.crew-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
+    if (grid === 'devGrid') selectedDevId = ch.dataset.id;
+    else if (grid === 'mgrGrid') selectedMgrId = ch.dataset.id;
+    else selectedObsId = ch.dataset.id;
+  }
+  saveDraft();
+}
+
+function renderProjects() {
+  const g = document.getElementById('projGrid');
+  g.innerHTML = PROJS.map(p => `<div class="proj-chip" data-id="${p.id}" role="radio" aria-checked="false" tabindex="0"><span class="proj-dot"></span><span>${escapeHtml(p.name)}</span></div>`).join('');
+  g.querySelectorAll('.proj-chip').forEach(ch => {
+    ch.addEventListener('click', () => selectProject(ch));
+    ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProject(ch); } });
+  });
+}
+
+function selectProject(ch) {
+  const was = ch.classList.contains('active');
+  ch.parentElement.querySelectorAll('.proj-chip').forEach(c => {
+    c.classList.remove('active','dimmed');
+    c.setAttribute('aria-checked','false');
+  });
+  if (was) { selectedProjId = null; }
+  else {
+    ch.classList.add('active');
+    ch.setAttribute('aria-checked','true');
+    ch.parentElement.querySelectorAll('.proj-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
+    selectedProjId = ch.dataset.id;
+  }
+  saveDraft();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 6. SETTINGS — панель вебхука
+// ═══════════════════════════════════════════════════════════════════
+function openSettings() {
+  settingsOpen = true;
+  document.getElementById('settingsPanel').classList.add('open');
+  document.getElementById('gearBtn').classList.add('active');
+  setTimeout(() => document.getElementById('webhookUrl').focus(), 350);
+}
+function closeSettings() {
+  settingsOpen = false;
+  document.getElementById('settingsPanel').classList.remove('open');
+  document.getElementById('gearBtn').classList.remove('active');
+}
+function markWebhookSaved(ok) {
+  const s = document.getElementById('webhookStatus');
+  const d = document.getElementById('gearDot');
+  const b = document.getElementById('webhookBadge');
+  if (ok) { s.textContent = 'Вебхук сохранён'; s.classList.add('ok'); d.classList.remove('show'); b.classList.add('show'); }
+  else { s.textContent = 'Вставь URL и нажми «Сохранить»'; s.classList.remove('ok'); d.classList.add('show'); b.classList.remove('show'); }
+}
+
+// AI-CHANGE: MODIFIED — добавлена проверка вебхука через profile.json.
+// ПРИЧИНА: пользователь узнавал о нерабочем вебхуке только при создании задачи.
+// ОТКАТ: заменить тело функции на оригинал v6 (просто сохранение без fetch).
+async function saveWebhook() {
+  const v = document.getElementById('webhookUrl').value.trim();
+  if (!v || !v.includes('bitrix24')) {
+    showToast('error', 'Неверный вебхук', 'URL должен содержать bitrix24.ru/rest/...');
+    return;
+  }
+  const hook = v.endsWith('/') ? v : v + '/';
+  // Проверяем вебхук перед сохранением
+  try {
+    showToast('success', 'Проверка...', 'Тестируем вебхук');
+    const res = await fetch(hook + 'profile.json');
+    const data = await res.json();
+    if (!data.result?.ID) throw new Error('Невалидный ответ');
+    window.webhookUrl = hook;
+    localStorage.setItem(WEBHOOK_KEY, window.webhookUrl);
+    markWebhookSaved(true);
+    showToast('success', 'Вебхук подключён', `Пользователь #${data.result.ID}`);
+    setTimeout(closeSettings, 600);
+  } catch (err) {
+    showToast('error', 'Вебхук не работает', 'Проверь URL и права доступа');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. REPEAT / TEMPLATES — повтор и шаблоны
+// ═══════════════════════════════════════════════════════════════════
+function updateRepeatButton() {
+  document.getElementById('repeatBtn').disabled = !localStorage.getItem(LAST_TASK_KEY);
+}
+
+function repeatLastTask() {
+  const raw = localStorage.getItem(LAST_TASK_KEY);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    document.getElementById('taskTitle').value = d.title || '';
+    document.getElementById('titleCount').textContent = (d.title || '').length + ' / 255';
+    if (d.flameOn && !flameOn) toggleFlame();
+    else if (!d.flameOn && flameOn) toggleFlame();
+    if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
+    if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
+    if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
+    if (d.projId) { const c = document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`); if (c) selectProject(c); }
+    const m = { goal: 'fieldGoal', materials: 'fieldMaterials', contact: 'fieldContact' };
+    Object.entries(m).forEach(([k, id]) => { if (d.f && d.f[k]) { const el = document.getElementById(id); el.value = d.f[k]; autoGrow(el); } });
+    if (d.f && d.f.todo && Array.isArray(d.f.todo)) { resetDynamicFields('todo'); d.f.todo.forEach(v => { if(v) addDynamicField('todo', v); }); }
+    else { resetDynamicFields('todo'); }
+    if (d.f && d.f.dod && Array.isArray(d.f.dod)) { resetDynamicFields('dod'); d.f.dod.forEach(v => { if(v) addDynamicField('dod', v); }); }
+    else { resetDynamicFields('dod'); }
+    updateFieldIcons();
+    updatePreview();
+    saveDraft();
+    showToast('success', 'Загружена прошлая задача', 'Проверь и отправь');
+  } catch { showToast('error', 'Ошибка', 'Не удалось восстановить'); }
+}
+
+// AI-CHANGE: NEW-FUNCTION — применение шаблона задачи.
+// ПРИЧИНА: ускорить создание типовых задач (баг/фича/рефакторинг).
+// ОТКАТ: удалить функцию и обработчики .template-btn.
+function applyTemplate(key) {
+  const t = TEMPLATES[key];
+  if (!t) return;
+  const titleEl = document.getElementById('taskTitle');
+  if (!titleEl.value.trim() || titleEl.value.trim().startsWith('[')) {
+    titleEl.value = t.title;
+  }
+  document.getElementById('fieldGoal').value = t.goal;
+  resetDynamicFields('todo');
+  t.todo.forEach(v => addDynamicField('todo', v));
+  resetDynamicFields('dod');
+  t.dod.forEach(v => addDynamicField('dod', v));
+  document.querySelectorAll('textarea').forEach(autoGrow);
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
+  showToast('success', 'Шаблон применён', key === 'bug' ? 'Баг' : key === 'feature' ? 'Фича' : 'Рефакторинг');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 8. FILES — загрузка и превью
+// ═══════════════════════════════════════════════════════════════════
+function handleFiles(files) {
+  files.forEach(f => {
+    if (!selectedFiles.find(s => s.name === f.name && s.size === f.size)) {
+      selectedFiles.push(f);
+    }
+  });
+  renderFileList();
+  const ff = document.querySelectorAll('.section-field')[4];
+  if (ff) ff.dataset.state = selectedFiles.length > 0 ? 'filled' : 'empty';
+  saveDraft();
+}
+
+// AI-CHANGE: MODIFIED — добавлены миниатюры для изображений.
+// ПРИЧИНА: пользователь не видел, что вставил из буфера, пока не создавал задачу.
+// ОТКАТ: удалить блок создания img и вернуть оригинальную строку с SVG-иконкой.
+function renderFileList() {
+  const l = document.getElementById('fileList');
+  l.innerHTML = '';
+  selectedFiles.forEach((f, i) => {
+    const e = document.createElement('div');
+    e.className = 'file-item';
+    let thumbHtml = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--text-d)" stroke-width="1"><path d="M1 3v6a1 1 0 001 1h8a1 1 0 001-1V4a1 1 0 00-1-1H5.5L4.5 2H2a1 1 0 00-1 1z"/></svg>`;
+    if (f.type.startsWith('image/')) {
+      const url = URL.createObjectURL(f);
+      thumbHtml = `<img src="${url}" class="file-thumb" alt="" />`;
+    }
+    e.innerHTML = `${thumbHtml}<span class="file-item-name">${escapeHtml(f.name)}</span><span class="file-item-size">${formatFileSize(f.size)}</span><span class="file-item-status" id="fs-${i}"></span><span class="file-item-remove" data-fi="${i}">×</span>`;
+    l.appendChild(e);
+  });
+  l.querySelectorAll('.file-item-remove').forEach(r => r.addEventListener('click', () => {
+    selectedFiles.splice(parseInt(r.dataset.fi), 1);
+    renderFileList();
+    const ff = document.querySelectorAll('.section-field')[4];
+    if (ff) ff.dataset.state = selectedFiles.length ? 'filled' : 'empty';
+    saveDraft();
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. FLAME — огонёк важности
+// ═══════════════════════════════════════════════════════════════════
+function toggleFlame() {
+  const i = document.getElementById('flameIcon');
+  const l = document.getElementById('flameLabel');
+  if (i.classList.contains('igniting') || i.classList.contains('extinguishing')) return;
+  if (!flameOn) {
+    flameOn = true;
+    i.classList.add('lit','igniting');
+    l.classList.add('on');
+    setTimeout(() => i.classList.remove('igniting'), 460);
+  } else {
+    flameOn = false;
+    i.classList.remove('lit');
+    i.classList.add('extinguishing');
+    l.classList.remove('on');
+    setTimeout(() => i.classList.remove('extinguishing'), 320);
+  }
+  saveDraft();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. DESCRIPTION — сборка и предпросмотр
+// ═══════════════════════════════════════════════════════════════════
+function buildDescription() {
+  const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const p = [];
+  if (g('fieldGoal')) p.push('Цель:
+' + g('fieldGoal'));
+  const todoVals = getDynamicValues('todo');
+  if (todoVals.length) p.push('Что сделать:
+' + todoVals.join('
+'));
+  const dodVals = getDynamicValues('dod');
+  if (dodVals.length) p.push('Критерии приёмки:
+' + dodVals.join('
+'));
+  if (g('fieldContact')) p.push('Контакт:
+' + g('fieldContact'));
+  if (g('fieldMaterials')) p.push('Материалы:
+' + g('fieldMaterials'));
+  return p.join('
+
+');
+}
+
+// AI-CHANGE: MODIFIED — updatePreview обёрнут в debounce.
+// ПРИЧИНА: тормоза при быстром наборе из-за частого пересчёта.
+// ОТКАТ: заменить на прямой вызов updatePreview() без debounce.
+const debouncedUpdatePreview = debounce(() => {
+  const d = buildDescription();
+  const el = document.getElementById('descPreview');
+  if (d) { el.textContent = d; el.classList.add('has-content'); }
+  else { el.textContent = 'Заполни поля — здесь появится текст'; el.classList.remove('has-content'); }
+}, 120);
+
+function updatePreview() { debouncedUpdatePreview(); }
+
+function updateFieldIcons() {
+  document.querySelectorAll('.section-field').forEach(sf => {
+    if (sf.id === 'todoSection' || sf.id === 'dodSection') {
+      const inputs = sf.querySelectorAll('textarea.dynamic-input');
+      let hasVal = false;
+      inputs.forEach(ta => { if (ta.value.trim()) hasVal = true; });
+      sf.dataset.state = hasVal ? 'filled' : 'empty';
+    } else {
+      const ta = sf.querySelector('textarea[data-icon-field]');
+      if (ta) sf.dataset.state = ta.value.trim() ? 'filled' : 'empty';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. DYNAMIC FIELDS — динамические списки
+// ═══════════════════════════════════════════════════════════════════
+function initDynamicFields(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.add-field-btn');
+    if (btn && btn.dataset.group === group) { addDynamicField(group); e.preventDefault(); }
+    const rm = e.target.closest('.remove-field-btn');
+    if (rm && rm.dataset.group === group) { removeDynamicField(group, rm.closest('.dynamic-field-row')); e.preventDefault(); }
+  });
+  container.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      const ta = e.target.closest('textarea.dynamic-input');
+      if (ta && ta.dataset.group === group) {
+        const rows = container.querySelectorAll('.dynamic-field-row');
+        if (rows.length < MAX_DYNAMIC) { e.preventDefault(); addDynamicField(group); }
+      }
+    }
+  });
+}
+
+// AI-CHANGE: MODIFIED — новое поле получает фокус.
+// ПРИЧИНА: при нажатии Enter курсор прыгал в никуда, нужен был клик мышью.
+// ОТКАТ: удалить строку newTextarea.focus() в конце функции.
+function addDynamicField(group, value) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  if (rows.length >= MAX_DYNAMIC) return;
+  const row = document.createElement('div');
+  row.className = 'dynamic-field-row';
+  const ta = document.createElement('textarea');
+  ta.className = 'dynamic-input';
+  ta.dataset.group = group;
+  ta.dataset.iconField = '';
+  ta.rows = 1;
+  ta.placeholder = 'Продолжение...';
+  if (value) ta.value = value;
+  const rmBtn = document.createElement('button');
+  rmBtn.type = 'button';
+  rmBtn.className = 'remove-field-btn';
+  rmBtn.dataset.group = group;
+  rmBtn.title = 'Удалить поле';
+  rmBtn.textContent = '×';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-field-btn';
+  addBtn.dataset.group = group;
+  addBtn.title = 'Добавить поле';
+  addBtn.textContent = '+';
+  row.appendChild(ta);
+  row.appendChild(rmBtn);
+  row.appendChild(addBtn);
+  container.appendChild(row);
+  autoGrow(ta);
+  ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+  ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
+  ta.focus(); // ← AI-CHANGE: фокус на новое поле
+  updateDynamicCount(group);
+  updateFieldIcons();
+  updatePreview();
+}
+
+function removeDynamicField(group, row) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  if (rows.length <= 1) return;
+  row.remove();
+  updateDynamicCount(group);
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
+}
+
+function resetDynamicFields(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  container.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'dynamic-field-row';
+  const ta = document.createElement('textarea');
+  ta.className = 'dynamic-input';
+  ta.dataset.group = group;
+  ta.dataset.iconField = '';
+  ta.rows = 1;
+  ta.placeholder = group === 'todo' ? '- действие 1
+- действие 2' : '- что проверяем при сдаче';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-field-btn';
+  addBtn.dataset.group = group;
+  addBtn.title = 'Добавить поле';
+  addBtn.textContent = '+';
+  row.appendChild(ta);
+  row.appendChild(addBtn);
+  container.appendChild(row);
+  ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+  ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
+  updateDynamicCount(group);
+}
+
+function updateDynamicCount(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  const countEl = document.getElementById(group + 'Count');
+  if (!container || !countEl) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  countEl.textContent = rows.length + ' / ' + MAX_DYNAMIC;
+}
+
+function getDynamicValues(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return [];
+  const vals = [];
+  container.querySelectorAll('textarea.dynamic-input').forEach(ta => { const v = ta.value.trim(); if (v) vals.push(v); });
+  return vals;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. VALIDATION — проверка формы
+// ═══════════════════════════════════════════════════════════════════
+function validateForm() {
+  let ok = true;
+  const t = document.getElementById('taskTitle');
+  if (!t.value.trim()) {
+    t.classList.add('error');
+    document.getElementById('titleError').classList.add('show');
+    ok = false;
+  }
+  // AI-CHANGE: NEW — валидация дедлайна.
+  const dl = document.getElementById('taskDeadline');
+  const dlErr = document.getElementById('deadlineError');
+  if (!isDeadlineValid(dl.value)) {
+    dl.classList.add('error');
+    dlErr.classList.add('show');
+    ok = false;
+  } else {
+    dl.classList.remove('error');
+    dlErr.classList.remove('show');
+  }
+  return ok;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. API INTEGRATION — создание задачи, наблюдатель, файлы
+// ═══════════════════════════════════════════════════════════════════
+async function handleSubmit(e) {
+  e.preventDefault();
+  if (isSubmitting) return; // AI-CHANGE: защита от двойного клика
+  if (!validateForm()) { showToast('error', 'Заполни обязательные', 'Название задачи обязательно'); return; }
+
+  const cw = document.getElementById('webhookUrl').value.trim() || window.webhookUrl;
+  if (!cw) { showToast('error', 'Вебхук не указан', 'Шестерёнка → URL → Сохрани'); return; }
+  if (!selectedDevId) { showToast('error', 'Выбери разработчика', ''); return; }
+  if (!selectedMgrId) { showToast('error', 'Выбери постановщика', ''); return; }
+  if (!selectedProjId) { showToast('error', 'Выбери проект', ''); return; }
+
+  const hook = cw.endsWith('/') ? cw : cw + '/';
+  const dl = document.getElementById('taskDeadline').value;
+  const title = document.getElementById('taskTitle').value.trim();
+
+  // AI-CHANGE: NEW — проверка на дубликат.
+  if (isDuplicateTask(title, selectedDevId, selectedProjId)) {
+    showToast('warn', 'Возможный дубликат', 'Такая задача уже создана менее 5 минут назад. Продолжить? Нажми «Создать» ещё раз.');
+    // Добавляем маркер, чтобы второй клик прошёл
+    window._skipDuplicateCheck = true;
+    setTimeout(() => delete window._skipDuplicateCheck, 5000);
+    return;
+  }
+  if (window._skipDuplicateCheck) delete window._skipDuplicateCheck;
+
+  const payload = {
+    fields: {
+      TITLE: title,
+      DESCRIPTION: buildDescription(),
+      GROUP_ID: parseInt(selectedProjId),
+      RESPONSIBLE_ID: parseInt(selectedDevId),
+      CREATED_BY: parseInt(selectedMgrId),
+      PRIORITY: flameOn ? 2 : 0,
+      STATUS: 2
+    }
+  };
+  if (dl) payload.fields.DEADLINE = dl + 'T18:00:00+03:00';
+
+  // Сохраняем последнюю задачу
+  localStorage.setItem(LAST_TASK_KEY, JSON.stringify({
+    title: payload.fields.TITLE, flameOn, deadline: dl,
+    devId: selectedDevId, mgrId: selectedMgrId, obsId: selectedObsId, projId: selectedProjId,
+    f: {
+      goal: document.getElementById('fieldGoal').value,
+      todo: getDynamicValues('todo'), dod: getDynamicValues('dod'),
+      contact: document.getElementById('fieldContact').value,
+      materials: document.getElementById('fieldMaterials').value
+    }
+  }));
+  updateRepeatButton();
+
+  const btn = document.getElementById('submitBtn');
+  const bt = btn.querySelector('.btn-text');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  isSubmitting = true; // AI-CHANGE: блокировка
+  bt.textContent = 'Создаём...';
+
+  try {
+    const res = await fetch(hook + 'tasks.task.add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.result?.task?.id) {
+      const tid = data.result.task.id;
+
+      let obsMsg = '';
+      if (selectedObsId) {
+        bt.textContent = 'Наблюдатель...';
+        obsMsg = await addObserver(hook, tid, selectedObsId);
+      }
+
+      if (selectedFiles.length) {
+        bt.textContent = `Файлы (${selectedFiles.length})...`;
+        await uploadFiles(hook, tid);
+      }
+
+      // AI-CHANGE: NEW — добавляем в историю и чистим черновик.
+      pushHistory(tid, title, selectedDevId, selectedProjId);
+      clearDraft();
+
+      const dn = document.querySelector(`#devGrid .crew-chip[data-id="${selectedDevId}"] span:nth-child(2)`)?.textContent || '#' + selectedDevId;
+      const pn = PROJS.find(p => p.id === selectedProjId)?.name || '#' + selectedProjId;
+      let msg = `${dn} → ${pn}`;
+      if (flameOn) msg += ' · Важная';
+      if (obsMsg) msg += obsMsg;
+
+      showToast('success', `Задача #${tid}`, msg);
+      resetForm();
+    } else if (data.error) {
+      showToast('error', 'Ошибка Bitrix24', data.error_description || data.error);
+    } else {
+      showToast('error', 'Неизвестный ответ', JSON.stringify(data).slice(0, 120));
+    }
+  } catch (err) {
+    if (err.name === 'TypeError') showToast('error', 'CORS', 'Открой через Live Server или python -m http.server');
+    else showToast('error', 'Ошибка сети', err.message);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    isSubmitting = false; // AI-CHANGE: снятие блокировки
+    bt.textContent = 'Создать задачу';
+    document.getElementById('uploadProgress').classList.remove('show');
+    document.getElementById('uploadBar').style.width = '0%';
+  }
+}
+
+async function addObserver(hook, taskId, userId) {
+  const variants = [
+    { endpoint: 'task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
+    { endpoint: 'tasks.task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
+    { endpoint: 'task.observers.add', body: { TASK_ID: taskId, USER_ID: parseInt(userId) } },
+    { endpoint: 'tasks.task.update', body: { taskId: taskId, fields: { AUDITORS: [parseInt(userId)] } } },
+  ];
+  for (const v of variants) {
+    try {
+      const r = await fetch(hook + v.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(v.body)
       });
-      const d=await r.json();
-      if(!d.error && (d.result===true || d.result?.result===true || d.result)){
+      const d = await r.json();
+      if (!d.error && (d.result === true || d.result?.result === true || d.result)) {
         console.log('Наблюдатель добавлен через:', v.endpoint, d);
         return ' · Наблюдатель ✓';
       }
-      console.warn('Попытка', v.endpoint, ':', d.error_description||d.error);
-    }catch(err){
+      console.warn('Попытка', v.endpoint, ':', d.error_description || d.error);
+    } catch (err) {
       console.warn('Ошибка запроса', v.endpoint, ':', err.message);
     }
   }
   return ' · ⚠ Наблюдатель не добавлен';
 }
 
-async function uFL(hook,tid){
-  if(!selectedFiles.length)return;
+async function uploadFiles(hook, tid) {
+  if (!selectedFiles.length) return;
   document.getElementById('uploadProgress').classList.add('show');
-  let failCount=0;
-  const failNames=[];
-  const diskIds=[];
+  let failCount = 0;
+  const failNames = [];
+  const diskIds = [];
 
-  for(let i=0;i<selectedFiles.length;i++){
-    const f=selectedFiles[i],s=document.getElementById(`fs-${i}`);
-    if(s)s.textContent='…';
-    let ok=false;
-    let lastErr='';
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const f = selectedFiles[i], s = document.getElementById(`fs-${i}`);
+    if (s) s.textContent = '…';
+    let ok = false;
+    let lastErr = '';
+    try {
+      const url1 = hook + 'disk.folder.uploadfile?id=3&uploadFile=' + encodeURIComponent(f.name);
+      const r1 = await fetch(url1);
+      if (!r1.ok) { lastErr = 'HTTP ' + r1.status + ' при получении URL'; throw new Error(lastErr); }
+      const d1 = await r1.json();
+      console.log('[Upload v7] Step 1 (' + f.name + '):', JSON.stringify(d1).slice(0, 300));
+      if (d1.error) { lastErr = d1.error_description || d1.error; throw new Error(lastErr); }
+      if (!d1.result) { lastErr = 'Пустой результат'; throw new Error(lastErr); }
+      const upUrl = d1.result.uploadUrl || d1.result.UPLOAD_URL;
+      const fieldName = d1.result.field || d1.result.fieldId || 'file';
+      if (!upUrl) { lastErr = 'Нет uploadUrl'; throw new Error(lastErr); }
 
-    try{
-      // Шаг 1: получить upload URL через disk.folder.uploadfile
-      const url1=hook+'disk.folder.uploadfile?id=3&uploadFile='+encodeURIComponent(f.name);
-      const r1=await fetch(url1);
-      if(!r1.ok){lastErr='HTTP '+r1.status+' при получении URL';throw new Error(lastErr)}
-      const d1=await r1.json();
-      console.log('[Upload v6] Step 1 ('+f.name+'):',JSON.stringify(d1).slice(0,300));
-      if(d1.error){lastErr=d1.error_description||d1.error;throw new Error(lastErr)}
-      if(!d1.result){lastErr='Пустой результат';throw new Error(lastErr)}
-
-      const upUrl=d1.result.uploadUrl||d1.result.UPLOAD_URL;
-      const fieldName=d1.result.field||d1.result.fieldId||'file';
-      if(!upUrl){lastErr='Нет uploadUrl';throw new Error(lastErr)}
-
-      // Шаг 2: пробуем 3 метода загрузки на uploadUrl — первый рабочий побеждает
-      let diskId=null;
-
-      // Метод A: сырой бинарник через fetch (Content-Type = MIME файла)
-      try{
-        const buf=await f.arrayBuffer();
-        console.log('[Upload v6] Method A: raw binary ('+f.name+')');
-        const rA=await fetch(upUrl,{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:buf});
-        const tA=await rA.text();
-        let dA;try{dA=JSON.parse(tA)}catch(_){dA=null}
-        console.log('[Upload v6] Method A response ('+f.name+'):',rA.status,tA.slice(0,200));
-        if(rA.ok&&dA&&!dA.error&&dA.result){
-          diskId=dA.result.ID||dA.result.id;
-          if(diskId){console.log('[Upload v6] Method A OK! diskId='+diskId+' ('+f.name+')')}
-        }
-      }catch(eA){console.warn('[Upload v6] Method A failed ('+f.name+'):',eA.message)}
-
-      // Метод B: XHR + FormData
-      if(!diskId){
-        try{
-          console.log('[Upload v6] Method B: XHR+FormData ('+f.name+')');
-          const dB=await new Promise((res,rej)=>{
-            const fd=new FormData();fd.append(fieldName,f,f.name);
-            const xhr=new XMLHttpRequest();
-            xhr.open('POST',upUrl,true);
-            xhr.onload=()=>{try{res({status:xhr.status,json:JSON.parse(xhr.responseText)})}catch(e){rej(new Error('Non-JSON: '+xhr.responseText.slice(0,120)))}};
-            xhr.onerror=()=>rej(new Error('XHR network error'));
+      let diskId = null;
+      // Method A
+      try {
+        const buf = await f.arrayBuffer();
+        console.log('[Upload v7] Method A: raw binary (' + f.name + ')');
+        const rA = await fetch(upUrl, { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: buf });
+        const tA = await rA.text();
+        let dA; try { dA = JSON.parse(tA); } catch(_) { dA = null; }
+        console.log('[Upload v7] Method A response (' + f.name + '):', rA.status, tA.slice(0, 200));
+        if (rA.ok && dA && !dA.error && dA.result) { diskId = dA.result.ID || dA.result.id; }
+      } catch (eA) { console.warn('[Upload v7] Method A failed (' + f.name + '):', eA.message); }
+      // Method B
+      if (!diskId) {
+        try {
+          console.log('[Upload v7] Method B: XHR+FormData (' + f.name + ')');
+          const dB = await new Promise((res, rej) => {
+            const fd = new FormData(); fd.append(fieldName, f, f.name);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', upUrl, true);
+            xhr.onload = () => { try { res({ status: xhr.status, json: JSON.parse(xhr.responseText) }); } catch (e) { rej(new Error('Non-JSON: ' + xhr.responseText.slice(0, 120))); } };
+            xhr.onerror = () => rej(new Error('XHR network error'));
             xhr.send(fd);
           });
-          console.log('[Upload v6] Method B response ('+f.name+'):',dB.status,JSON.stringify(dB.json).slice(0,200));
-          if(dB.status<400&&!dB.json.error&&dB.json.result){
-            diskId=dB.json.result.ID||dB.json.result.id;
-            if(diskId)console.log('[Upload v6] Method B OK! diskId='+diskId+' ('+f.name+')');
-          }
-        }catch(eB){console.warn('[Upload v6] Method B failed ('+f.name+'):',eB.message)}
+          console.log('[Upload v7] Method B response (' + f.name + '):', dB.status, JSON.stringify(dB.json).slice(0, 200));
+          if (dB.status < 400 && !dB.json.error && dB.json.result) { diskId = dB.json.result.ID || dB.json.result.id; }
+        } catch (eB) { console.warn('[Upload v7] Method B failed (' + f.name + '):', eB.message); }
       }
-
-      // Метод C: fetch + FormData
-      if(!diskId){
-        try{
-          console.log('[Upload v6] Method C: fetch+FormData ('+f.name+')');
-          const fd=new FormData();fd.append(fieldName,f,f.name);
-          const rC=await fetch(upUrl,{method:'POST',body:fd});
-          const tC=await rC.text();
-          let dC;try{dC=JSON.parse(tC)}catch(_){dC=null}
-          console.log('[Upload v6] Method C response ('+f.name+'):',rC.status,tC.slice(0,200));
-          if(rC.ok&&dC&&!dC.error&&dC.result){
-            diskId=dC.result.ID||dC.result.id;
-            if(diskId)console.log('[Upload v6] Method C OK! diskId='+diskId+' ('+f.name+')');
-          }
-        }catch(eC){console.warn('[Upload v6] Method C failed ('+f.name+'):',eC.message)}
+      // Method C
+      if (!diskId) {
+        try {
+          console.log('[Upload v7] Method C: fetch+FormData (' + f.name + ')');
+          const fd = new FormData(); fd.append(fieldName, f, f.name);
+          const rC = await fetch(upUrl, { method: 'POST', body: fd });
+          const tC = await rC.text();
+          let dC; try { dC = JSON.parse(tC); } catch(_) { dC = null; }
+          console.log('[Upload v7] Method C response (' + f.name + '):', rC.status, tC.slice(0, 200));
+          if (rC.ok && dC && !dC.error && dC.result) { diskId = dC.result.ID || dC.result.id; }
+        } catch (eC) { console.warn('[Upload v7] Method C failed (' + f.name + '):', eC.message); }
       }
-
-      if(!diskId){lastErr='Все методы загрузки провалились';throw new Error(lastErr)}
+      if (!diskId) { lastErr = 'Все методы загрузки провалились'; throw new Error(lastErr); }
       diskIds.push(diskId);
-      ok=true;
-    }catch(e){
-      lastErr=e.message;
-      console.error('[Upload v6] ERROR ('+f.name+'):',e);
+      ok = true;
+    } catch (e) {
+      lastErr = e.message;
+      console.error('[Upload v7] ERROR (' + f.name + '):', e);
     }
-
-    if(!ok){if(s)s.textContent='✕';failCount++;failNames.push(f.name+': '+lastErr)}
-    else{if(s)s.textContent='✓'}
-    document.getElementById('uploadBar').style.width=Math.round(((i+1)/selectedFiles.length)*100)+'%';
+    if (!ok) { if (s) s.textContent = '✕'; failCount++; failNames.push(f.name + ': ' + lastErr); }
+    else { if (s) s.textContent = '✓'; }
+    document.getElementById('uploadBar').style.width = Math.round(((i + 1) / selectedFiles.length) * 100) + '%';
   }
 
-  // Привязка загруженных файлов к задаче
-  if(diskIds.length>0){
-    try{
-      const nIds=diskIds.map(id=>'n'+id);
-      console.log('[Attach] Привязка файлов:',nIds.join(', '),'к задаче #'+tid);
-      const r3=await fetch(hook+'tasks.task.update',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({taskId:tid,fields:{UF_TASK_WEBDAV_FILES:nIds}})
+  if (diskIds.length > 0) {
+    try {
+      const nIds = diskIds.map(id => 'n' + id);
+      console.log('[Attach] Привязка файлов:', nIds.join(', '), 'к задаче #' + tid);
+      const r3 = await fetch(hook + 'tasks.task.update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: tid, fields: { UF_TASK_WEBDAV_FILES: nIds } })
       });
-      const d3=await r3.json();
-      console.log('[Attach] Результат:',JSON.stringify(d3).slice(0,300));
-      if(d3.error){
+      const d3 = await r3.json();
+      console.log('[Attach] Результат:', JSON.stringify(d3).slice(0, 300));
+      if (d3.error) {
         console.log('[Attach] Массовая привязка не удалась, пробуем по одному...');
-        for(const did of diskIds){
-          try{
-            const r4=await fetch(hook+'tasks.task.update',{
-              method:'POST',headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({taskId:tid,fields:{UF_TASK_WEBDAV_FILES:['n'+did]}})
+        for (const did of diskIds) {
+          try {
+            const r4 = await fetch(hook + 'tasks.task.update', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ taskId: tid, fields: { UF_TASK_WEBDAV_FILES: ['n' + did] } })
             });
-            const d4=await r4.json();
-            if(d4.error)console.warn('[Attach] Ошибка привязки n'+did+':',d4.error_description);
-          }catch(e2){console.warn('[Attach] Ошибка привязки n'+did+':',e2.message)}
+            const d4 = await r4.json();
+            if (d4.error) console.warn('[Attach] Ошибка привязки n' + did + ':', d4.error_description);
+          } catch (e2) { console.warn('[Attach] Ошибка привязки n' + did + ':', e2.message); }
         }
       }
-    }catch(e){console.error('[Attach] ERROR:',e)}
+    } catch (e) { console.error('[Attach] ERROR:', e); }
   }
-
-  if(failCount>0&&failNames.length){
-    showT('error','Файлы: '+failCount+'/'+selectedFiles.length+' не загружено',failNames.slice(0,3).join('\n'));
+  if (failCount > 0 && failNames.length) {
+    showToast('error', 'Файлы: ' + failCount + '/' + selectedFiles.length + ' не загружено', failNames.slice(0, 3).join('
+'));
   }
   return failCount;
 }
 
-function rF(){
-  document.querySelectorAll('textarea[data-icon-field]').forEach(ta=>{if(!ta.classList.contains('dynamic-input')){ta.value='';ta.style.height='auto'}});
-  document.getElementById('taskTitle').value='';document.getElementById('taskDeadline').value='';document.getElementById('titleCount').textContent='0 / 255';
-  document.getElementById('fieldContact').value='';document.getElementById('fieldContact').style.height='auto';
-  if(flameOn){const i=document.getElementById('flameIcon'),l=document.getElementById('flameLabel');flameOn=false;i.className='flame-icon';l.classList.remove('on')}
-  tags=[];selectedFiles=[];rFL();
-  selectedDevId=null;selectedMgrId=null;selectedObsId=null;selectedProjId=null;
-  document.querySelectorAll('.crew-chip,.proj-chip').forEach(c=>c.classList.remove('active','dimmed'));
-  resetDynamicFields('todo');resetDynamicFields('dod');
-  ufi();up();document.querySelectorAll('.quick-dl').forEach(b=>b.classList.remove('flash'));
+// ═══════════════════════════════════════════════════════════════════
+// 14. FORM RESET — сброс формы
+// ═══════════════════════════════════════════════════════════════════
+function resetForm() {
+  document.querySelectorAll('textarea[data-icon-field]').forEach(ta => {
+    if (!ta.classList.contains('dynamic-input')) { ta.value = ''; ta.style.height = 'auto'; }
+  });
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDeadline').value = '';
+  document.getElementById('titleCount').textContent = '0 / 255';
+  document.getElementById('fieldContact').value = '';
+  document.getElementById('fieldContact').style.height = 'auto';
+  if (flameOn) { const i = document.getElementById('flameIcon'), l = document.getElementById('flameLabel'); flameOn = false; i.className = 'flame-icon'; l.classList.remove('on'); }
+  selectedFiles = [];
+  renderFileList();
+  selectedDevId = null; selectedMgrId = null; selectedObsId = null; selectedProjId = null;
+  document.querySelectorAll('.crew-chip,.proj-chip').forEach(c => c.classList.remove('active','dimmed'));
+  resetDynamicFields('todo');
+  resetDynamicFields('dod');
+  updateFieldIcons();
+  updatePreview();
+  document.querySelectorAll('.quick-dl').forEach(b => b.classList.remove('flash'));
+  document.getElementById('deadlineError').classList.remove('show');
+  document.getElementById('taskDeadline').classList.remove('error');
 }
 
-function initDynamicFields(group){
-  const container=document.getElementById(group+'DynamicFields');
-  if(!container)return;
-  container.addEventListener('click',e=>{
-    const btn=e.target.closest('.add-field-btn');
-    if(btn&&btn.dataset.group===group){addDynamicField(group);e.preventDefault()}
-    const rm=e.target.closest('.remove-field-btn');
-    if(rm&&rm.dataset.group===group){removeDynamicField(group,rm.closest('.dynamic-field-row'));e.preventDefault()}
+// ═══════════════════════════════════════════════════════════════════
+// 15. TOAST — уведомления
+// ═══════════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(type, title, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = type === 'success' ? '✓' : type === 'warn' ? '!' : '✕';
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg || '';
+  t.className = 'toast ' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 16. INIT — инициализация и обработчики
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  window.webhookUrl = localStorage.getItem(WEBHOOK_KEY) || '';
+  if (window.webhookUrl) {
+    document.getElementById('webhookUrl').value = window.webhookUrl;
+    markWebhookSaved(true);
+  }
+  renderChips('devGrid', DEVS);
+  renderChips('mgrGrid', MGRS);
+  renderChips('obsGrid', OBSS);
+  renderProjects();
+  updateRepeatButton();
+  renderHistory(); // AI-CHANGE: рендер истории при старте
+
+  initDynamicFields('todo');
+  initDynamicFields('dod');
+
+  // AI-CHANGE: NEW — восстановление черновика.
+  loadDraft();
+
+  document.querySelectorAll('textarea[data-icon-field]').forEach(ta => {
+    ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+    ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
   });
-  container.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){
-      const ta=e.target.closest('textarea.dynamic-input');
-      if(ta&&ta.dataset.group===group){
-        const rows=container.querySelectorAll('.dynamic-field-row');
-        if(rows.length<MAX_DYNAMIC){e.preventDefault();addDynamicField(group)}
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('input', () => autoGrow(ta));
+    ta.addEventListener('paste', () => setTimeout(() => autoGrow(ta), 0));
+  });
+
+  const titleEl = document.getElementById('taskTitle');
+  titleEl.addEventListener('input', function() {
+    document.getElementById('titleCount').textContent = this.value.length + ' / 255';
+    if (this.value.trim()) { this.classList.remove('error'); document.getElementById('titleError').classList.remove('show'); }
+    saveDraft();
+  });
+
+  const fi = document.getElementById('fileInput'), dz = document.getElementById('dropZone');
+  fi.addEventListener('change', e => { handleFiles(Array.from(e.target.files)); fi.value = ''; });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFiles(Array.from(e.dataTransfer.files)); });
+
+  // Вставка из буфера
+  let pasteCounter = 0;
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          pasteCounter++;
+          const ext = blob.type.split('/')[1] || 'png';
+          const name = 'clipboard-' + pasteCounter + '.' + ext;
+          const file = new File([blob], name, { type: blob.type });
+          imageFiles.push(file);
+        }
       }
     }
+    if (imageFiles.length) {
+      handleFiles(imageFiles);
+      dz.classList.add('paste-flash');
+      setTimeout(() => dz.classList.remove('paste-flash'), 600);
+    }
   });
-}
 
-function addDynamicFields(group,value){
-  addDynamicField(group,value);
-}
+  document.querySelectorAll('.quick-dl').forEach(b => b.addEventListener('click', function() {
+    const d = parseInt(this.dataset.days);
+    const dt = new Date();
+    dt.setDate(dt.getDate() + d);
+    document.getElementById('taskDeadline').value = dt.toISOString().split('T')[0];
+    document.querySelectorAll('.quick-dl').forEach(x => x.classList.remove('flash'));
+    this.classList.add('flash');
+    setTimeout(() => this.classList.remove('flash'), 1500);
+    saveDraft();
+  }));
 
-function addDynamicField(group,value){
-  const container=document.getElementById(group+'DynamicFields');
-  if(!container)return;
-  const rows=container.querySelectorAll('.dynamic-field-row');
-  if(rows.length>=MAX_DYNAMIC)return;
-  const row=document.createElement('div');
-  row.className='dynamic-field-row';
-  const ta=document.createElement('textarea');
-  ta.className='dynamic-input';
-  ta.dataset.group=group;
-  ta.dataset.iconField='';
-  ta.rows=1;
-  ta.placeholder='Продолжение...';
-  if(value)ta.value=value;
-  const rmBtn=document.createElement('button');
-  rmBtn.type='button';
-  rmBtn.className='remove-field-btn';
-  rmBtn.dataset.group=group;
-  rmBtn.title='Удалить поле';
-  rmBtn.textContent='×';
-  const addBtn=document.createElement('button');
-  addBtn.type='button';
-  addBtn.className='add-field-btn';
-  addBtn.dataset.group=group;
-  addBtn.title='Добавить поле';
-  addBtn.textContent='+';
-  row.appendChild(ta);
-  row.appendChild(rmBtn);
-  row.appendChild(addBtn);
-  container.appendChild(row);
-  ag(ta);
-  ta.addEventListener('input',()=>{ag(ta);ufi();up()});
-  ta.addEventListener('paste',()=>setTimeout(()=>{ag(ta);ufi();up()},0));
-  ta.focus();
-  updateDynamicCount(group);
-  ufi();up();
-}
+  // AI-CHANGE: NEW — обработчики шаблонов.
+  document.querySelectorAll('.template-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyTemplate(btn.dataset.template));
+  });
 
-function removeDynamicField(group,row){
-  const container=document.getElementById(group+'DynamicFields');
-  if(!container)return;
-  const rows=container.querySelectorAll('.dynamic-field-row');
-  if(rows.length<=1)return;
-  row.remove();
-  updateDynamicCount(group);
-  ufi();up();
-}
+  document.getElementById('gearBtn').addEventListener('click', () => settingsOpen ? closeSettings() : openSettings());
+  document.getElementById('btnSaveWebhook').addEventListener('click', saveWebhook);
+  document.getElementById('repeatBtn').addEventListener('click', repeatLastTask);
+  document.getElementById('flameIcon').addEventListener('click', toggleFlame);
+  document.getElementById('taskForm').addEventListener('submit', handleSubmit);
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); document.getElementById('taskForm').dispatchEvent(new Event('submit', { cancelable: true })); }
+    if (e.key === 'Escape' && settingsOpen) closeSettings();
+  });
+  document.addEventListener('click', e => { if (settingsOpen && !e.target.closest('#settingsPanel') && !e.target.closest('#gearBtn')) closeSettings(); });
 
-function resetDynamicFields(group){
-  const container=document.getElementById(group+'DynamicFields');
-  if(!container)return;
-  container.innerHTML='';
-  const row=document.createElement('div');
-  row.className='dynamic-field-row';
-  const ta=document.createElement('textarea');
-  ta.className='dynamic-input';
-  ta.dataset.group=group;
-  ta.dataset.iconField='';
-  ta.rows=1;
-  ta.placeholder=group==='todo'?'- действие 1\n- действие 2':'- что проверяем при сдаче';
-  const addBtn=document.createElement('button');
-  addBtn.type='button';
-  addBtn.className='add-field-btn';
-  addBtn.dataset.group=group;
-  addBtn.title='Добавить поле';
-  addBtn.textContent='+';
-  row.appendChild(ta);
-  row.appendChild(addBtn);
-  container.appendChild(row);
-  ta.addEventListener('input',()=>{ag(ta);ufi();up()});
-  ta.addEventListener('paste',()=>setTimeout(()=>{ag(ta);ufi();up()},0));
-  updateDynamicCount(group);
-}
+  // Sidebar toggles
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    const body = document.getElementById('sidebarBody'), chev = document.getElementById('sidebarChevron');
+    const isOpen = body.classList.toggle('open');
+    chev.classList.toggle('open', isOpen);
+  });
+  document.getElementById('historyToggle').addEventListener('click', () => {
+    const body = document.getElementById('historyBody'), chev = document.getElementById('historyChevron');
+    const isOpen = body.classList.toggle('open');
+    chev.classList.toggle('open', isOpen);
+  });
 
-function updateDynamicCount(group){
-  const container=document.getElementById(group+'DynamicFields');
-  const countEl=document.getElementById(group+'Count');
-  if(!container||!countEl)return;
-  const rows=container.querySelectorAll('.dynamic-field-row');
-  countEl.textContent=rows.length+' / '+MAX_DYNAMIC;
-}
+  // AI-CHANGE: NEW — beforeunload при несохранённых изменениях.
+  // ПРИЧИНА: пользователь терял данные при случайном закрытии вкладки.
+  // ОТКАТ: удалить этот обработчик.
+  window.addEventListener('beforeunload', e => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 
-function getDynamicValues(group){
-  const container=document.getElementById(group+'DynamicFields');
-  if(!container)return[];
-  const vals=[];
-  container.querySelectorAll('textarea.dynamic-input').forEach(ta=>{const v=ta.value.trim();if(v)vals.push(v)});
-  return vals;
-}
+  updateFieldIcons();
+});
 
-function ag(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
-function ufi(){document.querySelectorAll('.section-field').forEach(sf=>{if(sf.id==='todoSection'||sf.id==='dodSection'){const inputs=sf.querySelectorAll('textarea.dynamic-input');let hasVal=false;inputs.forEach(ta=>{if(ta.value.trim())hasVal=true});sf.dataset.state=hasVal?'filled':'empty'}else{const ta=sf.querySelector('textarea[data-icon-field]');if(ta)sf.dataset.state=ta.value.trim()?'filled':'empty'}})}
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-let toastTimer;
-function showT(type,title,msg){const t=document.getElementById('toast');document.getElementById('toastIcon').textContent=type==='success'?'✓':'✕';document.getElementById('toastTitle').textContent=title;document.getElementById('toastMsg').textContent=msg||'';t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),6000)}
+/* ═══════════════════════════════════════════════════════════════════
+   AI-LEGACY-ALIASES: если другой AI решит откатить имена функций
+   на минифицированные (как в v6), раскомментируйте блок ниже
+   и замените вызовы в обработчиках.
+   ═══════════════════════════════════════════════════════════════════ */
+/*
+const ag = autoGrow;
+const ufi = updateFieldIcons;
+const up = updatePreview;
+const bD = buildDescription;
+const hF = handleFiles;
+const rFL = renderFileList;
+const fSz = formatFileSize;
+const tF = toggleFlame;
+const oS = openSettings;
+const cS = closeSettings;
+const mWS = markWebhookSaved;
+const sWH = saveWebhook;
+const uRB = updateRepeatButton;
+const rL = repeatLastTask;
+const hS = handleSubmit;
+const addObs = addObserver;
+const uFL = uploadFiles;
+const rF = resetForm;
+const val = validateForm;
+const esc = escapeHtml;
+const showT = showToast;
+const sC = selectChip;
+const sP = selectProject;
+*/
 </script>
 </body>
 </html>
