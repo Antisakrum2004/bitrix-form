@@ -327,7 +327,7 @@
                ПРИЧИНА: ускорить заполнение типовых задач.
                ОТКАТ: удалить div.template-bar и его содержимое. -->
           <div class="template-bar">
-            <button type="button" class="template-btn" data-template="bug">Исправление</button>
+            <button type="button" class="template-btn" data-template="bug">Правки</button>
             <button type="button" class="template-btn" data-template="feature">Доработка</button>
             <button type="button" class="template-btn" data-template="refactor">Реф</button>
           </div>
@@ -816,9 +816,20 @@ function applyTemplate(key) {
 }
 
 function clearTemplate() {
+  const scrollY = window.scrollY;
+  // Очищаем поля шаблона до базового состояния
+  const titleEl = document.getElementById('taskTitle');
+  if (titleEl.value.trim().startsWith('[')) titleEl.value = '';
+  document.getElementById('fieldGoal').value = '';
+  resetDynamicFields('todo');
+  resetDynamicFields('dod');
+  document.querySelectorAll('textarea').forEach(ta => { ta.style.height = 'auto'; });
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   activeTemplateKey = null;
-  showToast('warn', 'Шаблон снят', '');
+  window.scrollTo(0, scrollY);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1324,7 +1335,7 @@ function resetForm() {
     if (!ta.classList.contains('dynamic-input')) { ta.value = ''; ta.style.height = 'auto'; }
   });
   document.getElementById('taskTitle').value = '';
-  document.getElementById('taskDeadline').value = new Date().toISOString().split('T')[0];
+  { const d = new Date(); document.getElementById('taskDeadline').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   document.getElementById('titleCount').textContent = '0 / 255';
   document.getElementById('fieldContact').value = '';
   document.getElementById('fieldContact').style.height = 'auto';
@@ -1377,11 +1388,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initDynamicFields('todo');
   initDynamicFields('dod');
 
-  // Дедлайн по умолчанию — сегодня
+  // Дедлайн по умолчанию — сегодня (локальное время)
   const dlEl = document.getElementById('taskDeadline');
   if (!dlEl.value) {
-    const today = new Date();
-    dlEl.value = today.toISOString().split('T')[0];
+    const d = new Date();
+    dlEl.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
   // AI-CHANGE: NEW — восстановление черновика.
