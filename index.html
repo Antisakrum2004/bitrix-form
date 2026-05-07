@@ -235,7 +235,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.3</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.4</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -786,13 +786,11 @@ function repeatLastTask() {
 let activeTemplateKey = null;
 
 function applyTemplate(key) {
-  // Тогл: повторный клик по активному шаблону — снимаем его
   if (activeTemplateKey === key) {
     clearTemplate();
     return;
   }
-  // Запоминаем позицию скролла, чтобы не прыгалo
-  const scrollY = window.scrollY;
+  const savedY = window.scrollY;
   const t = TEMPLATES[key];
   if (!t) return;
   const titleEl = document.getElementById('taskTitle');
@@ -808,18 +806,16 @@ function applyTemplate(key) {
   updateFieldIcons();
   updatePreview();
   saveDraft();
-  // Подсветка активного шаблона
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.template-btn[data-template="${key}"]`);
   if (activeBtn) activeBtn.classList.add('active');
   activeTemplateKey = key;
-  // Возвращаем скролл на место
-  window.scrollTo(0, scrollY);
+  // Восстанавливаем скролл после того как браузер пересчитает лейаут
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, savedY)));
 }
 
 function clearTemplate() {
-  const scrollY = window.scrollY;
-  // Очищаем поля шаблона до базового состояния
+  const savedY = window.scrollY;
   const titleEl = document.getElementById('taskTitle');
   if (titleEl.value.trim().startsWith('[')) titleEl.value = '';
   document.getElementById('fieldGoal').value = '';
@@ -831,7 +827,7 @@ function clearTemplate() {
   saveDraft();
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   activeTemplateKey = null;
-  window.scrollTo(0, scrollY);
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, savedY)));
 }
 
 // ═══════════════════════════════════════════════════════════════════
