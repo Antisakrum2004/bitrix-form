@@ -235,7 +235,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.2</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.3</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1390,11 +1390,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initDynamicFields('todo');
   initDynamicFields('dod');
 
-  // AI-CHANGE: NEW — восстановление черновика.
-  loadDraft();
+  // НЕ восстанавливаем черновик при перезагрузке — форма всегда чистая
+  // loadDraft();
+  // Очищаем старый черновик из localStorage
+  localStorage.removeItem(DRAFT_KEY);
 
-  // Дедлайн ВСЕГДА сегодня (локальное время) — ставим ПОСЛЕ loadDraft,
-  // чтобы черновик не мог восстановить старую дату
+  // Дедлайн ВСЕГДА сегодня (локальное время)
   const dlEl = document.getElementById('taskDeadline');
   {
     const d = new Date();
