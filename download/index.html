@@ -241,7 +241,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.8</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.9</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1117,6 +1117,7 @@ async function handleSubmit(e) {
   if (!selectedProjId) { showToast('error', 'Выбери проект', ''); return; }
 
   const hook = cw.endsWith('/') ? cw : cw + '/';
+  const EOD_HOOK = 'https://1c-cms.bitrix24.ru/rest/154/f896em13hhazm006/';
   const dl = document.getElementById('taskDeadline').value;
   const title = document.getElementById('taskTitle').value.trim();
 
@@ -1189,7 +1190,9 @@ async function handleSubmit(e) {
       let eodMsg = '';
       if (document.getElementById('eodCheck').checked) {
         bt.textContent = 'EOD...';
-        eodMsg = await addEodComment(hook, tid, selectedProjId);
+        // Добавляем бота (154) наблюдателем, чтобы он мог комментировать
+        await addObserver(hook, tid, '154');
+        eodMsg = await addEodComment(EOD_HOOK, tid, selectedProjId);
       }
 
       // AI-CHANGE: NEW — добавляем в историю и чистим черновик.
@@ -1267,7 +1270,7 @@ async function addEodComment(hook, tid, projId) {
     const r = await fetch(hook + 'task.commentitem.add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ TASK_ID: tid, fields: { POST_MESSAGE: comment, AUTHOR_ID: '154' } })
+      body: JSON.stringify({ TASK_ID: tid, fields: { POST_MESSAGE: comment } })
     });
     const d = await r.json();
     console.log('[EOD] Comment result:', JSON.stringify(d).slice(0, 300));
