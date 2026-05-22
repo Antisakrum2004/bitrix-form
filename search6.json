@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://apidocs.bitrix24.ru/api-reference/user/user-add.html",
+    "name": "Пригласить пользователя user.add - REST API Битрикс24",
+    "snippet": "Пригласить пользователя user.add · используйте Битрикс24 Вайбкод, чтобы создать приложение для Битрикс24 по описанию задачи без знания языков ...",
+    "host_name": "apidocs.bitrix24.ru",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.1c-bitrix.ru/support/forum/forum6/topic122617",
+    "name": "1С-Битрикс Разработчикам - Форум",
+    "snippet": "Здравствуйте. После недавних обновлений битрикса стали звонить клиенты и жаловаться, что не могут оформить заказ.",
+    "host_name": "dev.1c-bitrix.ru",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.infostart.ru/forum15/topic278928",
+    "name": "Битрикс и УНФ (ошибка авторизации при обмене)",
+    "snippet": "Не удалось установить соединение. Разумеется первым делом поменял пароль (НЕ ПОМОГЛО) Добавил другого пользователя с правами админа (НЕ ПОМОГЛО) Попробовал ...",
+    "host_name": "forum.infostart.ru",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://pinall.ru/forum/forum2/255-bitriks24-ya-ne-mogu-otpravit-priglashenie-prisoedinitsya-k-portalu-sotrudnikam-kholdinga",
+    "name": "Битрикс24 Я не могу отправить приглашение присоединиться к",
+    "snippet": "Добрый день, коллега. Почта не настроена в виртуальной машине. Сообщите параметры аккаунта, от имени которого Б24(коробка) должен отправлять почту: e-mail, ...",
+    "host_name": "pinall.ru",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.1c-bitrix.ru/support/forum/forum32/topic134972",
+    "name": "1С-Битрикс Разработчикам - Форум",
+    "snippet": "В данной статье даны причины и пути решения ситуации с почтой https://helpdesk.bitrix24.ru/open/13118632 · Пользователь 901959. Постоянный ...",
+    "host_name": "dev.1c-bitrix.ru",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  }
+]
