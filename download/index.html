@@ -241,7 +241,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.7</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.8</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1254,7 +1254,7 @@ async function addObserver(hook, taskId, userId) {
 // ПРИЧИНА: шаблон EOD для отчёта по задаче.
 // ОТКАТ: удалить функцию и вызов в handleSubmit.
 async function addEodComment(hook, tid, projId) {
-  let comment = '[i]Не забываем заполнять при срезе задачи если она длится более 4х часов либо по завершении задачи:[/i]\n';
+  let comment = '[i]Заполни EOD при срезе задачи, если она решается более 4х часов и по завершении задачи:[/i]\n';
   comment += '[i]Стадия тестирования обязательна при завершении задачи[/i]\n';
   if (projId === '32') {
     comment += '[i]Не забываем прикладывать инструкцию по завершению задачи[/i]\n';
@@ -1267,7 +1267,7 @@ async function addEodComment(hook, tid, projId) {
     const r = await fetch(hook + 'task.commentitem.add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ TASK_ID: tid, fields: { POST_MESSAGE: comment } })
+      body: JSON.stringify({ TASK_ID: tid, fields: { POST_MESSAGE: comment, AUTHOR_ID: '154' } })
     });
     const d = await r.json();
     console.log('[EOD] Comment result:', JSON.stringify(d).slice(0, 300));
