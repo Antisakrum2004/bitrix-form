@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://apidocs.bitrix24.ru/api-reference/user/user-add.html",
+    "name": "Пригласить пользователя user.add - REST API Битрикс24",
+    "snippet": "Пригласить пользователя user.add · используйте Битрикс24 Вайбкод, чтобы создать приложение для Битрикс24 по описанию задачи без знания языков ...",
+    "host_name": "apidocs.bitrix24.ru",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/user/user-add.html",
+    "name": "Invite User user.add | Bitrix24 REST API and Marketplace Applications",
+    "snippet": "The method user.add invites a user. This can only be done on behalf of a user with the rights to invite users, typically an administrator.",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.1c-bitrix.ru/api_help/main/reference/cuser/add.php",
+    "name": "CUser::Add - 1С-Битрикс",
+    "snippet": "Параметры · LOGIN* - логин (имя входа) · NAME - имя пользователя · LAST_NAME - фамилия пользователя · SECOND_NAME - отчество пользователя · EMAIL* - E-Mail адрес ...",
+    "host_name": "dev.1c-bitrix.ru",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/bitrix-tools/b24-rest-docs/blob/main//api-reference/user/user-add.md?plain=1",
+    "name": "user-add.md - b24-rest-docs - GitHub",
+    "snippet": "Метод `user.add` приглашает пользователя. Возможно только от имени пользователя с правами приглашения пользователей, как правило администратора. В случае успеха ...",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com",
+    "name": "Bitrix24 REST API and Marketplace Applications",
+    "snippet": "Bitrix24 uses two REST API versions: REST and REST 3.0. They differ by call path, the format of some responses, and the documentation coverage. Before you start ...",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://habr.com/ru/articles/936252",
+    "name": "Разработка Битрикс-бота: история о том, как документация",
+    "snippet": "Берём к примеру метод imbot.message.add – простой и понятный метод, отвечающий за отправку сообщений от лица бота. Смотрим на него детальнее…",
+    "host_name": "habr.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/user/index.html",
+    "name": "Users: Overview of Methods - Bitrix24 REST API",
+    "snippet": "User documentation: How to invite employees to Bitrix24 · How to Work with UsersHow to Work with Users. Use the method: user.add to invite new users. The ...",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.ru/api-reference/lists/lists/lists-add.html",
+    "name": "Создать универсальный список lists.add - REST API Битрикс24",
+    "snippet": "Создать универсальный список lists.add · используйте Битрикс24 Вайбкод, чтобы создать приложение для Битрикс24 по описанию задачи без знания ...",
+    "host_name": "apidocs.bitrix24.ru",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://openintegrations.dev/docs/Bitrix24/Chats-and-dialogs-management/Add-users-to-chat",
+    "name": "Добавить пользователей в чат | Открытый Пакет Интеграций",
+    "snippet": "Добавить пользователей в чат и другие функции для работы с Bitrix24 в Открытом пакете интеграций - бесплатной open-source библиотеке интеграций для ...",
+    "host_name": "openintegrations.dev",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.1c-bitrix.ru/learning/course/?COURSE_ID=43&LESSON_ID=3496",
+    "name": "Добавление, редактирование, удаление пользовательских",
+    "snippet": "Добавить пользовательское свойство к разделу инфоблока. Если необходимо добавить пользовательское свойство к разделу инфоблока через механизм Битрикс-API, нужно ...",
+    "host_name": "dev.1c-bitrix.ru",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

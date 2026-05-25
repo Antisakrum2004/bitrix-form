@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/user/user-add.html",
+    "name": "Invite User user.add | Bitrix24 REST API and Marketplace Applications",
+    "snippet": "The method user.add invites a user. This can only be done on behalf of a user with the rights to invite users, typically an administrator.",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.make.com/t/bitrix24-create-or-update-lead-problems/46103",
+    "name": "Bitrix24 create or update lead problems - Make Community",
+    "snippet": "If you get an 'invalid ID' error, make sure you are using the same connection or that the connections you are using can access the same resource ...",
+    "host_name": "community.make.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/bizproc/bizproc-robot/bizproc-robot-add.html",
+    "name": "Register a New Automation Rule bizproc.robot.add",
+    "snippet": "Bitrix24 REST API and Marketplace Applications · What the Bitrix24 REST API Allows. First Steps; Typical use-cases and scenarios; Local ...",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.facebook.com/groups/community.bitrix24/posts/861583988357246",
+    "name": "Developer API \"user.get\" issue with Bitrix users - Facebook",
+    "snippet": "Hi. Im developer. i am having problem using calling api \"user.get\". i can't get all users in bitrix, i only can get a some users.",
+    "host_name": "www.facebook.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/bitrix?tab=Votes",
+    "name": "Highest scored 'bitrix' questions - Stack Overflow",
+    "snippet": "\"The custom type is invalid\" error in bitrix24 REST API. I am working on the bitrix24 REST API. I am able to get the 200 response from other API like crm.",
+    "host_name": "stackoverflow.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/sonet-group/members/sonet-group-user-add.html",
+    "name": "Add Users to Group sonet_group.user.add - Bitrix24 REST API",
+    "snippet": "The errors described below may occur when calling any method. Status. Code Error Message. Description. 500. INTERNAL_SERVER_ERROR",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/mesilov/bitrix24-php-sdk/issues/43",
+    "name": "Fix errors after change REST API to support self hosted version #43",
+    "snippet": "The first step is sending the user to /oauth/authorize portal - remains unchanged, but in one of the next updates will be made the ability to ...",
+    "host_name": "github.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com/api-reference/crm/companies/userfields/crm-company-userfield-update.html",
+    "name": "Update Company User Field crm.company.userfield.update",
+    "snippet": "Bitrix24 REST API and Marketplace Applications · What the Bitrix24 REST API Allows. First Steps; Typical use-cases and scenarios; Local Solutions; Development ...",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apidocs.bitrix24.com",
+    "name": "Bitrix24 REST API and Marketplace Applications",
+    "snippet": "REST API methods return JSON responses. The structure of a successful response and the error format depend on the REST version and the specific method. See the ...",
+    "host_name": "apidocs.bitrix24.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=iCVZv8TvWTU",
+    "name": "Bitrix24 REST API Training Course_How to move a lead  - YouTube",
+    "snippet": "Bitrix24 REST API Training Course_How to move a lead or a deal along sale funnel ... Comments. Add a comment... 1:23. Go to channel Bitrix24 ...",
+    "host_name": "www.youtube.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
