@@ -20,6 +20,24 @@
      ОТКАТ: заменить всю секцию &lt;style&gt; на оригинал из v6.
      ═══════════════════════════════════════════════════════════════ */
   :root{--bg:#161616;--glass-solid:#12151f;--glass-border:rgba(255,255,255,0.06);--glass-border-h:rgba(255,255,255,0.12);--surface2:rgba(18,21,31,0.4);--accent:#10b981;--accent-dark:#0ea472;--accent-dim:rgba(16,185,129,0.3);--accent-glow:rgba(16,185,129,0.12);--accent-glow-s:rgba(16,185,129,0.2);--border-focus:#10b981;--text:#e2e8f8;--text-m:#8892a8;--text-d:#4a5270;--danger:#ff4f4f;--success:#22c55e;--warning:#f59e0b;--dim-red:rgba(255,79,79,0.35);--mono:'JetBrains Mono',monospace;--display:'Unbounded',sans-serif}
+  html[data-theme="gray"]{--bg:#2a2d38;--glass-solid:#1e2130;--glass-border:rgba(255,255,255,0.08);--glass-border-h:rgba(255,255,255,0.16);--surface2:rgba(30,33,48,0.5);--accent:#10b981;--accent-dark:#0ea472;--accent-dim:rgba(16,185,129,0.25);--accent-glow:rgba(16,185,129,0.1);--accent-glow-s:rgba(16,185,129,0.18);--border-focus:#10b981;--text:#d4d9e8;--text-m:#8b92a8;--text-d:#5a6078;--danger:#ff4f4f;--success:#22c55e;--warning:#f59e0b;--dim-red:rgba(255,79,79,0.35);--input-bg:rgba(20,22,32,0.5);--card-shadow:0 12px 28px rgba(0,0,0,.25)}
+  html[data-theme="light"]{--bg:#f0f2f5;--glass-solid:#ffffff;--glass-border:rgba(0,0,0,0.08);--glass-border-h:rgba(0,0,0,0.15);--surface2:rgba(255,255,255,0.7);--accent:#0d9668;--accent-dark:#0a7d56;--accent-dim:rgba(13,150,104,0.2);--accent-glow:rgba(13,150,104,0.06);--accent-glow-s:rgba(13,150,104,0.12);--border-focus:#0d9668;--text:#1a1d2e;--text-m:#5a6078;--text-d:#9ca3b8;--danger:#e53e3e;--success:#16a34a;--warning:#d97706;--dim-red:rgba(229,62,62,0.25);--input-bg:rgba(240,242,245,0.8);--card-shadow:0 4px 16px rgba(0,0,0,.08)}
+  html[data-theme="light"] .topbar{background:rgba(255,255,255,0.92)}
+  html[data-theme="light"] .card{background:rgba(255,255,255,0.85)}
+  html[data-theme="light"] .sidebar-card{background:rgba(255,255,255,0.85)}
+  html[data-theme="light"] .settings-panel{background:rgba(255,255,255,0.7)}
+  html[data-theme="light"] input[type="text"],html[data-theme="light"] input[type="date"],html[data-theme="light"] textarea{background:rgba(240,242,245,0.9);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .file-upload-area{background:rgba(240,242,245,0.6)}
+  html[data-theme="light"] .crew-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .proj-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .toast{background:rgba(255,255,255,0.9)}
+  html[data-theme="light"] .gear-btn{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .install-banner{background:rgba(255,255,255,0.95);border-top-color:rgba(0,0,0,0.1)}
+  html[data-theme="gray"] .topbar{background:rgba(42,45,56,0.92)}
+  html[data-theme="gray"] .card{background:rgba(30,33,48,0.85)}
+  html[data-theme="gray"] .sidebar-card{background:rgba(30,33,48,0.85)}
+  html[data-theme="gray"] .settings-panel{background:rgba(30,33,48,0.7)}
+
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 50% at 15% 45%,rgba(16,185,129,0.05) 0%,transparent 100%),radial-gradient(ellipse 50% 60% at 85% 25%,rgba(16,185,129,0.03) 0%,transparent 100%),radial-gradient(ellipse 70% 40% at 50% 85%,rgba(16,185,129,0.025) 0%,transparent 100%)}
@@ -255,6 +273,16 @@
   /* AI-CHANGE: NEW-CSS — PWA install banner + standalone mode.
      ПРИЧИНА: пользователь может установить форму как приложение на телефон.
      ОТКАТ: удалить блок .install-banner, .pwa-* и @media(standalone). */
+  /* AI-CHANGE: NEW-CSS — Theme switcher dots. */
+  .theme-dots{display:flex;align-items:center;gap:5px;margin-right:4px}
+  .theme-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--glass-border-h);cursor:pointer;transition:all .2s;flex-shrink:0}
+  .theme-dot:hover{transform:scale(1.2)}
+  .theme-dot.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+  .theme-dot-dark{background:#161616}
+  .theme-dot-gray{background:#2a2d38}
+  .theme-dot-light{background:#f0f2f5}
+  /* END THEME DOTS CSS */
+
   .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
   .install-banner.show{transform:translateY(0)}
   .install-icon{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(16,185,129,0.3)}
@@ -281,6 +309,11 @@
     <span class="draft-indicator" id="draftIndicator">● черновик</span>
   </div>
   <div class="topbar-right">
+    <div class="theme-dots" id="themeDots" title="Тема оформления">
+      <div class="theme-dot theme-dot-dark active" data-theme="dark"></div>
+      <div class="theme-dot theme-dot-gray" data-theme="gray"></div>
+      <div class="theme-dot theme-dot-light" data-theme="light"></div>
+    </div>
     <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
     <div class="gear-btn" id="installBtn" title="Установить приложение" style="display:none">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14M6 10l6 6 6-6M4 20h16"/></svg>
@@ -564,6 +597,28 @@
     banner?.classList.remove("show");
     deferredPrompt = null;
   });
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// 0b. Theme Switcher — три кружка в topbar
+// ═══════════════════════════════════════════════════════════════════
+(function initTheme() {
+  const dots = document.querySelectorAll('.theme-dot');
+  const key = 'b24_theme';
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem(key, t);
+    dots.forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+    // Обновить color-scheme для date input
+    document.documentElement.style.colorScheme = t === 'light' ? 'light' : 'dark';
+  }
+
+  dots.forEach(d => d.addEventListener('click', () => setTheme(d.dataset.theme)));
+
+  // Восстановить сохранённую тему
+  const saved = localStorage.getItem(key);
+  if (saved) setTheme(saved);
 })();
 
 /* ═══════════════════════════════════════════════════════════════════
