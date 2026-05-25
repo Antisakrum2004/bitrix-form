@@ -120,13 +120,16 @@
   .section-content{flex:1;min-width:0}
   .section-label{font-size:10px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 
-  .deadline-row{display:flex;align-items:center;gap:8px}.deadline-row input[type="date"]{flex:1;min-width:0}
-  .time-est-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
-  .time-est-wrap .fl{font-size:11px;color:var(--text-d);white-space:nowrap}
-  .time-est-input{width:64px;padding:6px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono);text-align:center;outline:none;transition:border-color .15s}
+  .deadline-row{display:flex;align-items:flex-end;gap:12px}
+  .deadline-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .deadline-col label.fl{font-size:10px;font-weight:700;color:var(--text-d);text-transform:uppercase;letter-spacing:.06em}
+  .time-col{width:110px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+  .time-col label.fl{font-size:10px;font-weight:700;color:var(--text-d);text-transform:uppercase;letter-spacing:.06em}
+  .time-est-field{display:flex;align-items:center;gap:6px}
+  .time-est-input{flex:1;padding:7px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono);text-align:center;outline:none;transition:border-color .15s;min-width:0}
   .time-est-input:focus{border-color:var(--accent)}
   .time-est-input::placeholder{color:var(--text-d);opacity:.5}
-  .time-est-unit{font-size:11px;color:var(--text-d);font-weight:600}
+  .time-est-unit{font-size:12px;color:var(--text-d);font-weight:600;flex-shrink:0}
 
   .crew-grid{display:flex;flex-wrap:wrap;gap:6px}
   .crew-chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:6px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none}
@@ -238,7 +241,7 @@
   .draft-indicator.show{opacity:1}
   /* END DRAFT CSS */
 
-  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.deadline-row input[type="date"]{width:100%}.time-est-wrap{margin-left:0;width:100%}.time-est-input{flex:1;width:auto}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
+  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.time-col{width:100%}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
 </style>
 </head>
 <body>
@@ -383,14 +386,16 @@
         <div class="card-body">
           <div class="field">
             <div class="deadline-row">
-              <div style="flex:1;min-width:0">
+              <div class="deadline-col">
                 <label class="fl">Крайний срок</label>
                 <input type="date" id="taskDeadline" />
               </div>
-              <div class="time-est-wrap">
-                <label class="fl">Оценка</label>
-                <input type="text" id="timeEstimate" class="time-est-input" placeholder="0" inputmode="decimal" />
-                <span class="time-est-unit">ч</span>
+              <div class="time-col">
+                <label class="fl">Оценка в часах</label>
+                <div class="time-est-field">
+                  <input type="text" id="timeEstimate" class="time-est-input" placeholder="0" inputmode="decimal" />
+                  <span class="time-est-unit">ч</span>
+                </div>
               </div>
             </div>
             <!-- AI-CHANGE: NEW-HTML — ошибка валидации дедлайна.
