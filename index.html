@@ -274,7 +274,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.12</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.12.1</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -468,43 +468,58 @@
 <script>
 
 // ═══════════════════════════════════════════════════════════════════
-// 0. PWA — Service Worker + Install Prompt
+// 0. PWA — Service Worker + Install Prompt (Android + iOS)
 // ═══════════════════════════════════════════════════════════════════
 (function initPWA() {
   // Регистрация Service Worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").then(reg => {
       console.log("[PWA] SW registered, scope:", reg.scope);
-      // Проверка обновлений каждые 30 минут
       setInterval(() => reg.update(), 30 * 60 * 1000);
     }).catch(err => console.warn("[PWA] SW registration failed:", err));
   }
 
-  // Install Prompt — показываем баннер если браузер предлагает установку
-  let deferredPrompt = null;
   const banner = document.getElementById("installBanner");
   const btnAccept = document.getElementById("installAccept");
   const btnDismiss = document.getElementById("installDismiss");
-
-  // Проверяем: уже отклоняли или уже установлено
-  const dismissed = localStorage.getItem("b24_pwa_dismissed");
+  const iosHint = document.getElementById("iosHint");
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  const dismissed = localStorage.getItem("b24_pwa_dismissed");
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  let deferredPrompt = null;
 
+  // Android Chrome — beforeinstallprompt
   window.addEventListener("beforeinstallprompt", e => {
     e.preventDefault();
     deferredPrompt = e;
-    // Показываем баннер только если не отклоняли ранее и не в standalone
     if (!dismissed && !isStandalone) {
-      setTimeout(() => banner?.classList.add("show"), 2000);
+      setTimeout(() => banner?.classList.add("show"), 1500);
     }
   });
 
+  // iOS Safari — показываем баннер с инструкцией
+  if (isIOS && isSafari && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      if (banner) {
+        // Меняем текст кнопки и описание для iOS
+        const desc = banner.querySelector(".install-desc");
+        const btnY = banner.querySelector(".install-btn-yes");
+        if (desc) desc.textContent = "Нажми Поделиться → На рабочий стол";
+        if (btnY) btnY.textContent = "Понятно";
+        banner.classList.add("show");
+      }
+    }, 2000);
+  }
+
   btnAccept?.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const result = await deferredPrompt.userChoice;
-    console.log("[PWA] Install choice:", result.outcome);
-    deferredPrompt = null;
+    if (deferredPrompt) {
+      // Android — нативный install prompt
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      console.log("[PWA] Install choice:", result.outcome);
+      deferredPrompt = null;
+    }
     banner?.classList.remove("show");
   });
 
@@ -513,7 +528,6 @@
     localStorage.setItem("b24_pwa_dismissed", "1");
   });
 
-  // После установки — скрываем баннер
   window.addEventListener("appinstalled", () => {
     console.log("[PWA] App installed");
     banner?.classList.remove("show");
