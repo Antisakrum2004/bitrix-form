@@ -247,7 +247,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.10</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.11</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -649,7 +649,8 @@ function renderHistory() {
     const dev = DEVS.find(d => d.id === h.devId)?.name || '#' + h.devId;
     const proj = PROJS.find(p => p.id === h.projId)?.name || '#' + h.projId;
     const date = new Date(h.createdAt).toLocaleDateString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
-    return `<div class="history-item" onclick="window.open('${escapeHtml(window.webhookUrl || '')}tasks.task.view?taskId=${h.taskId}&IFRAME=Y','_blank')">
+    const taskUrl = 'https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/' + h.taskId + '/';
+    return `<div class="history-item" onclick="window.open('${taskUrl}','_blank')">
       <span class="history-id">#${h.taskId}</span>
       <span class="history-title" title="${escapeHtml(h.title)}">${escapeHtml(h.title)}</span>
       <span class="history-meta">${escapeHtml(dev)} · ${escapeHtml(proj)} · ${date}</span>
@@ -1279,7 +1280,7 @@ async function addObserver(hook, taskId, userId) {
 // ОТКАТ: удалить функцию и вызов в handleSubmit.
 async function addEodComment(hook, tid, projId) {
   let comment = '[i]Заполни EOD при срезе задачи, если она решается более 4х часов и по завершении задачи:[/i]\n';
-  comment += '[i]Стадия тестирования обязательна при завершении задачи[/i]\n';
+  comment += '[i]Стадия тестирования обязательна при завершении задачи - [URL=https://www.notion.so/36b5ca3a0f26819db0decf544571a4bd?source=copy_link]ссылка[/URL][/i]\n';
   if (projId === '32') {
     comment += '[i]Не забываем прикладывать инструкцию по завершению задачи[/i]\n';
   }
