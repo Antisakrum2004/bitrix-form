@@ -31,7 +31,11 @@
   html[data-theme="light"] .crew-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
   html[data-theme="light"] .proj-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
   html[data-theme="light"] .toast{background:rgba(255,255,255,0.9)}
+  html[data-theme="light"] .crew-chip.active{background:rgba(13,150,104,0.12);border-color:rgba(13,150,104,0.35);color:#0d9668}
+  html[data-theme="light"] .proj-chip.active{background:rgba(13,150,104,0.12);border-color:rgba(13,150,104,0.35);color:#0d9668}
   html[data-theme="light"] .gear-btn{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .preview-wrap{background:#ffffff;border-color:rgba(0,0,0,0.1)}
+  html[data-theme="light"] .preview-wrap.has-content{color:#1a1d2e}
   html[data-theme="light"] .install-banner{background:rgba(255,255,255,0.95);border-top-color:rgba(0,0,0,0.1)}
   html[data-theme="gray"] .topbar{background:rgba(42,45,56,0.92)}
   html[data-theme="gray"] .card{background:rgba(30,33,48,0.85)}
@@ -274,13 +278,15 @@
      ПРИЧИНА: пользователь может установить форму как приложение на телефон.
      ОТКАТ: удалить блок .install-banner, .pwa-* и @media(standalone). */
   /* AI-CHANGE: NEW-CSS — Theme switcher dots. */
-  .theme-dots{display:flex;align-items:center;gap:5px;margin-right:4px}
-  .theme-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--glass-border-h);cursor:pointer;transition:all .2s;flex-shrink:0}
-  .theme-dot:hover{transform:scale(1.2)}
-  .theme-dot.active{border-color:var(--accent);background:var(--accent)!important;box-shadow:0 0 0 2px var(--accent-dim)}
+  .theme-dots{display:flex;align-items:center;gap:8px;margin-right:6px}
+  .theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--glass-border-h);cursor:pointer;transition:all .2s;flex-shrink:0;position:relative}
+  .theme-dot:hover{transform:scale(1.15)}
+  .theme-dot.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+  .theme-dot.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
   .theme-dot-dark{background:#161616}
   .theme-dot-gray{background:#2a2d38}
   .theme-dot-light{background:#f0f2f5}
+  .theme-dot-light.active::after{color:#1a1d2e}
   /* END THEME DOTS CSS */
 
   .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
