@@ -282,6 +282,9 @@
   </div>
   <div class="topbar-right">
     <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
+    <div class="gear-btn" id="installBtn" title="Установить приложение" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14M6 10l6 6 6-6M4 20h16"/></svg>
+    </div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M2.9 2.9l1.8 1.8M11.3 11.3l1.8 1.8M13.1 2.9l-1.8 1.8M4.7 11.3l-1.8 1.8"/></svg>
       <div class="gear-dot" id="gearDot"></div>
@@ -487,14 +490,35 @@
   const dismissed = localStorage.getItem("b24_pwa_dismissed");
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const installBtn = document.getElementById("installBtn");
   let deferredPrompt = null;
+
+  // Показываем кнопку установки в topbar если не standalone
+  if (!isStandalone && installBtn) {
+    installBtn.style.display = "flex";
+  }
 
   // Android Chrome — beforeinstallprompt
   window.addEventListener("beforeinstallprompt", e => {
     e.preventDefault();
     deferredPrompt = e;
+    // Показываем и кнопку и баннер
+    if (installBtn) installBtn.style.display = "flex";
     if (!dismissed && !isStandalone) {
       setTimeout(() => banner?.classList.add("show"), 1500);
+    }
+  });
+
+  // Кнопка установки в topbar
+  installBtn?.addEventListener("click", async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      console.log("[PWA] Install (button) choice:", result.outcome);
+      deferredPrompt = null;
+    } else {
+      // Нет deferredPrompt — показываем баннер с инструкцией
+      if (banner) banner.classList.add("show");
     }
   });
 
@@ -519,8 +543,15 @@
       const result = await deferredPrompt.userChoice;
       console.log("[PWA] Install choice:", result.outcome);
       deferredPrompt = null;
+      banner?.classList.remove("show");
+    } else if (isIOS) {
+      // iOS — просто закрываем, пользователь знает что делать
+      banner?.classList.remove("show");
+    } else {
+      // Fallback — пытаемся найти install в меню Chrome
+      banner?.classList.remove("show");
+      showToast("Нажми ⋮ в Chrome → «Установить приложение»", "warn");
     }
-    banner?.classList.remove("show");
   });
 
   btnDismiss?.addEventListener("click", () => {
