@@ -120,10 +120,13 @@
   .section-content{flex:1;min-width:0}
   .section-label{font-size:10px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 
-  .deadline-row{display:flex;align-items:center;gap:8px}.deadline-row input[type="date"]{flex:1}
-  .quick-dl{font-size:10px;font-weight:600;padding:6px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none;flex-shrink:0}
-  .quick-dl:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
-  .quick-dl.flash{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow-s)}
+  .deadline-row{display:flex;align-items:center;gap:8px}.deadline-row input[type="date"]{flex:1;min-width:0}
+  .time-est-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+  .time-est-wrap .fl{font-size:11px;color:var(--text-d);white-space:nowrap}
+  .time-est-input{width:64px;padding:6px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono);text-align:center;outline:none;transition:border-color .15s}
+  .time-est-input:focus{border-color:var(--accent)}
+  .time-est-input::placeholder{color:var(--text-d);opacity:.5}
+  .time-est-unit{font-size:11px;color:var(--text-d);font-weight:600}
 
   .crew-grid{display:flex;flex-wrap:wrap;gap:6px}
   .crew-chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:6px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none}
@@ -235,13 +238,13 @@
   .draft-indicator.show{opacity:1}
   /* END DRAFT CSS */
 
-  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.deadline-row input[type="date"]{width:100%}.deadline-row .quick-dl{width:100%;text-align:center;justify-content:center;display:flex}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
+  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.deadline-row input[type="date"]{width:100%}.time-est-wrap{margin-left:0;width:100%}.time-est-input{flex:1;width:auto}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.9</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.10</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -379,12 +382,16 @@
         <div class="card-header"><div class="card-num">3</div><div class="card-title">Сроки</div></div>
         <div class="card-body">
           <div class="field">
-            <label class="fl">Крайний срок</label>
             <div class="deadline-row">
-              <input type="date" id="taskDeadline" />
-              <button type="button" class="quick-dl" data-days="3">+3д</button>
-              <button type="button" class="quick-dl" data-days="7">+7д</button>
-              <button type="button" class="quick-dl" data-days="14">+14д</button>
+              <div style="flex:1;min-width:0">
+                <label class="fl">Крайний срок</label>
+                <input type="date" id="taskDeadline" />
+              </div>
+              <div class="time-est-wrap">
+                <label class="fl">Оценка</label>
+                <input type="text" id="timeEstimate" class="time-est-input" placeholder="0" inputmode="decimal" />
+                <span class="time-est-unit">ч</span>
+              </div>
             </div>
             <!-- AI-CHANGE: NEW-HTML — ошибка валидации дедлайна.
                  ПРИЧИНА: запретить дедлайн в прошлом.
@@ -559,6 +566,7 @@ function saveDraft() {
     title: document.getElementById('taskTitle').value,
     flameOn,
     deadline: document.getElementById('taskDeadline').value,
+    timeEst: document.getElementById('timeEstimate').value,
     devId: selectedDevId,
     mgrId: selectedMgrId,
     obsId: selectedObsId,
@@ -1144,6 +1152,14 @@ async function handleSubmit(e) {
   };
   if (dl) payload.fields.DEADLINE = dl + 'T18:00:00+03:00';
 
+  // Оценка времени (часы → секунды)
+  const timeEstRaw = document.getElementById('timeEstimate').value.replace(',', '.');
+  const timeHours = parseFloat(timeEstRaw);
+  if (!isNaN(timeHours) && timeHours > 0) {
+    payload.fields.TIME_ESTIMATE = Math.round(timeHours * 3600);
+    payload.fields.ALLOW_TIME_TRACKING = 'Y';
+  }
+
   // Сохраняем последнюю задачу
   localStorage.setItem(LAST_TASK_KEY, JSON.stringify({
     title: payload.fields.TITLE, flameOn, deadline: dl,
@@ -1371,6 +1387,7 @@ function resetForm() {
     if (!ta.classList.contains('dynamic-input')) { ta.value = ''; ta.style.height = 'auto'; }
   });
   document.getElementById('taskTitle').value = '';
+  document.getElementById('timeEstimate').value = '';
   { const d = new Date(); document.getElementById('taskDeadline').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   document.getElementById('titleCount').textContent = '0 / 255';
   document.getElementById('fieldContact').value = '';
@@ -1384,7 +1401,6 @@ function resetForm() {
   resetDynamicFields('dod');
   updateFieldIcons();
   updatePreview();
-  document.querySelectorAll('.quick-dl').forEach(b => b.classList.remove('flash'));
   document.getElementById('deadlineError').classList.remove('show');
   document.getElementById('taskDeadline').classList.remove('error');
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
@@ -1482,17 +1498,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => dz.classList.remove('paste-flash'), 600);
     }
   });
-
-  document.querySelectorAll('.quick-dl').forEach(b => b.addEventListener('click', function() {
-    const d = parseInt(this.dataset.days);
-    const dt = new Date();
-    dt.setDate(dt.getDate() + d);
-    document.getElementById('taskDeadline').value = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-    document.querySelectorAll('.quick-dl').forEach(x => x.classList.remove('flash'));
-    this.classList.add('flash');
-    setTimeout(() => this.classList.remove('flash'), 1500);
-    saveDraft();
-  }));
 
   // AI-CHANGE: NEW — обработчики шаблонов.
   document.querySelectorAll('.template-btn').forEach(btn => {
