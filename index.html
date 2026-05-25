@@ -2,8 +2,17 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Создать задачу — Bitrix24</title>
+<meta name="theme-color" content="#10b981">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B24 Задача">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════════════════════════
@@ -242,12 +251,30 @@
   /* END DRAFT CSS */
 
   @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.time-col{width:100%}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
+
+  /* AI-CHANGE: NEW-CSS — PWA install banner + standalone mode.
+     ПРИЧИНА: пользователь может установить форму как приложение на телефон.
+     ОТКАТ: удалить блок .install-banner, .pwa-* и @media(standalone). */
+  .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
+  .install-banner.show{transform:translateY(0)}
+  .install-icon{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(16,185,129,0.3)}
+  .install-icon svg{width:22px;height:22px;fill:#fff}
+  .install-text{flex:1;min-width:0}
+  .install-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+  .install-desc{font-size:10px;color:var(--text-m);line-height:1.5}
+  .install-actions{display:flex;gap:8px;flex-shrink:0}
+  .install-btn-yes{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:opacity .15s;text-transform:uppercase;letter-spacing:.04em}
+  .install-btn-yes:hover{opacity:.85}
+  .install-btn-no{background:transparent;color:var(--text-d);border:1px solid var(--glass-border-h);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+  .install-btn-no:hover{border-color:var(--text-d);color:var(--text-m)}
+  @media(standalone){.topbar{padding-top:env(safe-area-inset-top)}}
+  /* END PWA CSS */
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.11</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.12</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -439,6 +466,61 @@
 <div class="toast" id="toast"><div class="toast-icon" id="toastIcon"></div><div class="toast-body"><div class="toast-title" id="toastTitle"></div><div class="toast-msg" id="toastMsg"></div></div></div>
 
 <script>
+
+// ═══════════════════════════════════════════════════════════════════
+// 0. PWA — Service Worker + Install Prompt
+// ═══════════════════════════════════════════════════════════════════
+(function initPWA() {
+  // Регистрация Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      console.log("[PWA] SW registered, scope:", reg.scope);
+      // Проверка обновлений каждые 30 минут
+      setInterval(() => reg.update(), 30 * 60 * 1000);
+    }).catch(err => console.warn("[PWA] SW registration failed:", err));
+  }
+
+  // Install Prompt — показываем баннер если браузер предлагает установку
+  let deferredPrompt = null;
+  const banner = document.getElementById("installBanner");
+  const btnAccept = document.getElementById("installAccept");
+  const btnDismiss = document.getElementById("installDismiss");
+
+  // Проверяем: уже отклоняли или уже установлено
+  const dismissed = localStorage.getItem("b24_pwa_dismissed");
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Показываем баннер только если не отклоняли ранее и не в standalone
+    if (!dismissed && !isStandalone) {
+      setTimeout(() => banner?.classList.add("show"), 2000);
+    }
+  });
+
+  btnAccept?.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+    console.log("[PWA] Install choice:", result.outcome);
+    deferredPrompt = null;
+    banner?.classList.remove("show");
+  });
+
+  btnDismiss?.addEventListener("click", () => {
+    banner?.classList.remove("show");
+    localStorage.setItem("b24_pwa_dismissed", "1");
+  });
+
+  // После установки — скрываем баннер
+  window.addEventListener("appinstalled", () => {
+    console.log("[PWA] App installed");
+    banner?.classList.remove("show");
+    deferredPrompt = null;
+  });
+})();
+
 /* ═══════════════════════════════════════════════════════════════════
    AI-NOTE: ARCHITECTURE — код полностью реструктуризирован.
    Все минифицированные имена функций переименованы в читаемые.
@@ -1577,5 +1659,23 @@ const sC = selectChip;
 const sP = selectProject;
 */
 </script>
+
+<!-- AI-CHANGE: NEW-HTML — PWA install banner.
+     ПРИЧИНА: предложить пользователю установить форму как приложение.
+     ОТКАТ: удалить div.install-banner. -->
+<div class="install-banner" id="installBanner">
+  <div class="install-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2L8 6h3v8h2V6h3l-4-4zM6 20v-2h12v2H6zm0-4v-2h12v2H6z"/></svg>
+  </div>
+  <div class="install-text">
+    <div class="install-title">Установить приложение</div>
+    <div class="install-desc">Быстрый доступ с рабочего стола — без браузера</div>
+  </div>
+  <div class="install-actions">
+    <button class="install-btn-no" id="installDismiss">Позже</button>
+    <button class="install-btn-yes" id="installAccept">Установить</button>
+  </div>
+</div>
+<!-- END PWA INSTALL BANNER -->
 </body>
 </html>

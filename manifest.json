@@ -1,0 +1,28 @@
+{
+  "name": "Bitrix24 Tasks — Быстрая задача",
+  "short_name": "B24 Задача",
+  "description": "Быстрое создание задач в Bitrix24 — форма с шаблонами, EOD, файлами и оценкой времени",
+  "start_url": "/bitrix-form/",
+  "scope": "/bitrix-form/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#161616",
+  "theme_color": "#10b981",
+  "lang": "ru",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "prefer_related_applications": false
+}
