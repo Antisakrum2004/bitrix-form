@@ -356,6 +356,8 @@ function formatTime(seconds) {
   return `${m}м`;
 }
 
+const TASK_URL = `https://${config.B24_DOMAIN}/company/personal/user/${config.REPORT_USER_ID}/tasks/task/view/`;
+
 function formatReport(dateStr, devResults) {
   const dateFormatted = dateStr.split('-').reverse().join('.');
   let lines = [];
@@ -394,16 +396,17 @@ function formatReport(dateStr, devResults) {
     for (const task of visibleTasks) {
       totalWorked++;
       const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
+      const link = `[URL=${TASK_URL}${task.id}/]${task.title}[/URL]`;
 
       if (task.eodUnknown) {
         totalUnknown++;
-        lines.push(`  ⚠️ ${task.title}${timeStr} — нет доступа к чату`);
+        lines.push(`  ⚠️ ${link}${timeStr} — нет доступа к чату`);
       } else if (task.eodPresent) {
         totalWithEod++;
-        lines.push(`  ✅ ${task.title}${timeStr} — ЕОД добавлен`);
+        lines.push(`  ✅ ${link}${timeStr} — ЕОД добавлен`);
       } else {
         totalWithoutEod++;
-        lines.push(`  ❌ ${task.title}${timeStr} — ЕОД отсутствует`);
+        lines.push(`  ❌ ${link}${timeStr} — ЕОД отсутствует`);
       }
     }
 
@@ -413,14 +416,15 @@ function formatReport(dateStr, devResults) {
       totalUnknown++;
       totalInvisible++;
       const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
-      lines.push(`  ⚠️ #${task.id}${timeStr} — нет доступа к задаче`);
+      const link = `[URL=${TASK_URL}${task.id}/]#${task.id}[/URL]`;
+      lines.push(`  ⚠️ ${link}${timeStr} — нет доступа к задаче`);
     }
 
     lines.push('');
   }
 
   lines.push(`---`);
-  let summary = `В работе: ${totalWorked} | ЕОД ✅: ${totalWithEod} | ЕОД ❌: ${totalWithoutEod}`;
+  let summary = `В работе сегодня: ${totalWorked} | ЕОД ✅: ${totalWithEod} | ЕОД ❌: ${totalWithoutEod}`;
   if (totalUnknown > 0) summary += ` | Не проверено: ${totalUnknown}`;
   lines.push(summary);
 
