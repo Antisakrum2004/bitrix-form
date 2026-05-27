@@ -59,8 +59,14 @@ button{padding:10px 20px;border:none;border-radius:6px;font-size:14px;font-weigh
       <input type="text" id="webhookUrl" placeholder="https://1c-cms.bitrix24.ru/rest/116/ТОКЕН/" />
       <button class="btn-secondary" onclick="loadSaved()">Восстановить</button>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+      <label style="font-size:13px;color:#8b949e">С:</label>
+      <input type="date" id="dateFrom" style="padding:8px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:13px" />
+      <label style="font-size:13px;color:#8b949e">По:</label>
+      <input type="date" id="dateTo" style="padding:8px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:13px" />
+    </div>
     <div style="display:flex;gap:8px">
-      <button class="btn-primary" id="btnScan" onclick="scanTasks()">🔍 Найти задачи</button>
+      <button class="btn-primary" id="btnScan" onclick="scanTasks()">🔍 Найти задачи (только с учётом времени)</button>
       <button class="btn-primary" id="btnAdd" onclick="addBotToAll()" disabled>➕ Добавить бота</button>
     </div>
   </div>
@@ -89,15 +95,16 @@ const BOT_NAME = 'Айти Лаб Bot';
 const DEV_IDS = ['18','38','54','82','92','98'];
 const STORAGE_KEY = 'bx_webhook_admin';
 
-// Date range: this week (Mon to today)
-function getWeekRange() {
+// Set default date range (this week: Mon to today)
+window.addEventListener('DOMContentLoaded', () => {
   const now = new Date();
   const day = now.getDay(); // 0=Sun, 1=Mon
   const monday = new Date(now);
   monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
   const fmt = d => d.toISOString().substring(0, 10);
-  return { from: fmt(monday), to: fmt(now) };
-}
+  document.getElementById('dateFrom').value = fmt(monday);
+  document.getElementById('dateTo').value = fmt(now);
+});
 
 function log(msg, cls = '') {
   const el = document.getElementById('log');
@@ -146,50 +153,39 @@ async function scanTasks() {
   document.getElementById('btnScan').disabled = true;
   log('🔍 Сканирование задач за эту неделю...', 'info');
 
-  const { from, to } = getWeekRange();
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  if (!from || !to) { log('❌ Укажи период!', 'err'); document.getElementById('btnScan').disabled = false; return; }
   log(`Период: ${from} — ${to}`, 'info');
 
-  // Step 1: Get all task IDs with time entries this week
+  // Only use task.elapseditem.getlist — tasks with actual TIME ENTRIES
+  // DATE_ACTIVITY is NOT used — it catches any activity (comments, edits) = too many false positives
   const taskIds = new Set();
 
   for (const devId of DEV_IDS) {
-    log(`  Проверка разработчика id=${devId}...`, 'dim');
-    const r = await bx(hook, 'task.elapseditem.getlist', {
-      ORDER: { ID: 'DESC' },
-      FILTER: {
-        USER_ID: devId,
-        '>=CREATED_DATE': from + 'T00:00:00',
-        '<=CREATED_DATE': to + 'T23:59:59',
-      },
-    });
-
-    if (r?.result) {
-      for (const item of r.result) {
-        taskIds.add(String(item.TASK_ID));
+    log(`  Разработчик id=${devId}...`, 'dim');
+    let start = 0;
+    while (true) {
+      const r = await bx(hook, 'task.elapseditem.getlist', {
+        ORDER: { ID: 'DESC' },
+        FILTER: {
+          USER_ID: devId,
+          '>=CREATED_DATE': from + 'T00:00:00',
+          '<=CREATED_DATE': to + 'T23:59:59',
+        },
+        ...(start > 0 ? { start } : {}),
+      });
+      if (r?.result) {
+        for (const item of r.result) {
+          taskIds.add(String(item.TASK_ID));
+        }
       }
+      if (!r?.next) break;
+      start = r.next;
     }
   }
 
-  log(`Найдено ${taskIds.size} уникальных задач с учётом времени`, 'ok');
-
-  // Step 2: Also add tasks with activity this week (for tasks without time but with work events)
-  for (const devId of DEV_IDS) {
-    const r = await bx(hook, 'tasks.task.list', {
-      filter: {
-        RESPONSIBLE_ID: devId,
-        '>=DATE_ACTIVITY': from + 'T00:00:00',
-        '<=DATE_ACTIVITY': to + 'T23:59:59',
-      },
-      select: ['ID'],
-    });
-    if (r?.result?.tasks) {
-      for (const t of r.result.tasks) {
-        taskIds.add(String(t.id));
-      }
-    }
-  }
-
-  log(`Всего задач (с учётом DATE_ACTIVITY): ${taskIds.size}`, 'info');
+  log(`Найдено ${taskIds.size} задач с учётом времени за период`, 'ok');
 
   // Step 3: Get task details (title, observers) for ALL tasks
   allTasks = [];
