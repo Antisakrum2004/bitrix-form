@@ -20,3 +20,34 @@ Stage Summary:
 - 6 tasks found, 2 with EOD, 4 without
 - GitHub Actions workflow ready for scheduled and manual runs
 - Key API finding: im.dialog.messages.get for task chat, POST for task filters
+
+---
+Task ID: eod-inspector-v5
+Agent: main
+Task: Fix EOD Inspector — replace DATE_ACTIVITY with task.elapseditem.getlist, fix #7352 bug
+
+Work Log:
+- User reported task #7352 incorrectly flagged (Костя only changed description, never started task)
+- Discovered correct API: task.elapseditem.getlist(ORDER, FILTER) — returns ALL time entries for a user
+  - Works even for tasks bot can't see via tasks.task.list
+  - Uses ORDER + FILTER as top-level params (not nested in filter{})
+  - task.elapseditem.list does NOT exist (ERROR_METHOD_NOT_FOUND)
+- Rewrote inspector.js v5 with new detection logic:
+  - PRIMARY: task.elapseditem.getlist → finds tasks with time entries (auto + manual)
+  - SECONDARY: System messages for "начал выполнять"/"продолжил"/"вручную добавил время"
+  - Removed DATE_ACTIVITY as work indicator (only pre-filter for Step 2)
+- Fixed Step 2/3 order: fetch task details AFTER all worked tasks collected
+- Bug fix: Task #7352 no longer appears (no time entry, no work-start system message)
+- Results: 18 tasks found vs 5 previously (3.6x improvement)
+  - Костя: 4 time-entry tasks + 2 system-message tasks (matches "Топ задач")
+  - Саша: 4 tasks, Тимур: 4 tasks, Елена: 1 task, Ольга: 3 tasks
+- Limitation: 13 tasks show "нет доступа" — bot can't check EOD without admin webhook
+- Sent updated report to Андрей (message ID 198498)
+- Pushed to GitHub: commit 5030f46
+
+Stage Summary:
+- EOD Inspector v5 deployed and working
+- Key API: task.elapseditem.getlist(ORDER={ID:DESC}, FILTER={USER_ID, >=CREATED_DATE})
+- Bug fix: #7352 correctly excluded (no work event)
+- 18/18 tasks detected via time entries, but 13 can't check EOD (need admin webhook)
+- Still need admin webhook from user 1 (Владимир) for full EOD coverage
