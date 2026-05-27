@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Добавить бота в наблюдатели</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:20px}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:22px;margin-bottom:8px;color:#58a6ff}
+.subtitle{color:#8b949e;margin-bottom:24px;font-size:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;margin-bottom:16px}
+.card h2{font-size:16px;color:#f0883e;margin-bottom:12px}
+.webhook-section{display:flex;gap:8px;margin-bottom:16px}
+.webhook-section input{flex:1;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:14px}
+.webhook-section input:focus{outline:none;border-color:#58a6ff}
+button{padding:10px 20px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:#238636;color:#fff}
+.btn-primary:hover{background:#2ea043}
+.btn-primary:disabled{background:#21262d;color:#484f58;cursor:not-allowed}
+.btn-danger{background:#da3633;color:#fff}
+.btn-danger:hover{background:#f85149}
+.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.btn-secondary:hover{background:#30363d}
+.log{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:12px;font-family:'Cascadia Code',monospace;font-size:12px;max-height:400px;overflow-y:auto;line-height:1.6;margin-top:12px}
+.log .ok{color:#3fb950}
+.log .err{color:#f85149}
+.log .warn{color:#d29922}
+.log .info{color:#58a6ff}
+.log .dim{color:#484f58}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{text-align:center;padding:12px;background:#0d1117;border-radius:6px;border:1px solid #30363d}
+.stat .num{font-size:24px;font-weight:700;color:#58a6ff}
+.stat .label{font-size:11px;color:#8b949e;margin-top:4px}
+.task-list{margin-top:8px}
+.task-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:4px;font-size:13px}
+.task-item .icon{font-size:16px}
+.task-item .name{flex:1}
+.task-item .observers{color:#8b949e;font-size:11px}
+.progress-bar{height:4px;background:#21262d;border-radius:2px;margin-top:12px;overflow:hidden}
+.progress-bar .fill{height:100%;background:#238636;transition:width .3s;border-radius:2px}
+.warning{background:#1c1204;border:1px solid #d29922;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;color:#d29922}
+.safe-badge{display:inline-block;background:#0d2818;color:#3fb950;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🤖 Добавить бота в наблюдатели</h1>
+  <p class="subtitle">Добавляет Айти Лаб Bot (154) наблюдателем во все задачи недели. <span class="safe-badge">БЕЗОПАСНО</span> — текущие наблюдатели не удаляются</p>
+
+  <div class="warning">
+    ⚠️ Используй <b>свой вебхук</b> (user 116). Бот не может добавить себя в задачи, где он не наблюдатель — нужен твой доступ.
+  </div>
+
+  <div class="card">
+    <h2>🔌 Подключение</h2>
+    <div class="webhook-section">
+      <input type="text" id="webhookUrl" placeholder="https://1c-cms.bitrix24.ru/rest/116/ТОКЕН/" />
+      <button class="btn-secondary" onclick="loadSaved()">Восстановить</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" id="btnScan" onclick="scanTasks()">🔍 Найти задачи</button>
+      <button class="btn-primary" id="btnAdd" onclick="addBotToAll()" disabled>➕ Добавить бота</button>
+    </div>
+  </div>
+
+  <div id="statsCard" class="card" style="display:none">
+    <h2>📊 Статистика</h2>
+    <div class="stats">
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="label">Всего задач</div></div>
+      <div class="stat"><div class="num" id="statHasBot" style="color:#3fb950">0</div><div class="label">Бот уже есть</div></div>
+      <div class="stat"><div class="num" id="statNeedBot" style="color:#f0883e">0</div><div class="label">Нужно добавить</div></div>
+      <div class="stat"><div class="num" id="statAdded" style="color:#58a6ff">0</div><div class="label">Добавлено</div></div>
+    </div>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+    <div class="task-list" id="taskList"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Лог</h2>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+const BOT_ID = '154';
+const BOT_NAME = 'Айти Лаб Bot';
+const DEV_IDS = ['18','38','54','82','92','98'];
+const STORAGE_KEY = 'bx_webhook_admin';
+
+// Date range: this week (Mon to today)
+function getWeekRange() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  const fmt = d => d.toISOString().substring(0, 10);
+  return { from: fmt(monday), to: fmt(now) };
+}
+
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  const time = new Date().toLocaleTimeString('ru-RU');
+  el.innerHTML += `<div class="${cls}">[${time}] ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function loadSaved() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    document.getElementById('webhookUrl').value = saved;
+    log('Вебхук восстановлен из localStorage', 'ok');
+  } else {
+    log('Нет сохранённого вебхука', 'warn');
+  }
+}
+
+function getWebhook() {
+  const url = document.getElementById('webhookUrl').value.trim();
+  if (!url.includes('bitrix24.ru/rest/')) {
+    log('❌ Неверный URL вебхука', 'err');
+    return null;
+  }
+  localStorage.setItem(STORAGE_KEY, url);
+  return url.endsWith('/') ? url : url + '/';
+}
+
+async function bx(hook, method, params = {}) {
+  const r = await fetch(hook + method, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return r.json();
+}
+
+// Global state
+let allTasks = [];
+let tasksNeedingBot = [];
+
+async function scanTasks() {
+  const hook = getWebhook();
+  if (!hook) return;
+
+  document.getElementById('btnScan').disabled = true;
+  log('🔍 Сканирование задач за эту неделю...', 'info');
+
+  const { from, to } = getWeekRange();
+  log(`Период: ${from} — ${to}`, 'info');
+
+  // Step 1: Get all task IDs with time entries this week
+  const taskIds = new Set();
+
+  for (const devId of DEV_IDS) {
+    log(`  Проверка разработчика id=${devId}...`, 'dim');
+    const r = await bx(hook, 'task.elapseditem.getlist', {
+      ORDER: { ID: 'DESC' },
+      FILTER: {
+        USER_ID: devId,
+        '>=CREATED_DATE': from + 'T00:00:00',
+        '<=CREATED_DATE': to + 'T23:59:59',
+      },
+    });
+
+    if (r?.result) {
+      for (const item of r.result) {
+        taskIds.add(String(item.TASK_ID));
+      }
+    }
+  }
+
+  log(`Найдено ${taskIds.size} уникальных задач с учётом времени`, 'ok');
+
+  // Step 2: Also add tasks with activity this week (for tasks without time but with work events)
+  for (const devId of DEV_IDS) {
+    const r = await bx(hook, 'tasks.task.list', {
+      filter: {
+        RESPONSIBLE_ID: devId,
+        '>=DATE_ACTIVITY': from + 'T00:00:00',
+        '<=DATE_ACTIVITY': to + 'T23:59:59',
+      },
+      select: ['ID'],
+    });
+    if (r?.result?.tasks) {
+      for (const t of r.result.tasks) {
+        taskIds.add(String(t.id));
+      }
+    }
+  }
+
+  log(`Всего задач (с учётом DATE_ACTIVITY): ${taskIds.size}`, 'info');
+
+  // Step 3: Get task details (title, observers) for ALL tasks
+  allTasks = [];
+  const taskIdsArr = [...taskIds];
+
+  // Batch fetch (max 50 per request)
+  for (let i = 0; i < taskIdsArr.length; i += 50) {
+    const batch = taskIdsArr.slice(i, i + 50);
+    const r = await bx(hook, 'tasks.task.list', {
+      filter: { ID: batch },
+      select: ['ID', 'TITLE', 'AUDITORS', 'RESPONSIBLE_ID', 'STATUS'],
+    });
+    if (r?.result?.tasks) {
+      allTasks = allTasks.concat(r.result.tasks);
+    }
+  }
+
+  // Identify which tasks need bot
+  const visibleIds = new Set(allTasks.map(t => String(t.id)));
+  const invisibleIds = taskIdsArr.filter(id => !visibleIds.has(id));
+
+  tasksNeedingBot = [];
+
+  for (const task of allTasks) {
+    const observers = (task.auditors || []).map(String);
+    if (!observers.includes(BOT_ID)) {
+      tasksNeedingBot.push({
+        id: String(task.id),
+        title: task.title || '(без названия)',
+        currentObservers: observers,
+        visible: true,
+      });
+    }
+  }
+
+  // Invisible tasks — need to try adding bot
+  for (const tid of invisibleIds) {
+    tasksNeedingBot.push({
+      id: tid,
+      title: `Задача #${tid} (нет доступа)`,
+      currentObservers: [],
+      visible: false,
+    });
+  }
+
+  // Update UI
+  document.getElementById('statsCard').style.display = '';
+  document.getElementById('statTotal').textContent = taskIds.size;
+  document.getElementById('statHasBot').textContent = allTasks.filter(t => (t.auditors || []).map(String).includes(BOT_ID)).length;
+  document.getElementById('statNeedBot').textContent = tasksNeedingBot.length;
+  document.getElementById('statAdded').textContent = '0';
+
+  // Render task list
+  const listEl = document.getElementById('taskList');
+  listEl.innerHTML = '';
+  for (const t of tasksNeedingBot) {
+    listEl.innerHTML += `
+      <div class="task-item" id="task-${t.id}">
+        <span class="icon">${t.visible ? '👁️' : '🔒'}</span>
+        <span class="name">#${t.id} ${t.title}</span>
+        <span class="observers">${t.currentObservers.length > 0 ? 'obs: ' + t.currentObservers.join(',') : 'нет наблюдателей'}</span>
+        <span class="status" id="status-${t.id}">⏳</span>
+      </div>`;
+  }
+
+  log(`✅ Готово: ${tasksNeedingBot.length} задач нужно добавить бота`, 'ok');
+  document.getElementById('btnScan').disabled = false;
+  document.getElementById('btnAdd').disabled = tasksNeedingBot.length === 0;
+}
+
+async function addBotToAll() {
+  const hook = getWebhook();
+  if (!hook) return;
+
+  document.getElementById('btnAdd').disabled = true;
+  document.getElementById('btnScan').disabled = true;
+
+  let added = 0;
+  let failed = 0;
+  let skipped = 0;
+
+  log(`\n🚀 Начинаю добавление бота в ${tasksNeedingBot.length} задач...`, 'info');
+
+  for (let i = 0; i < tasksNeedingBot.length; i++) {
+    const task = tasksNeedingBot[i];
+    const progress = Math.round(((i + 1) / tasksNeedingBot.length) * 100);
+    document.getElementById('progressFill').style.width = progress + '%';
+
+    if (task.visible) {
+      // Get current observers and merge
+      try {
+        const r = await bx(hook, 'tasks.task.get', {
+          taskId: task.id,
+          select: ['AUDITORS'],
+        });
+
+        const currentObs = (r?.result?.task?.auditors || []).map(String);
+        if (currentObs.includes(BOT_ID)) {
+          log(`  #${task.id} — бот уже наблюдатель, пропуск`, 'ok');
+          document.getElementById(`status-${task.id}`).textContent = '✅';
+          skipped++;
+          continue;
+        }
+
+        // Merge: add bot to existing observers
+        const newObservers = [...new Set([...currentObs, BOT_ID])];
+
+        const updateR = await bx(hook, 'tasks.task.update', {
+          taskId: task.id,
+          fields: { AUDITORS: newObservers },
+        });
+
+        if (updateR?.result?.task) {
+          log(`  #${task.id} ✅ бот добавлен (observers: ${newObservers.join(',')})`, 'ok');
+          document.getElementById(`status-${task.id}`).textContent = '✅';
+          added++;
+        } else {
+          log(`  #${task.id} ❌ ошибка: ${updateR?.error_description || updateR?.error || 'unknown'}`, 'err');
+          document.getElementById(`status-${task.id}`).textContent = '❌';
+          failed++;
+        }
+      } catch (e) {
+        log(`  #${task.id} ❌ исключение: ${e.message}`, 'err');
+        document.getElementById(`status-${task.id}`).textContent = '❌';
+        failed++;
+      }
+    } else {
+      // Invisible task — try to get and update via user's webhook
+      try {
+        const r = await bx(hook, 'tasks.task.get', {
+          taskId: task.id,
+          select: ['AUDITORS'],
+        });
+
+        const currentObs = (r?.result?.task?.auditors || []).map(String);
+
+        if (currentObs.length === 0 && !r?.result?.task) {
+          log(`  #${task.id} 🔒 задача не доступна даже через ваш вебхук`, 'err');
+          document.getElementById(`status-${task.id}`).textContent = '🔒';
+          failed++;
+          continue;
+        }
+
+        if (currentObs.includes(BOT_ID)) {
+          log(`  #${task.id} ✅ бот уже наблюдатель`, 'ok');
+          document.getElementById(`status-${task.id}`).textContent = '✅';
+          skipped++;
+          continue;
+        }
+
+        const newObservers = [...new Set([...currentObs, BOT_ID])];
+
+        const updateR = await bx(hook, 'tasks.task.update', {
+          taskId: task.id,
+          fields: { AUDITORS: newObservers },
+        });
+
+        if (updateR?.result?.task) {
+          log(`  #${task.id} ✅ бот добавлен (был невидим, стал доступен!)`, 'ok');
+          document.getElementById(`status-${task.id}`).textContent = '✅';
+          added++;
+        } else {
+          log(`  #${task.id} ❌ ошибка: ${updateR?.error_description || 'не удалось обновить'}`, 'err');
+          document.getElementById(`status-${task.id}`).textContent = '❌';
+          failed++;
+        }
+      } catch (e) {
+        log(`  #${task.id} ❌ ${e.message}`, 'err');
+        document.getElementById(`status-${task.id}`).textContent = '❌';
+        failed++;
+      }
+    }
+
+    document.getElementById('statAdded').textContent = added;
+
+    // Rate limiting — 0.5s between requests
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  log(`\n=== ИТОГ ===`, 'info');
+  log(`Добавлено: ${added}`, 'ok');
+  log(`Пропущено (уже есть): ${skipped}`, 'dim');
+  log(`Ошибок: ${failed}`, failed > 0 ? 'err' : 'dim');
+  log(`\nТеперь перезапусти EOD Inspector — он увидит больше задач!`, 'info');
+
+  document.getElementById('btnScan').disabled = false;
+  document.getElementById('btnAdd').disabled = false;
+}
+
+// Auto-load saved webhook on page load
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) document.getElementById('webhookUrl').value = saved;
+
+  // Also check if form's webhook is available
+  const formHook = localStorage.getItem('bx_webhook');
+  if (formHook && !saved) {
+    document.getElementById('webhookUrl').value = formHook;
+    log('Вебхук загружен из формы задач', 'info');
+  }
+});
+</script>
+</body>
+</html>
