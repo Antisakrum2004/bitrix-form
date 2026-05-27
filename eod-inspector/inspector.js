@@ -121,14 +121,14 @@ async function buildReport(dateStr) {
           }
         }
 
-        // Step 3: Check if developer started/worked on task today
-        const workedToday = checkWorkedToday(messages, dev.id, dateStr, {
+        // Step 3: Determine work type for this task today
+        const workType = getWorkType(messages, dev.id, dateStr, {
           taskStatus,
           createdDate,
           statusChangedDate,
         });
 
-        if (workedToday) {
+        if (workType) {
           // Step 4: Check for EOD comment from developer today
           const hasEod = checkEodComment(messages, dev.id, dateStr);
           const stillRunning = String(taskStatus) === '2';
@@ -139,10 +139,10 @@ async function buildReport(dateStr) {
             status: taskStatus,
             eodPresent: hasEod,
             stillRunning,
-            startEvent: workedToday,
+            workType,
           });
 
-          console.log(`    #${taskId} ${workedToday} → EOD: ${hasEod ? 'YES' : 'NO'}${stillRunning ? ' (still running)' : ''}`);
+          console.log(`    #${taskId} [${workType}] → EOD: ${hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}`);
         }
       }
     } catch (err) {
@@ -156,21 +156,26 @@ async function buildReport(dateStr) {
 }
 
 /**
- * Check if the developer started/worked on the task on the target date.
+ * Determine the type of work the developer did on the task on the target date.
  *
- * Detection methods (in priority order):
- * 1. Chat: "начал выполнять задачу" today mentioning this developer
- * 2. Chat: "вернул выполненную задачу в работу" today
- * 3. Chat: "завершил задачу" / "изменил стадию" today from developer
- * 4. Task created today AND assigned to this developer (form creates in status=2)
- * 5. STATUS_CHANGED_DATE today + any active status (means developer worked on it)
+ * Since DATE_ACTIVITY filter already ensures the task had activity today,
+ * we just need to determine the work type for the report.
+ *
+ * Priority:
+ * 1. "начал выполнять" — explicitly started today
+ * 2. "вернул в работу" — returned to work today
+ * 3. "завершил" / "на тестировании" — completed today
+ * 4. Created today — new task, working on it
+ * 5. General activity — task was touched today (comments, time tracking, etc.)
+ *
+ * Returns work type string or null if somehow no work happened.
  */
-function checkWorkedToday(messages, devId, dateStr, taskInfo) {
+function getWorkType(messages, devId, dateStr, taskInfo) {
   const { taskStatus, createdDate, statusChangedDate } = taskInfo;
 
-  // Method 1-3: Check chat for work-related events today from our developer
+  // Check chat for specific work events today from this developer
   for (const msg of messages) {
-    if (msg.author_id !== 0) continue; // System messages only
+    if (msg.author_id !== 0) continue;
     const msgDate = (msg.date || '').substring(0, 10);
     if (msgDate !== dateStr) continue;
 
@@ -178,32 +183,39 @@ function checkWorkedToday(messages, devId, dateStr, taskInfo) {
     const hasDevMention = text.includes(`[USER=${devId}]`);
 
     if (hasDevMention) {
-      // Check start/work events
-      for (const event of config.START_EVENTS) {
-        if (text.toLowerCase().includes(event.toLowerCase())) {
-          return event;
-        }
-      }
-      // Check completion events (developer worked on it today)
-      if (text.includes('завершил задачу')) return 'завершена сегодня';
-      if (text.includes('изменил стадию на Готово')) return 'завершена сегодня';
+      // Started working
+      if (text.includes('начал выполнять задачу')) return 'начал выполнять';
+      if (text.includes('вернул выполненную задачу в работу')) return 'вернул в работу';
+      if (text.includes('возобновил') || text.includes('продолжил')) return 'продолжил работу';
+
+      // Completed
+      if (text.includes('завершил задачу')) return 'завершена';
+      if (text.includes('изменил стадию на Готово')) return 'завершена';
       if (text.includes('изменил стадию на Тестируется')) return 'на тестировании';
+
+      // Other meaningful activity
+      if (text.includes('добавил время') || text.includes('добавила время')) return 'время учтено';
+      if (text.includes('приостановил') || text.includes('приостановила')) return 'приостановлена';
+      if (text.includes('остановил работу') || text.includes('остановила работу')) return 'работа остановлена';
     }
   }
 
-  // Method 4: Task created today and assigned to this developer
-  // (Form creates tasks in status=2 "Выполняется", no "начал выполнять" event)
+  // Task created today
   if (createdDate && createdDate.substring(0, 10) === dateStr) {
     return 'создана в работе';
   }
 
-  // Method 5: Status changed today — developer actively worked on it
-  if (statusChangedDate && statusChangedDate.substring(0, 10) === dateStr &&
-      ['2', '3', '4', '5', '-3'].includes(String(taskStatus))) {
-    return 'статус изменён сегодня';
+  // Status changed today — developer actively worked on it
+  if (statusChangedDate && statusChangedDate.substring(0, 10) === dateStr) {
+    return 'статус изменён';
   }
 
-  // No work event found for today
+  // Fallback: task had activity today and is in an active status
+  // (DATE_ACTIVITY filter already ensures this)
+  if (['2', '3', '4', '5', '-3'].includes(String(taskStatus))) {
+    return 'в работе';
+  }
+
   return null;
 }
 
