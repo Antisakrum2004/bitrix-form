@@ -1,13 +1,29 @@
 /**
  * EOD Inspector — Configuration
+ *
+ * IMPORTANT: The bot webhook (154) only sees tasks where it's an observer.
+ * For full coverage, we need an admin webhook (user 1) that can see ALL tasks.
+ * Set ADMIN_WEBHOOK below or as env variable.
  */
 
 module.exports = {
   // Bitrix24 domain
   B24_DOMAIN: '1c-cms.bitrix24.ru',
 
-  // Bot webhook (user 154) — used for API calls AND sending reports
+  // Bot webhook (user 154) — used for sending reports
   BOT_WEBHOOK: 'https://1c-cms.bitrix24.ru/rest/154/f896em13hhazm006/',
+
+  // Admin webhook (user 1 — Владимир) — used for task listing and chat reading
+  // Has full access to ALL tasks and chats regardless of membership.
+  // Create: Битрикс24 → Разработчикам → Другое → Входящий вебхук (user 1)
+  // Required permissions: tasks, im, user
+  ADMIN_WEBHOOK: process.env.ADMIN_WEBHOOK || '',
+
+  // Which webhook to use for data access (task listing, chat reading)
+  // Falls back to BOT_WEBHOOK if ADMIN_WEBHOOK is not set
+  get DATA_WEBHOOK() {
+    return this.ADMIN_WEBHOOK || this.BOT_WEBHOOK;
+  },
 
   // Report mode: "private" → send to REPORT_USER_ID, "group" → send to REPORT_CHAT_ID
   REPORT_MODE: process.env.REPORT_MODE || 'private',
@@ -35,14 +51,6 @@ module.exports = {
   EOD_KEYWORDS: ['done', 'test', 'next', 'block',
                   'готово', 'сделано', 'далее', 'блок',
                   'тест'],
-
-  // Events that indicate developer worked on the task today
-  START_EVENTS: [
-    'начал выполнять задачу',
-    'вернул выполненную задачу в работу',
-    'возобновил выполнение задачи',
-    'продолжил работу над задачей',
-  ],
 
   // Timezone for date calculations
   TIMEZONE: 'Europe/Moscow',

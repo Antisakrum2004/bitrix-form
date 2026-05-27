@@ -1,14 +1,15 @@
 /**
- * EOD Inspector — Main Script v2
+ * EOD Inspector — Main Script v3
  *
  * Checks which tasks were started/worked on today and whether developers filled their EOD.
  *
  * Key API findings:
  *   - tasks.task.list with POST + nested filter{} works (GET query params ignored RESPONSIBLE_ID)
  *   - Comments are in chat system, NOT forum: use im.dialog.messages.get with task.chatId
+ *   - Bot (154) can only see tasks where it's an observer — misses older tasks
+ *   - Need admin webhook (user 1) for full task visibility
  *   - "начал выполнять" is a system message with author_id=0
  *   - Tasks from form are created in status=2, so no "начал выполнять" event
- *   - "вернул в работу" also counts as working on the task
  *
  * Usage:
  *   node inspector.js                  — check today
@@ -27,14 +28,18 @@ function getTodayMSC() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: config.TIMEZONE });
 }
 
-console.log(`[EOD Inspector v2] Target date: ${TARGET_DATE}`);
+const DATA_WEBHOOK = config.DATA_WEBHOOK;
+const SEND_WEBHOOK = config.BOT_WEBHOOK;
+
+console.log(`[EOD Inspector v3] Target date: ${TARGET_DATE}`);
+console.log(`[EOD Inspector] Data webhook: ${DATA_WEBHOOK === config.BOT_WEBHOOK ? 'BOT (154)' : 'ADMIN'}`);
 console.log(`[EOD Inspector] Report mode: ${config.REPORT_MODE}`);
 console.log(`[EOD Inspector] Dry run: ${DRY_RUN}`);
 
-// ─── Bitrix24 API helper (POST only — GET ignores filters) ───
-function bxPost(method, params = {}) {
+// ─── Bitrix24 API helpers ───
+function bxRequest(webhook, method, params = {}) {
   return new Promise((resolve, reject) => {
-    const url = new URL(config.BOT_WEBHOOK + method);
+    const url = new URL(webhook + method);
     const body = JSON.stringify(params);
     const options = {
       hostname: url.hostname,
@@ -55,6 +60,16 @@ function bxPost(method, params = {}) {
     req.write(body);
     req.end();
   });
+}
+
+// Read data (tasks, chats) — use admin webhook if available
+function bxData(method, params = {}) {
+  return bxRequest(DATA_WEBHOOK, method, params);
+}
+
+// Send messages — always use bot webhook (so messages come from bot)
+function bxSend(method, params = {}) {
+  return bxRequest(SEND_WEBHOOK, method, params);
 }
 
 // ─── Main logic ───
@@ -87,7 +102,7 @@ async function buildReport(dateStr) {
 
   for (const dev of config.DEVELOPERS) {
     try {
-      const r = await bxPost('tasks.task.list', {
+      const r = await bxData('tasks.task.list', {
         filter: {
           RESPONSIBLE_ID: dev.id,
           '>=DATE_ACTIVITY': dateStr + 'T00:00:00',
@@ -111,13 +126,15 @@ async function buildReport(dateStr) {
         let messages = [];
         if (chatId) {
           try {
-            const chatR = await bxPost('im.dialog.messages.get', {
+            const chatR = await bxData('im.dialog.messages.get', {
               CHAT_ID: chatId,
               LIMIT: config.MAX_MESSAGES_PER_CHAT,
             });
             messages = chatR?.result?.messages || [];
           } catch (e) {
-            console.log(`    [!] Error fetching chat for task ${taskId}: ${e.message}`);
+            console.log(`    [!] Chat ${chatId} access denied for task ${taskId}: ${e.message}`);
+            // If we can't read chat, still include the task but can't check EOD
+            messages = [];
           }
         }
 
@@ -131,6 +148,7 @@ async function buildReport(dateStr) {
         if (workType) {
           // Step 4: Check for EOD comment from developer today
           const hasEod = checkEodComment(messages, dev.id, dateStr);
+          const chatAccessOk = messages.length > 0;
           const stillRunning = String(taskStatus) === '2';
 
           devResults[dev.id].tasks.push({
@@ -138,11 +156,12 @@ async function buildReport(dateStr) {
             title: taskTitle,
             status: taskStatus,
             eodPresent: hasEod,
+            eodUnknown: !chatAccessOk, // Can't verify EOD without chat access
             stillRunning,
             workType,
           });
 
-          console.log(`    #${taskId} [${workType}] → EOD: ${hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}`);
+          console.log(`    #${taskId} [${workType}] → EOD: ${!chatAccessOk ? '???' : hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}${!chatAccessOk ? ' (no chat access)' : ''}`);
         }
       }
     } catch (err) {
@@ -157,18 +176,6 @@ async function buildReport(dateStr) {
 
 /**
  * Determine the type of work the developer did on the task on the target date.
- *
- * Since DATE_ACTIVITY filter already ensures the task had activity today,
- * we just need to determine the work type for the report.
- *
- * Priority:
- * 1. "начал выполнять" — explicitly started today
- * 2. "вернул в работу" — returned to work today
- * 3. "завершил" / "на тестировании" — completed today
- * 4. Created today — new task, working on it
- * 5. General activity — task was touched today (comments, time tracking, etc.)
- *
- * Returns work type string or null if somehow no work happened.
  */
 function getWorkType(messages, devId, dateStr, taskInfo) {
   const { taskStatus, createdDate, statusChangedDate } = taskInfo;
@@ -183,17 +190,12 @@ function getWorkType(messages, devId, dateStr, taskInfo) {
     const hasDevMention = text.includes(`[USER=${devId}]`);
 
     if (hasDevMention) {
-      // Started working
-      if (text.includes('начал выполнять задачу')) return 'начал выполнять';
-      if (text.includes('вернул выполненную задачу в работу')) return 'вернул в работу';
-      if (text.includes('возобновил') || text.includes('продолжил')) return 'продолжил работу';
-
-      // Completed
-      if (text.includes('завершил задачу')) return 'завершена';
-      if (text.includes('изменил стадию на Готово')) return 'завершена';
-      if (text.includes('изменил стадию на Тестируется')) return 'на тестировании';
-
-      // Other meaningful activity
+      if (text.includes('начал выполнять задачу') || text.includes('начала выполнять задачу')) return 'начал выполнять';
+      if (text.includes('вернул выполненную задачу в работу') || text.includes('вернула выполненную задачу в работу')) return 'вернул в работу';
+      if (text.includes('возобновил') || text.includes('возобновила') || text.includes('продолжил') || text.includes('продолжила')) return 'продолжил работу';
+      if (text.includes('завершил задачу') || text.includes('завершила задачу')) return 'завершена';
+      if (text.includes('изменил стадию на Готово') || text.includes('изменила стадию на Готово')) return 'завершена';
+      if (text.includes('изменил стадию на Тестируется') || text.includes('изменила стадию на Тестируется')) return 'на тестировании';
       if (text.includes('добавил время') || text.includes('добавила время')) return 'время учтено';
       if (text.includes('приостановил') || text.includes('приостановила')) return 'приостановлена';
       if (text.includes('остановил работу') || text.includes('остановила работу')) return 'работа остановлена';
@@ -205,13 +207,12 @@ function getWorkType(messages, devId, dateStr, taskInfo) {
     return 'создана в работе';
   }
 
-  // Status changed today — developer actively worked on it
+  // Status changed today
   if (statusChangedDate && statusChangedDate.substring(0, 10) === dateStr) {
     return 'статус изменён';
   }
 
-  // Fallback: task had activity today and is in an active status
-  // (DATE_ACTIVITY filter already ensures this)
+  // Fallback: task had activity today
   if (['2', '3', '4', '5', '-3'].includes(String(taskStatus))) {
     return 'в работе';
   }
@@ -225,18 +226,14 @@ function getWorkType(messages, devId, dateStr, taskInfo) {
  */
 function checkEodComment(messages, devId, dateStr) {
   for (const msg of messages) {
-    // Skip system messages
     if (msg.author_id === 0) continue;
-    // Skip bot messages
     if (Number(msg.author_id) === config.BOT_ID) continue;
-    // Only messages from our developer
     if (String(msg.author_id) !== String(devId)) continue;
 
     const msgDate = (msg.date || '').substring(0, 10);
     if (msgDate !== dateStr) continue;
 
     const text = (msg.text || '').toLowerCase();
-    // Count EOD keywords present in the message
     const matchCount = config.EOD_KEYWORDS.filter(kw => text.includes(kw)).length;
     if (matchCount >= 2) {
       return true;
@@ -258,6 +255,7 @@ function formatReport(dateStr, devResults) {
   let totalStarted = 0;
   let totalWithEod = 0;
   let totalWithoutEod = 0;
+  let totalUnknown = 0;
 
   for (const dev of config.DEVELOPERS) {
     const result = devResults[dev.id];
@@ -277,7 +275,10 @@ function formatReport(dateStr, devResults) {
     lines.push(`${result.name}:`);
     for (const task of result.tasks) {
       totalStarted++;
-      if (task.eodPresent) {
+      if (task.eodUnknown) {
+        totalUnknown++;
+        lines.push(`  ⚠️ ${task.title} — нет доступа к чату, ЕОД не проверен`);
+      } else if (task.eodPresent) {
         totalWithEod++;
         lines.push(`  ✅ ${task.title} — ЕОД добавлен`);
       } else {
@@ -293,13 +294,25 @@ function formatReport(dateStr, devResults) {
   }
 
   lines.push(`---`);
-  lines.push(`Запущено задач: ${totalStarted} | ЕОД добавлен: ${totalWithEod} | ЕОД отсутствует: ${totalWithoutEod}`);
+  let summary = `Запущено задач: ${totalStarted} | ЕОД добавлен: ${totalWithEod} | ЕОД отсутствует: ${totalWithoutEod}`;
+  if (totalUnknown > 0) summary += ` | Не проверено: ${totalUnknown}`;
+
+  if (totalUnknown > 0) {
+    lines.push(summary);
+    lines.push('');
+    lines.push(`⚠️ ${totalUnknown} задач без доступа к чату — нужен админский вебхук`);
+    lines.push(`Создайте входящий вебхук от имени администратора (user 1)`);
+    lines.push(`и установите ADMIN_WEBHOOK в конфигурации`);
+  } else {
+    lines.push(summary);
+  }
 
   return lines.join('\n');
 }
 
 /**
  * Send report via Bitrix24 IM.
+ * Always uses bot webhook so message comes from bot.
  */
 async function sendReport(text) {
   const params = { MESSAGE: text };
@@ -314,7 +327,7 @@ async function sendReport(text) {
     throw new Error('No report target. Set REPORT_MODE=private or REPORT_CHAT_ID.');
   }
 
-  const result = await bxPost('im.message.add', params);
+  const result = await bxSend('im.message.add', params);
   console.log('[Send] Response:', JSON.stringify(result).substring(0, 300));
 
   if (result?.error) {
