@@ -54,3 +54,15 @@ jobs:
             ARGS="$ARGS --dry-run"
           fi
           node inspector.js $ARGS
+
+      - name: Send Productivity Rating
+        working-directory: eod-inspector
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.target_date }}" ]; then
+            ARGS="$ARGS ${{ github.event.inputs.target_date }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node productivity.js $ARGS

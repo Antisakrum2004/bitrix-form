@@ -2,7 +2,9 @@
  * 📊 Рейтинг продуктивности
  * 
  * Собирает затреканное время за текущую неделю по каждому разработчику,
- * строит рейтинг и отправляет в личку Андрею (116).
+ * строит рейтинг и отправляет отчёт.
+ * 
+ * Поддерживает REPORT_MODE: 'private' → в ЛК Андрею, 'group' → в Общий чат
  * 
  * Использование:
  *   node productivity.js            — текущая неделя
@@ -168,14 +170,31 @@ async function main() {
   const text = lines.join('\n');
   console.log('\n' + text);
 
-  // Send to Andrey (116)
+  // Send report (same routing as EOD inspector)
+  const DRY_RUN = process.argv.includes('--dry-run');
+
+  if (DRY_RUN) {
+    console.log('\n[DRY RUN] Рейтинг не отправлен.');
+    return;
+  }
+
   try {
-    const result = await bxSend('im.message.add', {
-      USER_ID: config.REPORT_USER_ID,
-      MESSAGE: text,
-      URL_PREVIEW: 'N',
-    });
-    console.log('\n[✓] Рейтинг отправлен в ЛК');
+    const params = { MESSAGE: text, URL_PREVIEW: 'N' };
+
+    if (config.REPORT_MODE === 'private') {
+      params.USER_ID = config.REPORT_USER_ID;
+      console.log(`[Send] ЛК → user ${config.REPORT_USER_ID}`);
+    } else if (config.REPORT_CHAT_ID) {
+      params.CHAT_ID = config.REPORT_CHAT_ID;
+      console.log(`[Send] Чат → chat ${config.REPORT_CHAT_ID}`);
+    } else {
+      // Fallback: send to Andrey
+      params.USER_ID = config.REPORT_USER_ID;
+      console.log(`[Send] Fallback ЛК → user ${config.REPORT_USER_ID}`);
+    }
+
+    const result = await bxSend('im.message.add', params);
+    console.log('\n[✓] Рейтинг отправлен');
     console.log('[Send] Response:', JSON.stringify(result).substring(0, 200));
   } catch (err) {
     console.error('[!] Ошибка отправки:', err.message);
