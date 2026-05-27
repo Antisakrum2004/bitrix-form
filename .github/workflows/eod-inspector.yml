@@ -1,7 +1,7 @@
 name: EOD Inspector
 
 on:
-  # Auto-run at 20:00 MSC (17:00 UTC) on weekdays
+  # Auto-run at 20:00 MSC (17:00 UTC) on weekdays (Mon-Fri)
   schedule:
     - cron: '0 17 * * 1-5'
 
@@ -17,22 +17,14 @@ on:
         required: false
         type: boolean
         default: false
-      report_mode:
-        description: 'Report mode: private or group'
-        required: false
-        default: 'private'
-        type: choice
-        options:
-          - private
-          - group
 
 jobs:
   inspect:
     runs-on: ubuntu-latest
 
     env:
-      REPORT_MODE: ${{ github.event.inputs.report_mode || 'private' }}
-      REPORT_CHAT_ID: ''
+      REPORT_MODE: group
+      REPORT_CHAT_ID: '2'
 
     steps:
       - name: Checkout repo

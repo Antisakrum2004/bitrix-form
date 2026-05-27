@@ -26,13 +26,13 @@ module.exports = {
   },
 
   // Report mode: "private" → send to REPORT_USER_ID, "group" → send to REPORT_CHAT_ID
-  REPORT_MODE: process.env.REPORT_MODE || 'private',
+  REPORT_MODE: process.env.REPORT_MODE || 'group',
 
   // АМ (Андрей) — receives private reports
   REPORT_USER_ID: '116',
 
-  // Group chat ID — fill later for team-wide reports
-  REPORT_CHAT_ID: process.env.REPORT_CHAT_ID || '',
+  // Group chat ID — Общий чат
+  REPORT_CHAT_ID: process.env.REPORT_CHAT_ID || '2',
 
   // Developers to check
   DEVELOPERS: [
