@@ -51,3 +51,36 @@ Stage Summary:
 - Bug fix: #7352 correctly excluded (no work event)
 - 18/18 tasks detected via time entries, but 13 can't check EOD (need admin webhook)
 - Still need admin webhook from user 1 (Владимир) for full EOD coverage
+
+---
+Task ID: eod-reminders-and-chart
+Agent: main
+Task: Add reminder feature (18:00/19:00 MSK), weekly chart, fix link unfurling
+
+Work Log:
+- Added SKIP_CONNECTOR_CHECK: 'Y' to inspector.js sendReport() to prevent Bitrix IM from rendering task preview cards
+- Created eod-inspector/reminder.js — EOD reminder script
+  - Round 1 (18:00 MSK): gentle reminder with task list
+  - Round 2 (19:00 MSK): stricter tone, "less than hour left"
+  - If ALL EODs present for a developer → no reminder sent
+  - TEST_MODE: all reminders go to Андрей (116) for testing
+- Created eod-inspector/chart.js — weekly tasks-in-work chart
+  - Fetches task counts per developer per day via task.elapseditem.getlist
+  - Uses QuickChart.io API for PNG rendering
+  - Falls back to text-based chart if image generation fails
+  - Uploads to Bitrix24 disk and sends as attachment
+- Created .github/workflows/eod-reminder.yml — 15:00 UTC (18:00 MSK)
+- Created .github/workflows/eod-reminder-r2.yml — 16:00 UTC (19:00 MSK)
+- Updated .github/workflows/eod-inspector.yml — added chart generation step
+- Generated sample chart with matplotlib: /home/z/my-project/download/chart_tasks_per_day_sample.png
+- Tested reminder.js with 2026-05-26: correctly identified 3 devs needing reminders (Костя, Тимур, Марина)
+- Sent 3 reminder messages to Андрей (116) in test mode
+- Ran inspector for 2026-05-26: 20 tasks, 12 ✅ 8 ❌, sent to Андрей
+- Pushed all changes to GitHub
+
+Stage Summary:
+- Reminder feature complete: 18:00 and 19:00 MSK scheduled runs
+- Chart feature complete: QuickChart.io rendering with fallback
+- Link unfurling fix: added SKIP_CONNECTOR_CHECK='Y'
+- All features in TEST_MODE — sending to Андрей (116) only
+- Марина Тарасюк (156) was already in config.js from previous session
