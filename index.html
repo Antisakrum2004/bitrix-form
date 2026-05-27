@@ -867,38 +867,14 @@ function selectChip(ch) {
   });
   if (was) {
     if (grid === 'devGrid') selectedDevId = null;
-    else if (grid === 'mgrGrid') {
-      selectedMgrId = null;
-      // Снимаем того же человека с наблюдателя, если он был авто-выбран
-      const obsChip = document.querySelector(`#obsGrid .crew-chip[data-id="${ch.dataset.id}"]`);
-      if (obsChip && obsChip.classList.contains('active')) {
-        obsChip.classList.remove('active','dimmed');
-        obsChip.setAttribute('aria-checked','false');
-        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => c.classList.remove('dimmed'));
-        selectedObsId = null;
-      }
-    }
+    else if (grid === 'mgrGrid') selectedMgrId = null;
     else selectedObsId = null;
   } else {
     ch.classList.add('active');
     ch.setAttribute('aria-checked','true');
     ch.parentElement.querySelectorAll('.crew-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
     if (grid === 'devGrid') selectedDevId = ch.dataset.id;
-    else if (grid === 'mgrGrid') {
-      selectedMgrId = ch.dataset.id;
-      // Авто-выбор: постановщик → наблюдатель (АМ/ВМ)
-      const obsChip = document.querySelector(`#obsGrid .crew-chip[data-id="${ch.dataset.id}"]`);
-      if (obsChip) {
-        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => {
-          c.classList.remove('active','dimmed');
-          c.setAttribute('aria-checked','false');
-        });
-        obsChip.classList.add('active');
-        obsChip.setAttribute('aria-checked','true');
-        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => { if (c !== obsChip) c.classList.add('dimmed'); });
-        selectedObsId = ch.dataset.id;
-      }
-    }
+    else if (grid === 'mgrGrid') selectedMgrId = ch.dataset.id;
     else selectedObsId = ch.dataset.id;
   }
   saveDraft();
