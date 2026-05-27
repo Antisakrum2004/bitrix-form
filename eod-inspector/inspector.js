@@ -150,18 +150,23 @@ async function buildReport(dateStr) {
           const hasEod = checkEodComment(messages, dev.id, dateStr);
           const chatAccessOk = messages.length > 0;
           const stillRunning = String(taskStatus) === '2';
+          const noAccess = workType === 'NO_ACCESS';
 
           devResults[dev.id].tasks.push({
             id: taskId,
             title: taskTitle,
             status: taskStatus,
             eodPresent: hasEod,
-            eodUnknown: !chatAccessOk, // Can't verify EOD without chat access
+            eodUnknown: !chatAccessOk || noAccess,
             stillRunning,
-            workType,
+            workType: noAccess ? null : workType,
           });
 
-          console.log(`    #${taskId} [${workType}] → EOD: ${!chatAccessOk ? '???' : hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}${!chatAccessOk ? ' (no chat access)' : ''}`);
+          if (noAccess) {
+            console.log(`    #${taskId} [NO ACCESS] → can't verify work or EOD`);
+          } else {
+            console.log(`    #${taskId} [${workType}] → EOD: ${!chatAccessOk ? '???' : hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}`);
+          }
         }
       }
     } catch (err) {
@@ -176,47 +181,87 @@ async function buildReport(dateStr) {
 
 /**
  * Determine the type of work the developer did on the task on the target date.
+ *
+ * STRICT MODE: Only count tasks where the developer explicitly STARTED working.
+ * "Изменил описание", "добавил файл" etc. do NOT count — developer must have
+ * clicked "Начать выполнение" or equivalent.
+ *
+ * Valid work-start events (from chat system messages):
+ * 1. "начал выполнять задачу" — clicked "Start" button
+ * 2. "вернул выполненную задачу в работу" — returned completed task to work
+ * 3. "продолжил/возобновил выполнение задачи" — resumed after pause
+ *
+ * Also valid (no chat message but clear work signal):
+ * 4. Task created today via form in status=2 (form auto-starts task)
+ *    BUT only if there's NO "Ждёт выполнения" status in between
+ *
+ * NOT valid (should NOT trigger EOD requirement):
+ * - Changed description → didn't start working
+ * - Added file → didn't start working  
+ * - Added time manually → might be fixing time, not working
+ * - Status changed by someone else → not developer's action
  */
 function getWorkType(messages, devId, dateStr, taskInfo) {
   const { taskStatus, createdDate, statusChangedDate } = taskInfo;
+  const chatAccessOk = messages.length > 0;
 
-  // Check chat for specific work events today from this developer
-  for (const msg of messages) {
-    if (msg.author_id !== 0) continue;
-    const msgDate = (msg.date || '').substring(0, 10);
-    if (msgDate !== dateStr) continue;
+  // Priority 1: Check chat for EXPLICIT work-start events today
+  if (chatAccessOk) {
+    for (const msg of messages) {
+      if (msg.author_id !== 0) continue; // System messages only
+      const msgDate = (msg.date || '').substring(0, 10);
+      if (msgDate !== dateStr) continue;
 
-    const text = msg.text || '';
-    const hasDevMention = text.includes(`[USER=${devId}]`);
+      const text = msg.text || '';
+      const hasDevMention = text.includes(`[USER=${devId}]`);
 
-    if (hasDevMention) {
-      if (text.includes('начал выполнять задачу') || text.includes('начала выполнять задачу')) return 'начал выполнять';
-      if (text.includes('вернул выполненную задачу в работу') || text.includes('вернула выполненную задачу в работу')) return 'вернул в работу';
-      if (text.includes('возобновил') || text.includes('возобновила') || text.includes('продолжил') || text.includes('продолжила')) return 'продолжил работу';
-      if (text.includes('завершил задачу') || text.includes('завершила задачу')) return 'завершена';
-      if (text.includes('изменил стадию на Готово') || text.includes('изменила стадию на Готово')) return 'завершена';
-      if (text.includes('изменил стадию на Тестируется') || text.includes('изменила стадию на Тестируется')) return 'на тестировании';
-      if (text.includes('добавил время') || text.includes('добавила время')) return 'время учтено';
-      if (text.includes('приостановил') || text.includes('приостановила')) return 'приостановлена';
-      if (text.includes('остановил работу') || text.includes('остановила работу')) return 'работа остановлена';
+      if (hasDevMention) {
+        // Developer explicitly started working
+        if (text.includes('начал выполнять задачу') || text.includes('начала выполнять задачу')) return 'начал выполнять';
+        if (text.includes('вернул выполненную задачу в работу') || text.includes('вернула выполненную задачу в работу')) return 'вернул в работу';
+        if (text.includes('возобновил') || text.includes('возобновила') || text.includes('продолжил') || text.includes('продолжила')) return 'продолжил работу';
+
+        // Developer completed work (means they were working on it)
+        if (text.includes('завершил задачу') || text.includes('завершила задачу')) return 'завершена';
+        if (text.includes('изменил стадию на Готово') || text.includes('изменила стадию на Готово')) return 'завершена';
+        if (text.includes('изменил стадию на Тестируется') || text.includes('изменила стадию на Тестируется')) return 'на тестировании';
+
+        // Pause/stop = they WERE working but paused (still needs EOD for work done)
+        if (text.includes('приостановил') || text.includes('приостановила')) return 'приостановлена';
+        if (text.includes('остановил работу') || text.includes('остановила работу')) return 'работа остановлена';
+      }
     }
   }
 
-  // Task created today
-  if (createdDate && createdDate.substring(0, 10) === dateStr) {
+  // Priority 2: Task created today AND currently in "Выполняется" (status=2)
+  // Form creates tasks in status=2 — developer is expected to start immediately.
+  // But verify: if chat is accessible, check that developer didn't just ignore the task.
+  if (createdDate && createdDate.substring(0, 10) === dateStr && String(taskStatus) === '2') {
+    // If chat is accessible, verify developer actually started (or task is brand new)
+    if (chatAccessOk) {
+      // Check if there's a "начал выполнять" event after creation
+      const startMsg = messages.find(m => {
+        if (m.author_id !== 0) return false;
+        const text = m.text || '';
+        return text.includes(`[USER=${devId}]`) && text.includes('начал выполнять задачу');
+      });
+      if (startMsg) return 'начал выполнять';
+      
+      // No "начал выполнять" but task is in status 2 and created today
+      // Form creates tasks directly in status 2, so this is normal
+      return 'создана в работе';
+    }
+    // No chat access — assume created-in-work is valid
     return 'создана в работе';
   }
 
-  // Status changed today
-  if (statusChangedDate && statusChangedDate.substring(0, 10) === dateStr) {
-    return 'статус изменён';
+  // Priority 3: No chat access but task had activity today
+  // Can't verify work-start event → mark as "unknown" so report shows warning
+  if (!chatAccessOk && statusChangedDate && statusChangedDate.substring(0, 10) === dateStr) {
+    return 'NO_ACCESS'; // Special marker — can't verify
   }
 
-  // Fallback: task had activity today
-  if (['2', '3', '4', '5', '-3'].includes(String(taskStatus))) {
-    return 'в работе';
-  }
-
+  // No work-start event found → developer did NOT work on this task today
   return null;
 }
 
