@@ -1,20 +1,27 @@
 /**
- * EOD Inspector — Main Script v3
+ * EOD Inspector v5 — Main Script
  *
- * Checks which tasks were started/worked on today and whether developers filled their EOD.
+ * Detects which tasks developers ACTUALLY worked on today and checks EOD.
+ *
+ * Detection logic:
+ *   1. task.elapseditem.getlist — PRIMARY: finds tasks with time entries today
+ *      - Auto time: developer started → timer → time entry on stop
+ *      - Manual time: "вручную добавил время" → time entry created
+ *      - Uses ORDER + FILTER as top-level params (not nested)
+ *      - Returns entries for ALL tasks (even ones bot can't otherwise see)
+ *
+ *   2. System messages — SECONDARY: "начал выполнять", "продолжил",
+ *      "вручную добавил время" in task chat (only for visible tasks)
+ *
+ *   3. For invisible tasks (bot not observer): show task ID + time,
+ *      mark EOD as unknown, note admin webhook needed
  *
  * Key API findings:
- *   - tasks.task.list with POST + nested filter{} works (GET query params ignored RESPONSIBLE_ID)
- *   - Comments are in chat system, NOT forum: use im.dialog.messages.get with task.chatId
- *   - Bot (154) can only see tasks where it's an observer — misses older tasks
- *   - Need admin webhook (user 1) for full task visibility
- *   - "начал выполнять" is a system message with author_id=0
- *   - Tasks from form are created in status=2, so no "начал выполнять" event
- *
- * Usage:
- *   node inspector.js                  — check today
- *   node inspector.js 2026-05-26       — check specific date (YYYY-MM-DD)
- *   node inspector.js --dry-run        — only print report, don't send
+ *   - task.elapseditem.getlist(ORDER, FILTER) — returns ALL time entries
+ *     for a user, even for tasks bot can't see via tasks.task.list
+ *   - tasks.task.list(ID filter) — only returns tasks where bot is observer
+ *   - im.dialog.messages.get(CHAT_ID) — only works for chats bot is member of
+ *   - Task details (title, chatId) unavailable for tasks bot can't see
  */
 
 const config = require('./config');
@@ -31,7 +38,7 @@ function getTodayMSC() {
 const DATA_WEBHOOK = config.DATA_WEBHOOK;
 const SEND_WEBHOOK = config.BOT_WEBHOOK;
 
-console.log(`[EOD Inspector v3] Target date: ${TARGET_DATE}`);
+console.log(`[EOD Inspector v5] Target date: ${TARGET_DATE}`);
 console.log(`[EOD Inspector] Data webhook: ${DATA_WEBHOOK === config.BOT_WEBHOOK ? 'BOT (154)' : 'ADMIN'}`);
 console.log(`[EOD Inspector] Report mode: ${config.REPORT_MODE}`);
 console.log(`[EOD Inspector] Dry run: ${DRY_RUN}`);
@@ -62,14 +69,16 @@ function bxRequest(webhook, method, params = {}) {
   });
 }
 
-// Read data (tasks, chats) — use admin webhook if available
 function bxData(method, params = {}) {
   return bxRequest(DATA_WEBHOOK, method, params);
 }
 
-// Send messages — always use bot webhook (so messages come from bot)
 function bxSend(method, params = {}) {
   return bxRequest(SEND_WEBHOOK, method, params);
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ─── Main logic ───
@@ -97,77 +106,88 @@ async function buildReport(dateStr) {
     devResults[dev.id] = { name: dev.name, tasks: [], error: null };
   }
 
-  // Step 1: Get all tasks with activity today for each developer
-  console.log('\n[Step 1] Fetching tasks with activity on ' + dateStr + '...');
-
   for (const dev of config.DEVELOPERS) {
+    console.log(`\n[Processing] ${dev.name} (id=${dev.id})...`);
+
     try {
-      const r = await bxData('tasks.task.list', {
-        filter: {
-          RESPONSIBLE_ID: dev.id,
-          '>=DATE_ACTIVITY': dateStr + 'T00:00:00',
-          '<=DATE_ACTIVITY': dateStr + 'T23:59:59',
-        },
-        select: ['ID', 'TITLE', 'STATUS', 'STATUS_CHANGED_DATE', 'RESPONSIBLE_ID', 'CHAT_ID', 'CREATED_DATE'],
-      });
+      // ═══ STEP 1: Get ALL time entries for this developer today ═══
+      console.log(`  [Step 1] Fetching time entries...`);
+      const workedTasks = await fetchTimeEntries(dev.id, dateStr);
+      console.log(`  [Step 1] Found ${workedTasks.size} tasks with time entries`);
 
-      const tasks = r?.result?.tasks || [];
-      console.log(`  ${dev.name}: ${tasks.length} tasks with activity`);
+      // ═══ STEP 2: Find tasks with work-start events but no time entry ═══
+      // (timer still running, or completed/returned without logging time)
+      console.log(`  [Step 2] Checking for started-but-not-timed tasks...`);
+      const additionalTasks = await findStartedButNotTimed(dev.id, dateStr, workedTasks);
+      for (const [taskId, info] of additionalTasks) {
+        workedTasks.set(taskId, info);
+      }
+      if (additionalTasks.size > 0) {
+        console.log(`  [Step 2] Found ${additionalTasks.size} additional tasks with work events`);
+      }
 
-      for (const task of tasks) {
-        const taskId = task.id;
-        const chatId = task.chatId;
-        const taskTitle = task.title || '(без названия)';
-        const taskStatus = task.status;
-        const createdDate = task.createdDate || '';
-        const statusChangedDate = task.statusChangedDate || '';
+      // ═══ STEP 3: Get task details for ALL worked tasks ═══
+      console.log(`  [Step 3] Fetching task details...`);
+      const taskIds = [...workedTasks.keys()];
+      const visibleDetails = new Map();
 
-        // Step 2: Get chat messages for this task
-        let messages = [];
-        if (chatId) {
-          try {
-            const chatR = await bxData('im.dialog.messages.get', {
-              CHAT_ID: chatId,
-              LIMIT: config.MAX_MESSAGES_PER_CHAT,
+      if (taskIds.length > 0) {
+        // Batch fetch via tasks.task.list (only returns visible tasks)
+        try {
+          const r = await bxData('tasks.task.list', {
+            filter: { ID: taskIds },
+            select: ['ID', 'TITLE', 'STATUS', 'RESPONSIBLE_ID', 'CHAT_ID'],
+          });
+          const tasks = r?.result?.tasks || [];
+          for (const t of tasks) {
+            visibleDetails.set(String(t.id), {
+              title: t.title || '(без названия)',
+              status: t.status,
+              chatId: t.chatId,
+              responsibleId: t.responsibleId,
+              visible: true,
             });
-            messages = chatR?.result?.messages || [];
-          } catch (e) {
-            console.log(`    [!] Chat ${chatId} access denied for task ${taskId}: ${e.message}`);
-            // If we can't read chat, still include the task but can't check EOD
-            messages = [];
           }
+        } catch (e) {
+          console.log(`  [!] Error fetching task details: ${e.message}`);
+        }
+      }
+
+      console.log(`  [Step 3] Visible: ${visibleDetails.size}/${taskIds.length} tasks`);
+
+      // ═══ STEP 4: Check EOD for each task ═══
+      console.log(`  [Step 4] Checking EOD...`);
+      for (const [taskId, info] of workedTasks) {
+        const detail = visibleDetails.get(taskId);
+        const chatId = detail?.chatId || null;
+        const title = detail?.title || `Задача #${taskId}`;
+        const status = detail?.status || '?';
+        const isVisible = detail?.visible || false;
+
+        let eodResult = { present: false, unknown: true };
+        if (isVisible && chatId) {
+          eodResult = await checkEOD(chatId, dev.id, dateStr);
+          await delay(300);
         }
 
-        // Step 3: Determine work type for this task today
-        const workType = getWorkType(messages, dev.id, dateStr, {
-          taskStatus,
-          createdDate,
-          statusChangedDate,
+        devResults[dev.id].tasks.push({
+          id: taskId,
+          title,
+          status,
+          eodPresent: eodResult.present,
+          eodUnknown: eodResult.unknown,
+          timeSpent: info.seconds,
+          workType: info.workType,
+          visible: isVisible,
         });
 
-        if (workType) {
-          // Step 4: Check for EOD comment from developer today
-          const hasEod = checkEodComment(messages, dev.id, dateStr);
-          const chatAccessOk = messages.length > 0;
-          const stillRunning = String(taskStatus) === '2';
-          const noAccess = workType === 'NO_ACCESS';
+        const timeStr = info.seconds > 0 ? ` (${formatTime(info.seconds)})` : '';
+        const visStr = !isVisible ? ' [НЕТ ДОСТУПА]' : '';
+        console.log(`    #${taskId}${visStr} [${info.workType}]${timeStr} → EOD: ${eodResult.unknown ? '???' : eodResult.present ? 'YES' : 'NO'}`);
+      }
 
-          devResults[dev.id].tasks.push({
-            id: taskId,
-            title: taskTitle,
-            status: taskStatus,
-            eodPresent: hasEod,
-            eodUnknown: !chatAccessOk || noAccess,
-            stillRunning,
-            workType: noAccess ? null : workType,
-          });
-
-          if (noAccess) {
-            console.log(`    #${taskId} [NO ACCESS] → can't verify work or EOD`);
-          } else {
-            console.log(`    #${taskId} [${workType}] → EOD: ${!chatAccessOk ? '???' : hasEod ? 'YES' : 'NO'}${stillRunning ? ' (running)' : ''}`);
-          }
-        }
+      if (workedTasks.size === 0) {
+        console.log(`  (no worked tasks found for ${dateStr})`);
       }
     } catch (err) {
       console.error(`  [!] Error for ${dev.name}: ${err.message}`);
@@ -180,116 +200,162 @@ async function buildReport(dateStr) {
 }
 
 /**
- * Determine the type of work the developer did on the task on the target date.
- *
- * STRICT MODE: Only count tasks where the developer explicitly STARTED working.
- * "Изменил описание", "добавил файл" etc. do NOT count — developer must have
- * clicked "Начать выполнение" or equivalent.
- *
- * Valid work-start events (from chat system messages):
- * 1. "начал выполнять задачу" — clicked "Start" button
- * 2. "вернул выполненную задачу в работу" — returned completed task to work
- * 3. "продолжил/возобновил выполнение задачи" — resumed after pause
- *
- * Also valid (no chat message but clear work signal):
- * 4. Task created today via form in status=2 (form auto-starts task)
- *    BUT only if there's NO "Ждёт выполнения" status in between
- *
- * NOT valid (should NOT trigger EOD requirement):
- * - Changed description → didn't start working
- * - Added file → didn't start working  
- * - Added time manually → might be fixing time, not working
- * - Status changed by someone else → not developer's action
+ * Fetch ALL time entries for a developer on a specific date.
+ * Uses task.elapseditem.getlist with ORDER + FILTER as top-level params.
  */
-function getWorkType(messages, devId, dateStr, taskInfo) {
-  const { taskStatus, createdDate, statusChangedDate } = taskInfo;
-  const chatAccessOk = messages.length > 0;
+async function fetchTimeEntries(devId, dateStr) {
+  const workedTasks = new Map();
+  let start = 0;
 
-  // Priority 1: Check chat for EXPLICIT work-start events today
-  if (chatAccessOk) {
-    for (const msg of messages) {
-      if (msg.author_id !== 0) continue; // System messages only
-      const msgDate = (msg.date || '').substring(0, 10);
-      if (msgDate !== dateStr) continue;
+  while (true) {
+    const r = await bxData('task.elapseditem.getlist', {
+      ORDER: { ID: 'DESC' },
+      FILTER: {
+        USER_ID: devId,
+        '>=CREATED_DATE': dateStr + 'T00:00:00',
+        '<=CREATED_DATE': dateStr + 'T23:59:59',
+      },
+      ...(start > 0 ? { start } : {}),
+    });
 
-      const text = msg.text || '';
-      const hasDevMention = text.includes(`[USER=${devId}]`);
+    if (r?.error) {
+      console.log(`  [!] task.elapseditem.getlist error: ${r.error}`);
+      break;
+    }
 
-      if (hasDevMention) {
-        // Developer explicitly started working
-        if (text.includes('начал выполнять задачу') || text.includes('начала выполнять задачу')) return 'начал выполнять';
-        if (text.includes('вернул выполненную задачу в работу') || text.includes('вернула выполненную задачу в работу')) return 'вернул в работу';
-        if (text.includes('возобновил') || text.includes('возобновила') || text.includes('продолжил') || text.includes('продолжила')) return 'продолжил работу';
-
-        // Developer completed work (means they were working on it)
-        if (text.includes('завершил задачу') || text.includes('завершила задачу')) return 'завершена';
-        if (text.includes('изменил стадию на Готово') || text.includes('изменила стадию на Готово')) return 'завершена';
-        if (text.includes('изменил стадию на Тестируется') || text.includes('изменила стадию на Тестируется')) return 'на тестировании';
-
-        // Pause/stop = they WERE working but paused (still needs EOD for work done)
-        if (text.includes('приостановил') || text.includes('приостановила')) return 'приостановлена';
-        if (text.includes('остановил работу') || text.includes('остановила работу')) return 'работа остановлена';
+    const items = r?.result || [];
+    for (const item of items) {
+      const taskId = String(item.TASK_ID || '');
+      const seconds = Number(item.SECONDS || 0);
+      if (taskId) {
+        if (!workedTasks.has(taskId)) {
+          workedTasks.set(taskId, { seconds: 0, workType: 'учёт времени' });
+        }
+        workedTasks.get(taskId).seconds += seconds;
       }
     }
+
+    if (!r?.next) break;
+    start = r.next;
   }
 
-  // Priority 2: Task created today AND currently in "Выполняется" (status=2)
-  // Form creates tasks in status=2 — developer is expected to start immediately.
-  // But verify: if chat is accessible, check that developer didn't just ignore the task.
-  if (createdDate && createdDate.substring(0, 10) === dateStr && String(taskStatus) === '2') {
-    // If chat is accessible, verify developer actually started (or task is brand new)
-    if (chatAccessOk) {
-      // Check if there's a "начал выполнять" event after creation
-      const startMsg = messages.find(m => {
-        if (m.author_id !== 0) return false;
-        const text = m.text || '';
-        return text.includes(`[USER=${devId}]`) && text.includes('начал выполнять задачу');
-      });
-      if (startMsg) return 'начал выполнять';
-      
-      // No "начал выполнять" but task is in status 2 and created today
-      // Form creates tasks directly in status 2, so this is normal
-      return 'создана в работе';
+  return workedTasks;
+}
+
+/**
+ * Find tasks where developer started work today but hasn't logged time yet.
+ * Uses DATE_ACTIVITY as pre-filter, then checks system messages.
+ */
+async function findStartedButNotTimed(devId, dateStr, existingTasks) {
+  const additional = new Map();
+
+  try {
+    const r = await bxData('tasks.task.list', {
+      filter: {
+        RESPONSIBLE_ID: devId,
+        '>=DATE_ACTIVITY': dateStr + 'T00:00:00',
+        '<=DATE_ACTIVITY': dateStr + 'T23:59:59',
+      },
+      select: ['ID', 'CHAT_ID'],
+    });
+    const candidates = r?.result?.tasks || [];
+
+    for (const task of candidates) {
+      const taskId = String(task.id);
+      if (existingTasks.has(taskId)) continue;
+
+      const chatId = task.chatId;
+      if (!chatId) continue;
+
+      try {
+        const chatR = await bxData('im.dialog.messages.get', {
+          CHAT_ID: chatId,
+          LIMIT: config.MAX_MESSAGES_PER_CHAT,
+        });
+        const messages = chatR?.result?.messages || [];
+        const workEvent = findWorkSystemMessage(messages, devId, dateStr);
+
+        if (workEvent) {
+          additional.set(taskId, { seconds: 0, workType: workEvent });
+        }
+      } catch (e) {
+        // Can't access chat — skip
+      }
+
+      await delay(300);
     }
-    // No chat access — assume created-in-work is valid
-    return 'создана в работе';
+  } catch (e) {
+    // Error getting candidates — skip
   }
 
-  // Priority 3: No chat access but task had activity today
-  // Can't verify work-start event → mark as "unknown" so report shows warning
-  if (!chatAccessOk && statusChangedDate && statusChangedDate.substring(0, 10) === dateStr) {
-    return 'NO_ACCESS'; // Special marker — can't verify
-  }
+  return additional;
+}
 
-  // No work-start event found → developer did NOT work on this task today
+/**
+ * Find a work-start system message from today.
+ */
+function findWorkSystemMessage(messages, devId, dateStr) {
+  for (const msg of messages) {
+    if (msg.author_id !== 0) continue;
+    const msgDate = (msg.date || '').substring(0, 10);
+    if (msgDate !== dateStr) continue;
+
+    const text = msg.text || '';
+    const hasDevMention = text.includes(`[USER=${devId}]`);
+    if (!hasDevMention) continue;
+
+    if (text.includes('начал выполнять задачу') || text.includes('начала выполнять задачу')) return 'начал выполнять';
+    if (text.includes('продолжил выполнение') || text.includes('продолжила выполнение')) return 'продолжил';
+    if (text.includes('возобновил') || text.includes('возобновила')) return 'возобновил';
+    if (text.includes('вручную добавил время') || text.includes('вручную добавила время')) return 'добавил время';
+    if (text.includes('вернул выполненную задачу в работу') || text.includes('вернула выполненную задачу в работу')) return 'вернул в работу';
+    if (text.includes('завершил задачу') || text.includes('завершила задачу')) return 'завершена';
+    if (text.includes('изменил стадию на Готово') || text.includes('изменила стадию на Готово')) return 'завершена';
+  }
   return null;
 }
 
 /**
  * Check if the developer posted an EOD comment today.
- * EOD = user comment (not bot, not system) containing at least 2 EOD keywords.
  */
-function checkEodComment(messages, devId, dateStr) {
-  for (const msg of messages) {
-    if (msg.author_id === 0) continue;
-    if (Number(msg.author_id) === config.BOT_ID) continue;
-    if (String(msg.author_id) !== String(devId)) continue;
+async function checkEOD(chatId, devId, dateStr) {
+  if (!chatId) return { present: false, unknown: true };
 
-    const msgDate = (msg.date || '').substring(0, 10);
-    if (msgDate !== dateStr) continue;
+  try {
+    const chatR = await bxData('im.dialog.messages.get', {
+      CHAT_ID: chatId,
+      LIMIT: config.MAX_MESSAGES_PER_CHAT,
+    });
+    const messages = chatR?.result?.messages || [];
 
-    const text = (msg.text || '').toLowerCase();
-    const matchCount = config.EOD_KEYWORDS.filter(kw => text.includes(kw)).length;
-    if (matchCount >= 2) {
-      return true;
+    for (const msg of messages) {
+      if (msg.author_id === 0) continue;
+      if (Number(msg.author_id) === config.BOT_ID) continue;
+      if (String(msg.author_id) !== String(devId)) continue;
+
+      const msgDate = (msg.date || '').substring(0, 10);
+      if (msgDate !== dateStr) continue;
+
+      const text = (msg.text || '').toLowerCase();
+      const matchCount = config.EOD_KEYWORDS.filter(kw => text.includes(kw)).length;
+      if (matchCount >= 2) {
+        return { present: true, unknown: false };
+      }
     }
+    return { present: false, unknown: false };
+  } catch (e) {
+    return { present: false, unknown: true };
   }
-  return false;
 }
 
-/**
- * Format the report for sending via Bitrix IM.
- */
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}:${String(m).padStart(2, '0')}`;
+  if (h > 0) return `${h}ч`;
+  return `${m}м`;
+}
+
 function formatReport(dateStr, devResults) {
   const dateFormatted = dateStr.split('-').reverse().join('.');
   let lines = [];
@@ -297,68 +363,76 @@ function formatReport(dateStr, devResults) {
   lines.push(`📋 EOD-сводка за ${dateFormatted}`);
   lines.push('');
 
-  let totalStarted = 0;
+  let totalWorked = 0;
   let totalWithEod = 0;
   let totalWithoutEod = 0;
   let totalUnknown = 0;
+  let totalInvisible = 0;
 
   for (const dev of config.DEVELOPERS) {
     const result = devResults[dev.id];
     if (result.error) {
-      lines.push(`${result.name}: [ошибка] ${result.error}`);
+      lines.push(`${result.name}: ⚠️ ошибка — ${result.error}`);
       lines.push('');
       continue;
     }
 
     if (result.tasks.length === 0) {
       lines.push(`${result.name}:`);
-      lines.push(`  (не было запущенных задач)`);
+      lines.push(`  (не было задач в работе)`);
       lines.push('');
       continue;
     }
 
     lines.push(`${result.name}:`);
-    for (const task of result.tasks) {
-      totalStarted++;
+
+    // Separate visible and invisible tasks
+    const visibleTasks = result.tasks.filter(t => t.visible);
+    const invisibleTasks = result.tasks.filter(t => !t.visible);
+
+    // Show visible tasks first
+    for (const task of visibleTasks) {
+      totalWorked++;
+      const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
+
       if (task.eodUnknown) {
         totalUnknown++;
-        lines.push(`  ⚠️ ${task.title} — нет доступа к чату, ЕОД не проверен`);
+        lines.push(`  ⚠️ ${task.title}${timeStr} — нет доступа к чату`);
       } else if (task.eodPresent) {
         totalWithEod++;
-        lines.push(`  ✅ ${task.title} — ЕОД добавлен`);
+        lines.push(`  ✅ ${task.title}${timeStr} — ЕОД добавлен`);
       } else {
         totalWithoutEod++;
-        if (task.stillRunning) {
-          lines.push(`  ❌ ${task.title} — задача ещё выполняется, ЕОД не предоставлен`);
-        } else {
-          lines.push(`  ❌ ${task.title} — ЕОД отсутствует`);
-        }
+        lines.push(`  ❌ ${task.title}${timeStr} — ЕОД отсутствует`);
       }
     }
+
+    // Show invisible tasks (just task IDs + time)
+    for (const task of invisibleTasks) {
+      totalWorked++;
+      totalUnknown++;
+      totalInvisible++;
+      const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
+      lines.push(`  ⚠️ #${task.id}${timeStr} — нет доступа к задаче`);
+    }
+
     lines.push('');
   }
 
   lines.push(`---`);
-  let summary = `Запущено задач: ${totalStarted} | ЕОД добавлен: ${totalWithEod} | ЕОД отсутствует: ${totalWithoutEod}`;
+  let summary = `В работе: ${totalWorked} | ЕОД ✅: ${totalWithEod} | ЕОД ❌: ${totalWithoutEod}`;
   if (totalUnknown > 0) summary += ` | Не проверено: ${totalUnknown}`;
+  lines.push(summary);
 
-  if (totalUnknown > 0) {
-    lines.push(summary);
+  if (totalInvisible > 0) {
     lines.push('');
-    lines.push(`⚠️ ${totalUnknown} задач без доступа к чату — нужен админский вебхук`);
-    lines.push(`Создайте входящий вебхук от имени администратора (user 1)`);
-    lines.push(`и установите ADMIN_WEBHOOK в конфигурации`);
-  } else {
-    lines.push(summary);
+    lines.push(`⚠️ ${totalInvisible} задач без доступа — нужен админ-вебхук от user 1 (Владимир)`);
+    lines.push(`Бот видит учёт времени, но не может читать чаты этих задач`);
   }
 
   return lines.join('\n');
 }
 
-/**
- * Send report via Bitrix24 IM.
- * Always uses bot webhook so message comes from bot.
- */
 async function sendReport(text) {
   const params = { MESSAGE: text };
 
