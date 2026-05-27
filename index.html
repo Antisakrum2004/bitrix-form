@@ -308,7 +308,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.12.1</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.14</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -867,14 +867,38 @@ function selectChip(ch) {
   });
   if (was) {
     if (grid === 'devGrid') selectedDevId = null;
-    else if (grid === 'mgrGrid') selectedMgrId = null;
+    else if (grid === 'mgrGrid') {
+      selectedMgrId = null;
+      // Снимаем того же человека с наблюдателя, если он был авто-выбран
+      const obsChip = document.querySelector(`#obsGrid .crew-chip[data-id="${ch.dataset.id}"]`);
+      if (obsChip && obsChip.classList.contains('active')) {
+        obsChip.classList.remove('active','dimmed');
+        obsChip.setAttribute('aria-checked','false');
+        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => c.classList.remove('dimmed'));
+        selectedObsId = null;
+      }
+    }
     else selectedObsId = null;
   } else {
     ch.classList.add('active');
     ch.setAttribute('aria-checked','true');
     ch.parentElement.querySelectorAll('.crew-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
     if (grid === 'devGrid') selectedDevId = ch.dataset.id;
-    else if (grid === 'mgrGrid') selectedMgrId = ch.dataset.id;
+    else if (grid === 'mgrGrid') {
+      selectedMgrId = ch.dataset.id;
+      // Авто-выбор: постановщик → наблюдатель (АМ/ВМ)
+      const obsChip = document.querySelector(`#obsGrid .crew-chip[data-id="${ch.dataset.id}"]`);
+      if (obsChip) {
+        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => {
+          c.classList.remove('active','dimmed');
+          c.setAttribute('aria-checked','false');
+        });
+        obsChip.classList.add('active');
+        obsChip.setAttribute('aria-checked','true');
+        document.querySelectorAll('#obsGrid .crew-chip').forEach(c => { if (c !== obsChip) c.classList.add('dimmed'); });
+        selectedObsId = ch.dataset.id;
+      }
+    }
     else selectedObsId = ch.dataset.id;
   }
   saveDraft();
@@ -1385,10 +1409,17 @@ async function handleSubmit(e) {
     if (data.result?.task?.id) {
       const tid = data.result.task.id;
 
+      // Собираем ВСЕХ наблюдателей разом, чтобы не перетирать
+      // Раньше было 2 отдельных вызова addObserver — второй затирал первого
+      const observerIds = [];
+      if (selectedObsId) observerIds.push(parseInt(selectedObsId));
+      const eodOn = document.getElementById('eodCheck').checked;
+      if (eodOn) observerIds.push(154); // Бот для EOD-комментариев
+
       let obsMsg = '';
-      if (selectedObsId) {
+      if (observerIds.length) {
         bt.textContent = 'Наблюдатель...';
-        obsMsg = await addObserver(hook, tid, selectedObsId);
+        obsMsg = await addObserversBatch(hook, tid, observerIds);
       }
 
       if (selectedFiles.length) {
@@ -1396,12 +1427,10 @@ async function handleSubmit(e) {
         await uploadFiles(hook, tid);
       }
 
-      // EOD-комментарий если галка стоит
+      // EOD-комментарий если галка стоит (бот уже добавлен наблюдателем выше)
       let eodMsg = '';
-      if (document.getElementById('eodCheck').checked) {
+      if (eodOn) {
         bt.textContent = 'EOD...';
-        // Добавляем бота (154) наблюдателем, чтобы он мог комментировать
-        await addObserver(hook, tid, '154');
         eodMsg = await addEodComment(EOD_HOOK, tid, selectedProjId);
       }
 
@@ -1436,7 +1465,8 @@ async function handleSubmit(e) {
   }
 }
 
-async function addObserver(hook, taskId, userId) {
+// Добавление одного наблюдателя (фоллбэк для addObserversBatch)
+async function addObserverSingle(hook, taskId, userId) {
   const variants = [
     { endpoint: 'task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
     { endpoint: 'tasks.task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
@@ -1453,14 +1483,44 @@ async function addObserver(hook, taskId, userId) {
       const d = await r.json();
       if (!d.error && (d.result === true || d.result?.result === true || d.result)) {
         console.log('Наблюдатель добавлен через:', v.endpoint, d);
-        return ' · Наблюдатель ✓';
+        return true;
       }
       console.warn('Попытка', v.endpoint, ':', d.error_description || d.error);
     } catch (err) {
       console.warn('Ошибка запроса', v.endpoint, ':', err.message);
     }
   }
-  return ' · ⚠ Наблюдатель не добавлен';
+  return false;
+}
+
+// Пакетное добавление наблюдателей — ОДНИМ запросом, чтобы не перетирать
+// ПРИЧИНА: tasks.task.update с AUDITORS:[x] ЗАМЕНЯЕТ весь список.
+// Два вызова подряд: AUDITORS:[116] потом AUDITORS:[154] → остаётся только бот.
+// Решение: собираем все ID и шлём один запрос AUDITORS:[116, 154]
+async function addObserversBatch(hook, taskId, userIds) {
+  // Основной путь: один запрос со всеми наблюдателями
+  try {
+    const r = await fetch(hook + 'tasks.task.update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId: taskId, fields: { AUDITORS: userIds } })
+    });
+    const d = await r.json();
+    if (!d.error && d.result) {
+      console.log('[Observers] Batch added:', userIds, d);
+      return ' · Наблюдатель ✓';
+    }
+    console.warn('[Observers] Batch failed:', d.error_description || d.error);
+  } catch (err) {
+    console.warn('[Observers] Batch error:', err.message);
+  }
+  // Фоллбэк: по одному (менее надёжно — может перетирать)
+  let anyOk = false;
+  for (const uid of userIds) {
+    const ok = await addObserverSingle(hook, taskId, String(uid));
+    if (ok) anyOk = true;
+  }
+  return anyOk ? ' · Наблюдатель ✓' : ' · ⚠ Наблюдатель не добавлен';
 }
 
 // AI-CHANGE: NEW-FUNCTION — EOD-комментарий к задаче.
