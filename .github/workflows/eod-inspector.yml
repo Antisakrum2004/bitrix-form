@@ -1,0 +1,56 @@
+name: EOD Inspector
+
+on:
+  # Auto-run at 20:00 MSC (17:00 UTC) on weekdays
+  schedule:
+    - cron: '0 17 * * 1-5'
+
+  # Manual trigger with optional date parameter
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: 'Target date (YYYY-MM-DD), leave empty for today'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run (no message sent)'
+        required: false
+        type: boolean
+        default: false
+      report_mode:
+        description: 'Report mode: private or group'
+        required: false
+        default: 'private'
+        type: choice
+        options:
+          - private
+          - group
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+
+    env:
+      REPORT_MODE: ${{ github.event.inputs.report_mode || 'private' }}
+      REPORT_CHAT_ID: ''
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run EOD Inspector
+        working-directory: eod-inspector
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.target_date }}" ]; then
+            ARGS="$ARGS ${{ github.event.inputs.target_date }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node inspector.js $ARGS
