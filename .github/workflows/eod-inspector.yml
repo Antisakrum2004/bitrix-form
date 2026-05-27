@@ -25,6 +25,11 @@ on:
         options:
           - private
           - group
+      with_chart:
+        description: 'Include weekly chart'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   inspect:
@@ -54,3 +59,16 @@ jobs:
             ARGS="$ARGS --dry-run"
           fi
           node inspector.js $ARGS
+
+      - name: Generate Weekly Chart
+        if: ${{ github.event.inputs.with_chart != 'false' }}
+        working-directory: eod-inspector
+        run: |
+          ARGS="--days=7"
+          if [ -n "${{ github.event.inputs.target_date }}" ]; then
+            ARGS="$ARGS ${{ github.event.inputs.target_date }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node chart.js $ARGS
