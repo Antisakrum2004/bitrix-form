@@ -42,6 +42,7 @@ module.exports = {
     { id: '82', name: 'Тимур' },
     { id: '92', name: 'Елена' },
     { id: '98', name: 'Ольга' },
+    { id: '156', name: 'Марина' },
   ],
 
   // Bot ID (excluded from EOD checks — bot posts template, not real EOD)
