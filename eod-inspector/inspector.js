@@ -450,10 +450,8 @@ async function sendReport(text) {
     throw new Error('No report target. Set REPORT_MODE=private or REPORT_CHAT_ID.');
   }
 
-  // Disable URL preview (prevents Bitrix from expanding links as rich task cards)
+  // Disable URL preview (prevents Bitrix from expanding first link as rich card)
   params.URL_PREVIEW = 'N';
-  // Skip connector processing — prevents Bitrix from rendering task preview cards
-  params.SKIP_CONNECTOR_CHECK = 'Y';
 
   const result = await bxSend('im.message.add', params);
   console.log('[Send] Response:', JSON.stringify(result).substring(0, 300));

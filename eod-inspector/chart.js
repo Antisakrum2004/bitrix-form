@@ -278,49 +278,16 @@ function downloadQuickChart(chartConfig) {
 
 // ─── Send image via Bitrix IM (2-step upload) ───
 async function sendChartImage(imagePath) {
-  const fileBuffer = fs.readFileSync(imagePath);
-  const fileName = `eod_chart_${new Date().toISOString().slice(0, 10)}.png`;
+  // Step 1: Upload image to imgur (anonymous) to get a public URL
+  console.log(`[Imgur] Uploading chart image...`);
+  const imgUrl = await uploadToImgur(imagePath);
+  console.log(`[Imgur] Image URL: ${imgUrl}`);
 
-  // Step 1: Get upload URL from disk.folder.uploadfile
-  console.log(`[Upload] Step 1: Getting upload URL...`);
-  const r1 = await bxSend('disk.folder.uploadfile', {
-    id: BOT_STORAGE_ROOT_FOLDER_ID,
-    data: { NAME: fileName },
-  });
-
-  if (r1?.error) {
-    throw new Error(`Get upload URL error: ${r1.error_description || r1.error}`);
-  }
-
-  const uploadUrl = r1?.result?.uploadUrl;
-  const fieldName = r1?.result?.field || 'file';
-
-  if (!uploadUrl) {
-    throw new Error('No upload URL returned');
-  }
-
-  console.log(`[Upload] Step 2: Uploading file (${fileBuffer.length} bytes)...`);
-
-  // Step 2: Upload file to the URL
-  const r2 = await multipartUpload(uploadUrl, fieldName, fileName, fileBuffer);
-
-  if (r2?.error) {
-    throw new Error(`Upload error: ${r2.error_description || r2.error}`);
-  }
-
-  const fileId = r2?.result?.ID;
-  if (!fileId) {
-    throw new Error('No file ID returned from upload: ' + JSON.stringify(r2).substring(0, 300));
-  }
-
-  console.log(`[Upload] Step 3: File uploaded, ID=${fileId}. Sending message...`);
-
-  // Step 3: Send message with file attachment
+  // Step 2: Send message with IMAGE attachment pointing to imgur URL
+  // Also include the URL in message body so Bitrix can show a preview
   const params = {
-    MESSAGE: `📊 Задачи в работе по дням`,
-    URL_PREVIEW: 'N',
-    SKIP_CONNECTOR_CHECK: 'Y',
-    FILES: [{ id: String(fileId) }],
+    MESSAGE: `📊 Задачи в работе по дням\n${imgUrl}`,
+    URL_PREVIEW: 'Y',  // Enable preview so Bitrix shows the image
   };
 
   // Chart always goes to Andrey (116) private — not to group chat
@@ -334,6 +301,53 @@ async function sendChartImage(imagePath) {
   }
 
   return sendResult;
+}
+
+/**
+ * Upload image to imgur (anonymous) and return public URL.
+ * Uses Client-ID for anonymous uploads (no auth required).
+ */
+function uploadToImgur(imagePath) {
+  return new Promise((resolve, reject) => {
+    const boundary = '----ImgurBoundary' + Math.random().toString(36).slice(2);
+    const fileBuffer = fs.readFileSync(imagePath);
+
+    const prefix = '--' + boundary + '\r\n' +
+      'Content-Disposition: form-data; name="image"; filename="chart.png"\r\n' +
+      'Content-Type: image/png\r\n\r\n';
+    const suffix = '\r\n--' + boundary + '--\r\n';
+    const body = Buffer.concat([Buffer.from(prefix), fileBuffer, Buffer.from(suffix)]);
+
+    const options = {
+      hostname: 'api.imgur.com',
+      path: '/3/upload',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Client-ID 546c25a59c58ad7',
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        'Content-Length': body.length,
+      },
+    };
+
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (json.success && json.data?.link) {
+            resolve(json.data.link);
+          } else {
+            reject(new Error('Imgur upload failed: ' + (json.data?.error || JSON.stringify(json).substring(0, 200))));
+          }
+        } catch (e) { reject(new Error('Imgur parse error: ' + data.substring(0, 200))); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Imgur timeout')); });
+    req.write(body);
+    req.end();
+  });
 }
 
 // ─── Fallback: text-based chart ───

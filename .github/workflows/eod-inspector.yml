@@ -1,7 +1,7 @@
 name: EOD Inspector
 
 on:
-  # Auto-run at 20:00 MSC (17:00 UTC) on weekdays
+  # Auto-run at 20:00 MSC (17:00 UTC) on weekdays (Mon-Fri)
   schedule:
     - cron: '0 17 * * 1-5'
 
@@ -17,14 +17,6 @@ on:
         required: false
         type: boolean
         default: false
-      report_mode:
-        description: 'Report mode: private or group'
-        required: false
-        default: 'private'
-        type: choice
-        options:
-          - private
-          - group
       with_chart:
         description: 'Include weekly chart'
         required: false
@@ -36,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      REPORT_MODE: ${{ github.event.inputs.report_mode || 'private' }}
-      REPORT_CHAT_ID: ''
+      REPORT_MODE: group
+      REPORT_CHAT_ID: '2'
 
     steps:
       - name: Checkout repo
@@ -59,6 +51,18 @@ jobs:
             ARGS="$ARGS --dry-run"
           fi
           node inspector.js $ARGS
+
+      - name: Send Productivity Rating
+        working-directory: eod-inspector
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.target_date }}" ]; then
+            ARGS="$ARGS ${{ github.event.inputs.target_date }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node productivity.js $ARGS
 
       - name: Generate Weekly Chart
         if: ${{ github.event.inputs.with_chart != 'false' }}
