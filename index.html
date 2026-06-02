@@ -460,11 +460,12 @@
                 <input type="date" id="taskDeadline" />
               </div>
               <div class="time-col">
-                <label class="fl">Оценка в часах</label>
+                <label class="fl">Оценка в часах <span class="req">*</span></label>
                 <div class="time-est-field">
                   <input type="text" id="timeEstimate" class="time-est-input" placeholder="0" inputmode="decimal" />
                   <span class="time-est-unit">ч</span>
                 </div>
+                <div class="error-msg" id="timeEstError">Укажи оценку в часах</div>
               </div>
             </div>
             <!-- AI-CHANGE: NEW-HTML — ошибка валидации дедлайна.
@@ -1290,6 +1291,19 @@ function validateForm() {
     document.getElementById('titleError').classList.add('show');
     ok = false;
   }
+  // AI-CHANGE: NEW — валидация оценки времени.
+  const te = document.getElementById('timeEstimate');
+  const teErr = document.getElementById('timeEstError');
+  const teVal = te.value.replace(',', '.').trim();
+  const teNum = parseFloat(teVal);
+  if (!teVal || isNaN(teNum) || teNum <= 0) {
+    te.classList.add('error');
+    teErr.classList.add('show');
+    ok = false;
+  } else {
+    te.classList.remove('error');
+    teErr.classList.remove('show');
+  }
   // AI-CHANGE: NEW — валидация дедлайна.
   const dl = document.getElementById('taskDeadline');
   const dlErr = document.getElementById('deadlineError');
@@ -1695,6 +1709,14 @@ document.addEventListener('DOMContentLoaded', () => {
   titleEl.addEventListener('input', function() {
     document.getElementById('titleCount').textContent = this.value.length + ' / 255';
     if (this.value.trim()) { this.classList.remove('error'); document.getElementById('titleError').classList.remove('show'); }
+    saveDraft();
+  });
+
+  // Сброс ошибки оценки времени при вводе
+  document.getElementById('timeEstimate').addEventListener('input', function() {
+    const v = this.value.replace(',', '.').trim();
+    const n = parseFloat(v);
+    if (v && !isNaN(n) && n > 0) { this.classList.remove('error'); document.getElementById('timeEstError').classList.remove('show'); }
     saveDraft();
   });
 
