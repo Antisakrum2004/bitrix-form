@@ -3,23 +3,22 @@ import { triggerWorkflow } from '@/lib/github';
 
 export async function POST(req: Request) {
   try {
-    const { mode = 'group', dryRun = false } = await req.json();
+    const { mode = 'group' } = await req.json();
 
-    const inputs: Record<string, string> = {};
-    if (dryRun) inputs.dry_run = 'true';
-
-    // Productivity is part of the EOD Inspector workflow
-    const result = await triggerWorkflow('eod-inspector.yml', inputs);
+    const result = await triggerWorkflow('eod-inspector.yml', {
+      report_mode: mode,
+    });
 
     if (result.status === 204) {
+      const target = mode === 'group' ? 'Общий чат' : 'Личка (Андрей)';
       return NextResponse.json({
         success: true,
-        output: `Productivity workflow triggered (mode=${mode}, dryRun=${dryRun}). Check GitHub Actions for results.`,
+        output: `Рейтинг продуктивности запущен → ${target}. Отчёт придёт через 1-2 минуты.`,
       });
     } else {
       return NextResponse.json({
         success: false,
-        error: `GitHub API returned status ${result.status}`,
+        error: `GitHub API вернул статус ${result.status}`,
       });
     }
   } catch (err: any) {

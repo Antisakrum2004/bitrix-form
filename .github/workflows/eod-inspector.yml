@@ -5,25 +5,28 @@ on:
   schedule:
     - cron: '0 17 * * 1-5'
 
-  # Manual trigger with optional date parameter
+  # Manual trigger with optional parameters
   workflow_dispatch:
     inputs:
       target_date:
         description: 'Target date (YYYY-MM-DD), leave empty for today'
         required: false
         default: ''
-      dry_run:
-        description: 'Dry run (no message sent)'
+      report_mode:
+        description: 'Where to send report: group (Общий чат) or private (личка Андрей)'
         required: false
-        type: boolean
-        default: false
+        default: 'group'
+        type: choice
+        options:
+          - group
+          - private
 
 jobs:
   inspect:
     runs-on: ubuntu-latest
 
     env:
-      REPORT_MODE: group
+      REPORT_MODE: ${{ github.event.inputs.report_mode || 'group' }}
       REPORT_CHAT_ID: '2'
 
     steps:
@@ -42,9 +45,6 @@ jobs:
           if [ -n "${{ github.event.inputs.target_date }}" ]; then
             ARGS="$ARGS ${{ github.event.inputs.target_date }}"
           fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
-          fi
           node inspector.js $ARGS
 
       - name: Send Productivity Rating
@@ -53,8 +53,5 @@ jobs:
           ARGS=""
           if [ -n "${{ github.event.inputs.target_date }}" ]; then
             ARGS="$ARGS ${{ github.event.inputs.target_date }}"
-          fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
           fi
           node productivity.js $ARGS

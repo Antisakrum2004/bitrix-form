@@ -9,18 +9,15 @@ import { useToast } from '@/hooks/use-toast'
 import {
   Clock,
   Send,
-  TestTube,
   Save,
-  CheckCircle2,
-  XCircle,
   Loader2,
   Bell,
   FileText,
   BarChart3,
   Settings2,
-  Github,
-  ExternalLink,
-  RefreshCw,
+  Eye,
+  Users,
+  User,
 } from 'lucide-react'
 
 interface Settings {
@@ -28,15 +25,6 @@ interface Settings {
   reminder2Time: string
   reportTime: string
   enabledDays: number[]
-}
-
-interface WorkflowRun {
-  id: number
-  status: string
-  conclusion: string | null
-  createdAt: string
-  htmlUrl: string
-  displayTitle: string
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -56,34 +44,12 @@ const DEFAULT_SETTINGS: Settings = {
   enabledDays: [1, 2, 3, 4, 5],
 }
 
-function timeAgo(dateStr: string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return 'только что'
-  if (diffMin < 60) return `${diffMin} мин назад`
-  const diffH = Math.floor(diffMin / 60)
-  if (diffH < 24) return `${diffH}ч назад`
-  const diffD = Math.floor(diffH / 24)
-  return `${diffD}д назад`
-}
-
-function statusIcon(status: string, conclusion: string | null) {
-  if (status === 'completed' && conclusion === 'success') return <CheckCircle2 className="h-4 w-4 text-green-500" />
-  if (status === 'completed' && conclusion === 'failure') return <XCircle className="h-4 w-4 text-red-500" />
-  if (status === 'in_progress' || status === 'queued') return <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />
-  return <div className="h-4 w-4 rounded-full bg-gray-400" />
-}
-
 export default function EODPanel() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<{ success: boolean; output: string } | null>(null)
-  const [runs, setRuns] = useState<WorkflowRun[]>([])
-  const [loadingRuns, setLoadingRuns] = useState(false)
   const { toast } = useToast()
 
   const fetchSettings = useCallback(async () => {
@@ -98,26 +64,9 @@ export default function EODPanel() {
     }
   }, [])
 
-  const fetchRuns = useCallback(async () => {
-    setLoadingRuns(true)
-    try {
-      const r = await fetch('/api/workflow-status?workflow=eod-inspector.yml')
-      const data = await r.json()
-      if (data.success) setRuns(data.runs)
-    } catch {
-      // ignore
-    } finally {
-      setLoadingRuns(false)
-    }
-  }, [])
-
   useEffect(() => {
     fetchSettings()
-    fetchRuns()
-    // Auto-refresh runs every 30s
-    const interval = setInterval(fetchRuns, 30000)
-    return () => clearInterval(interval)
-  }, [fetchSettings, fetchRuns])
+  }, [fetchSettings])
 
   const toggleDay = (day: number) => {
     setSettings(prev => ({
@@ -139,8 +88,8 @@ export default function EODPanel() {
       const data = await res.json()
       if (data.success) {
         toast({
-          title: 'Настройки сохранены',
-          description: 'Расписание обновлено и запушено в GitHub',
+          title: 'Сохранено',
+          description: 'Расписание обновлено в GitHub Actions',
         })
       } else {
         toast({ title: 'Ошибка', description: data.error, variant: 'destructive' })
@@ -160,37 +109,29 @@ export default function EODPanel() {
       let reqBody: Record<string, any> = {}
 
       switch (action) {
-        case 'send-inspector':
-          url = '/api/send-report'
-          reqBody = { mode: 'group' }
-          break
-        case 'send-inspector-private':
+        case 'report-private':
           url = '/api/send-report'
           reqBody = { mode: 'private' }
           break
-        case 'send-reminder-1':
+        case 'report-group':
+          url = '/api/send-report'
+          reqBody = { mode: 'group' }
+          break
+        case 'reminder-1':
           url = '/api/send-reminder'
           reqBody = { round: 1 }
           break
-        case 'send-reminder-2':
+        case 'reminder-2':
           url = '/api/send-reminder'
           reqBody = { round: 2 }
           break
-        case 'send-productivity':
+        case 'productivity-private':
+          url = '/api/send-productivity'
+          reqBody = { mode: 'private' }
+          break
+        case 'productivity-group':
           url = '/api/send-productivity'
           reqBody = { mode: 'group' }
-          break
-        case 'test-inspector':
-          url = '/api/test-single'
-          reqBody = { script: 'inspector', mode: 'private' }
-          break
-        case 'test-reminder':
-          url = '/api/test-single'
-          reqBody = { script: 'reminder', round: 1 }
-          break
-        case 'test-productivity':
-          url = '/api/test-single'
-          reqBody = { script: 'productivity', mode: 'group' }
           break
       }
 
@@ -203,9 +144,7 @@ export default function EODPanel() {
       setLastResult({ success: data.success, output: data.output || data.error || '' })
 
       if (data.success) {
-        toast({ title: 'Запущено!', description: 'Воркфлоу запущен в GitHub Actions' })
-        // Refresh runs after a short delay
-        setTimeout(fetchRuns, 3000)
+        toast({ title: 'Запущено!', description: data.output })
       } else {
         toast({ title: 'Ошибка', description: data.error, variant: 'destructive' })
       }
@@ -236,10 +175,6 @@ export default function EODPanel() {
             <h1 className="text-2xl font-bold">EOD Inspector</h1>
             <p className="text-sm text-muted-foreground">Панель управления отчётами</p>
           </div>
-          <Badge variant="outline" className="ml-auto gap-1">
-            <Github className="h-3 w-3" />
-            GitHub Actions
-          </Badge>
         </div>
 
         {/* Schedule Settings */}
@@ -250,7 +185,7 @@ export default function EODPanel() {
               Расписание (МСК)
             </CardTitle>
             <CardDescription>
-              Время отправки уведомлений и отчётов. Изменения сохраняются в GitHub Actions.
+              Автоматическое время отправки по будням. Изменения сохраняются в GitHub.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -316,151 +251,160 @@ export default function EODPanel() {
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Сохранение и пуш в GitHub...
+                  Сохранение...
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Сохранить и запушить
+                  Сохранить расписание
                 </>
               )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Send Reports */}
+        {/* EOD Report */}
         <Card className="mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              Отправка отчётов
+              <FileText className="h-5 w-5" />
+              ЕОД-сводка
             </CardTitle>
             <CardDescription>
-              Запустить отправку отчёта через GitHub Actions
+              Отчёт по задачам разработчиков за сегодня
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => runAction('send-inspector')}
+                onClick={() => runAction('report-private')}
                 disabled={actionLoading !== null}
-                className="justify-start"
+                className="justify-start h-auto py-3"
               >
-                {actionLoading === 'send-inspector' ? (
+                {actionLoading === 'report-private' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4 mr-2" />
+                  <Eye className="h-4 w-4 mr-2 text-blue-500" />
                 )}
-                ЕОД-сводка → Общий чат
+                <div className="text-left">
+                  <div className="font-medium">Предпросмотр</div>
+                  <div className="text-xs text-muted-foreground font-normal">Отправить тебе в личку</div>
+                </div>
               </Button>
               <Button
                 variant="outline"
-                onClick={() => runAction('send-inspector-private')}
+                onClick={() => runAction('report-group')}
                 disabled={actionLoading !== null}
-                className="justify-start"
+                className="justify-start h-auto py-3"
               >
-                {actionLoading === 'send-inspector-private' ? (
+                {actionLoading === 'report-group' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4 mr-2" />
+                  <Users className="h-4 w-4 mr-2 text-green-500" />
                 )}
-                ЕОД-сводка → Личка
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => runAction('send-reminder-1')}
-                disabled={actionLoading !== null}
-                className="justify-start"
-              >
-                {actionLoading === 'send-reminder-1' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Bell className="h-4 w-4 mr-2 text-amber-500" />
-                )}
-                Напоминание #1
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => runAction('send-reminder-2')}
-                disabled={actionLoading !== null}
-                className="justify-start"
-              >
-                {actionLoading === 'send-reminder-2' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Bell className="h-4 w-4 mr-2 text-red-500" />
-                )}
-                Напоминание #2
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => runAction('send-productivity')}
-                disabled={actionLoading !== null}
-                className="justify-start sm:col-span-2"
-              >
-                {actionLoading === 'send-productivity' ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                )}
-                Рейтинг продуктивности → Общий чат
+                <div className="text-left">
+                  <div className="font-medium">В Общий чат</div>
+                  <div className="text-xs text-muted-foreground font-normal">Все увидят отчёт</div>
+                </div>
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Test (Dry Run) */}
+        {/* Productivity Rating */}
         <Card className="mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <TestTube className="h-5 w-5" />
-              Пробный запуск (Dry Run)
+              <BarChart3 className="h-5 w-5" />
+              Рейтинг продуктивности
             </CardTitle>
             <CardDescription>
-              Запуск без отправки сообщений — только формирование отчёта
+              Рейтинг разработчиков за сегодня
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
-                variant="secondary"
-                onClick={() => runAction('test-inspector')}
+                variant="outline"
+                onClick={() => runAction('productivity-private')}
                 disabled={actionLoading !== null}
-                className="justify-start"
+                className="justify-start h-auto py-3"
               >
-                {actionLoading === 'test-inspector' ? (
+                {actionLoading === 'productivity-private' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4 mr-2" />
+                  <Eye className="h-4 w-4 mr-2 text-blue-500" />
                 )}
-                ЕОД-сводка
+                <div className="text-left">
+                  <div className="font-medium">Предпросмотр</div>
+                  <div className="text-xs text-muted-foreground font-normal">Отправить тебе в личку</div>
+                </div>
               </Button>
               <Button
-                variant="secondary"
-                onClick={() => runAction('test-reminder')}
+                variant="outline"
+                onClick={() => runAction('productivity-group')}
                 disabled={actionLoading !== null}
-                className="justify-start"
+                className="justify-start h-auto py-3"
               >
-                {actionLoading === 'test-reminder' ? (
+                {actionLoading === 'productivity-group' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <Bell className="h-4 w-4 mr-2" />
+                  <Users className="h-4 w-4 mr-2 text-green-500" />
                 )}
-                Напоминание
+                <div className="text-left">
+                  <div className="font-medium">В Общий чат</div>
+                  <div className="text-xs text-muted-foreground font-normal">Все увидят рейтинг</div>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Reminders */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Напоминания
+            </CardTitle>
+            <CardDescription>
+              Отправить напоминание разработчикам, у которых нет ЕОД
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => runAction('reminder-1')}
+                disabled={actionLoading !== null}
+                className="justify-start h-auto py-3"
+              >
+                {actionLoading === 'reminder-1' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Bell className="h-4 w-4 mr-2 text-amber-500" />
+                )}
+                <div className="text-left">
+                  <div className="font-medium">Раунд #1</div>
+                  <div className="text-xs text-muted-foreground font-normal">Мягкое напоминание</div>
+                </div>
               </Button>
               <Button
-                variant="secondary"
-                onClick={() => runAction('test-productivity')}
+                variant="outline"
+                onClick={() => runAction('reminder-2')}
                 disabled={actionLoading !== null}
-                className="justify-start"
+                className="justify-start h-auto py-3"
               >
-                {actionLoading === 'test-productivity' ? (
+                {actionLoading === 'reminder-2' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <BarChart3 className="h-4 w-4 mr-2" />
+                  <Bell className="h-4 w-4 mr-2 text-red-500" />
                 )}
-                Рейтинг
+                <div className="text-left">
+                  <div className="font-medium">Раунд #2</div>
+                  <div className="text-xs text-muted-foreground font-normal">Строгое напоминание</div>
+                </div>
               </Button>
             </div>
           </CardContent>
@@ -469,68 +413,30 @@ export default function EODPanel() {
         {/* Last Action Result */}
         {lastResult && (
           <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
+            <CardContent className="pt-4">
+              <div className={`flex items-start gap-2 ${lastResult.success ? '' : 'text-destructive'}`}>
                 {lastResult.success ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <Send className="h-4 w-4 mt-0.5 text-green-500 shrink-0" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-500" />
+                  <XCircle className="h-4 w-4 mt-0.5 text-red-500 shrink-0" />
                 )}
-                Результат
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
-                {lastResult.output || 'Нет вывода'}
-              </pre>
+                <p className="text-sm">{lastResult.output}</p>
+              </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Recent Workflow Runs */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Github className="h-5 w-5" />
-                Последние запуски
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={fetchRuns} disabled={loadingRuns}>
-                <RefreshCw className={`h-4 w-4 ${loadingRuns ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {runs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Нет запусков</p>
-            ) : (
-              <div className="space-y-2">
-                {runs.map(run => (
-                  <a
-                    key={run.id}
-                    href={run.htmlUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
-                  >
-                    {statusIcon(run.status, run.conclusion)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{run.displayTitle}</p>
-                      <p className="text-xs text-muted-foreground">{timeAgo(run.createdAt)}</p>
-                    </div>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                  </a>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground py-4">
-          EOD Inspector Bot &bull; Bitrix24 &bull; GitHub Actions &bull; Vercel
+          EOD Inspector &bull; Bitrix24 &bull; GitHub Actions
         </div>
       </div>
     </div>
+  )
+}
+
+function XCircle(props: any) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
   )
 }

@@ -12,11 +12,6 @@ on:
         description: 'Target date (YYYY-MM-DD), leave empty for today'
         required: false
         default: ''
-      dry_run:
-        description: 'Dry run (no message sent)'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   remind:
@@ -37,8 +32,5 @@ jobs:
           ARGS="--round=2"
           if [ -n "${{ github.event.inputs.target_date }}" ]; then
             ARGS="$ARGS ${{ github.event.inputs.target_date }}"
-          fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
           fi
           node reminder.js $ARGS

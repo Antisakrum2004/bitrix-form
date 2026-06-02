@@ -5,9 +5,6 @@ on:
   schedule:
     - cron: '0 15 * * 1-5'
 
-  # Round 2: 19:00 MSC (16:00 UTC) on weekdays
-  # (separate workflow below — GitHub doesn't support multiple crons with different params)
-
   # Manual trigger
   workflow_dispatch:
     inputs:
@@ -23,11 +20,6 @@ on:
         options:
           - '1'
           - '2'
-      dry_run:
-        description: 'Dry run (no message sent)'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   remind:
@@ -42,14 +34,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Send EOD Reminders (Round 1)
+      - name: Send EOD Reminders
         working-directory: eod-inspector
         run: |
-          ARGS="--round=1"
+          ARGS="--round=${{ github.event.inputs.round || '1' }}"
           if [ -n "${{ github.event.inputs.target_date }}" ]; then
             ARGS="$ARGS ${{ github.event.inputs.target_date }}"
-          fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
           fi
           node reminder.js $ARGS
