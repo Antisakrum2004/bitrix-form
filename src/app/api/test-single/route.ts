@@ -1,36 +1,50 @@
 import { NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { triggerWorkflow } from '@/lib/github';
 
 export async function POST(req: Request) {
   try {
     const { script, mode = 'private', round = 1 } = await req.json();
-    const cwd = process.cwd();
 
-    let cmd: string;
+    const inputs: Record<string, string> = {
+      dry_run: 'true',
+    };
+
+    let workflowFile: string;
+    let description: string;
 
     switch (script) {
       case 'inspector':
-        cmd = `REPORT_MODE=${mode} node inspector.js --dry-run`;
+        workflowFile = 'eod-inspector.yml';
+        description = 'EOD Inspector';
         break;
       case 'reminder':
-        cmd = `node reminder.js --round=${round} --dry-run`;
+        workflowFile = round === 2 ? 'eod-reminder-r2.yml' : 'eod-reminder.yml';
+        inputs.round = String(round);
+        description = `Reminder round #${round}`;
         break;
       case 'productivity':
-        cmd = `REPORT_MODE=${mode} node productivity.js --dry-run`;
+        workflowFile = 'eod-inspector.yml';
+        description = 'Productivity';
         break;
       default:
         return NextResponse.json({ success: false, error: 'Unknown script' }, { status: 400 });
     }
 
-    const output = execSync(cmd, { cwd: `${cwd}/eod-inspector`, timeout: 120000, encoding: 'utf-8' });
+    const result = await triggerWorkflow(workflowFile, inputs);
 
-    return NextResponse.json({ success: true, output: output.slice(-2000) });
+    if (result.status === 204) {
+      return NextResponse.json({
+        success: true,
+        output: `${description} dry-run workflow triggered. Check GitHub Actions for results.`,
+      });
+    } else {
+      return NextResponse.json({
+        success: false,
+        error: `GitHub API returned status ${result.status}`,
+      });
+    }
   } catch (err: any) {
-    console.error('Test error:', err);
-    return NextResponse.json({ 
-      success: false, 
-      error: err.message,
-      output: (err.stdout || '').slice(-2000)
-    }, { status: 500 });
+    console.error('Test single error:', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

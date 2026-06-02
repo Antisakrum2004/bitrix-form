@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 import {
   Clock,
@@ -20,6 +19,8 @@ import {
   BarChart3,
   Settings2,
   Github,
+  ExternalLink,
+  RefreshCw,
 } from 'lucide-react'
 
 interface Settings {
@@ -27,6 +28,15 @@ interface Settings {
   reminder2Time: string
   reportTime: string
   enabledDays: number[]
+}
+
+interface WorkflowRun {
+  id: number
+  status: string
+  conclusion: string | null
+  createdAt: string
+  htmlUrl: string
+  displayTitle: string
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -46,23 +56,68 @@ const DEFAULT_SETTINGS: Settings = {
   enabledDays: [1, 2, 3, 4, 5],
 }
 
-export default function Home() {
+function timeAgo(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return 'только что'
+  if (diffMin < 60) return `${diffMin} мин назад`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `${diffH}ч назад`
+  const diffD = Math.floor(diffH / 24)
+  return `${diffD}д назад`
+}
+
+function statusIcon(status: string, conclusion: string | null) {
+  if (status === 'completed' && conclusion === 'success') return <CheckCircle2 className="h-4 w-4 text-green-500" />
+  if (status === 'completed' && conclusion === 'failure') return <XCircle className="h-4 w-4 text-red-500" />
+  if (status === 'in_progress' || status === 'queued') return <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />
+  return <div className="h-4 w-4 rounded-full bg-gray-400" />
+}
+
+export default function EODPanel() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<{ success: boolean; output: string } | null>(null)
+  const [runs, setRuns] = useState<WorkflowRun[]>([])
+  const [loadingRuns, setLoadingRuns] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
-        setSettings({ ...DEFAULT_SETTINGS, ...data })
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+  const fetchSettings = useCallback(async () => {
+    try {
+      const r = await fetch('/api/settings')
+      const data = await r.json()
+      setSettings({ ...DEFAULT_SETTINGS, ...data })
+    } catch {
+      // use defaults
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  const fetchRuns = useCallback(async () => {
+    setLoadingRuns(true)
+    try {
+      const r = await fetch('/api/workflow-status?workflow=eod-inspector.yml')
+      const data = await r.json()
+      if (data.success) setRuns(data.runs)
+    } catch {
+      // ignore
+    } finally {
+      setLoadingRuns(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchSettings()
+    fetchRuns()
+    // Auto-refresh runs every 30s
+    const interval = setInterval(fetchRuns, 30000)
+    return () => clearInterval(interval)
+  }, [fetchSettings, fetchRuns])
 
   const toggleDay = (day: number) => {
     setSettings(prev => ({
@@ -85,7 +140,7 @@ export default function Home() {
       if (data.success) {
         toast({
           title: 'Настройки сохранены',
-          description: `Расписание обновлено и запушено в GitHub${data.gitWarning ? ' (с предупреждением)' : ''}`,
+          description: 'Расписание обновлено и запушено в GitHub',
         })
       } else {
         toast({ title: 'Ошибка', description: data.error, variant: 'destructive' })
@@ -97,12 +152,13 @@ export default function Home() {
     }
   }
 
-  const runAction = async (action: string, body: Record<string, any> = {}) => {
+  const runAction = async (action: string) => {
     setActionLoading(action)
     setLastResult(null)
     try {
       let url = ''
-      let reqBody = body
+      let reqBody: Record<string, any> = {}
+
       switch (action) {
         case 'send-inspector':
           url = '/api/send-report'
@@ -147,7 +203,9 @@ export default function Home() {
       setLastResult({ success: data.success, output: data.output || data.error || '' })
 
       if (data.success) {
-        toast({ title: 'Успешно', description: `${action} выполнен` })
+        toast({ title: 'Запущено!', description: 'Воркфлоу запущен в GitHub Actions' })
+        // Refresh runs after a short delay
+        setTimeout(fetchRuns, 3000)
       } else {
         toast({ title: 'Ошибка', description: data.error, variant: 'destructive' })
       }
@@ -278,7 +336,7 @@ export default function Home() {
               Отправка отчётов
             </CardTitle>
             <CardDescription>
-              Отправить отчёт прямо сейчас в Общий чат или в личку
+              Запустить отправку отчёта через GitHub Actions
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -408,7 +466,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Result */}
+        {/* Last Action Result */}
         {lastResult && (
           <Card className="mb-6">
             <CardHeader className="pb-3">
@@ -422,16 +480,55 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto">
+              <pre className="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
                 {lastResult.output || 'Нет вывода'}
               </pre>
             </CardContent>
           </Card>
         )}
 
+        {/* Recent Workflow Runs */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Github className="h-5 w-5" />
+                Последние запуски
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={fetchRuns} disabled={loadingRuns}>
+                <RefreshCw className={`h-4 w-4 ${loadingRuns ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {runs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Нет запусков</p>
+            ) : (
+              <div className="space-y-2">
+                {runs.map(run => (
+                  <a
+                    key={run.id}
+                    href={run.htmlUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                  >
+                    {statusIcon(run.status, run.conclusion)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{run.displayTitle}</p>
+                      <p className="text-xs text-muted-foreground">{timeAgo(run.createdAt)}</p>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground py-4">
-          EOD Inspector Bot • Bitrix24 • GitHub Actions
+          EOD Inspector Bot &bull; Bitrix24 &bull; GitHub Actions &bull; Vercel
         </div>
       </div>
     </div>
