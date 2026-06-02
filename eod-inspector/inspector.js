@@ -399,9 +399,9 @@ function formatReport(dateStr, devResults) {
     // Show visible tasks first
     for (const task of visibleTasks) {
       totalWorked++;
-      // План = timeSpentTotal/Всего из задачи (запланировано), Факт = сегодня (elapsed), Всего = timeEstimate (затраченное)
+      // План = timeSpentTotal (TIME_SPENT_IN_LOGS = запланированное), Факт = timeEstimate (TIME_ESTIMATE = затраченное), Всего = timeEstimate (затраченное всего)
       const planStr = formatTime(task.timeSpentTotal);
-      const factStr = formatTime(task.timeSpent);
+      const factStr = formatTime(task.timeEstimate);
       const totalStr = formatTime(task.timeEstimate);
       const timeInfo = ` План (${planStr}) Факт (${factStr}) Всего (${totalStr})`;
       const link = `[URL=${TASK_URL}${task.id}/]${task.title}[/URL]`;
