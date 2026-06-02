@@ -136,7 +136,7 @@ async function buildReport(dateStr) {
         try {
           const r = await bxData('tasks.task.list', {
             filter: { ID: taskIds },
-            select: ['ID', 'TITLE', 'STATUS', 'RESPONSIBLE_ID', 'CHAT_ID'],
+            select: ['ID', 'TITLE', 'STATUS', 'RESPONSIBLE_ID', 'CHAT_ID', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS'],
           });
           const tasks = r?.result?.tasks || [];
           for (const t of tasks) {
@@ -146,6 +146,8 @@ async function buildReport(dateStr) {
               chatId: t.chatId,
               responsibleId: t.responsibleId,
               visible: true,
+              timeEstimate: Number(t.timeEstimate || 0),
+              timeSpentTotal: Number(t.timeSpentInLogs || 0),
             });
           }
         } catch (e) {
@@ -176,14 +178,15 @@ async function buildReport(dateStr) {
           status,
           eodPresent: eodResult.present,
           eodUnknown: eodResult.unknown,
-          timeSpent: info.seconds,
+          timeSpent: info.seconds, // today's time (Факт)
+          timeEstimate: detail?.timeEstimate || 0, // planned time (План)
+          timeSpentTotal: detail?.timeSpentTotal || 0, // total time ever (Всего)
           workType: info.workType,
           visible: isVisible,
         });
 
-        const timeStr = info.seconds > 0 ? ` (${formatTime(info.seconds)})` : '';
         const visStr = !isVisible ? ' [НЕТ ДОСТУПА]' : '';
-        console.log(`    #${taskId}${visStr} [${info.workType}]${timeStr} → EOD: ${eodResult.unknown ? '???' : eodResult.present ? 'YES' : 'NO'}`);
+        console.log(`    #${taskId}${visStr} [${info.workType}] Факт:${formatTime(info.seconds)} План:${formatTime(detail?.timeEstimate||0)} Всего:${formatTime(detail?.timeSpentTotal||0)} → EOD: ${eodResult.unknown ? '???' : eodResult.present ? 'YES' : 'NO'}`);
       }
 
       if (workedTasks.size === 0) {
@@ -349,6 +352,7 @@ async function checkEOD(chatId, devId, dateStr) {
 }
 
 function formatTime(seconds) {
+  if (!seconds || seconds <= 0) return '0';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0 && m > 0) return `${h}:${String(m).padStart(2, '0')}`;
@@ -395,18 +399,21 @@ function formatReport(dateStr, devResults) {
     // Show visible tasks first
     for (const task of visibleTasks) {
       totalWorked++;
-      const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
+      const planStr = formatTime(task.timeEstimate);
+      const factStr = formatTime(task.timeSpent);
+      const totalStr = formatTime(task.timeSpentTotal);
+      const timeInfo = ` План (${planStr}) Факт (${factStr}) Всего (${totalStr})`;
       const link = `[URL=${TASK_URL}${task.id}/]${task.title}[/URL]`;
 
       if (task.eodUnknown) {
         totalUnknown++;
-        lines.push(`  ⚠️ ${link}${timeStr} — нет доступа к чату`);
+        lines.push(`  ⚠️ ${link}${timeInfo} — нет доступа к чату`);
       } else if (task.eodPresent) {
         totalWithEod++;
-        lines.push(`  ✅ ${link}${timeStr} — ЕОД добавлен`);
+        lines.push(`  ✅ ${link}${timeInfo} — ЕОД добавлен`);
       } else {
         totalWithoutEod++;
-        lines.push(`  ❌ ${link}${timeStr} — ЕОД отсутствует`);
+        lines.push(`  ❌ ${link}${timeInfo} — ЕОД отсутствует`);
       }
     }
 
@@ -415,9 +422,9 @@ function formatReport(dateStr, devResults) {
       totalWorked++;
       totalUnknown++;
       totalInvisible++;
-      const timeStr = task.timeSpent > 0 ? ` (${formatTime(task.timeSpent)})` : '';
+      const factStr = formatTime(task.timeSpent);
       const link = `[URL=${TASK_URL}${task.id}/]#${task.id}[/URL]`;
-      lines.push(`  ⚠️ ${link}${timeStr} — нет доступа к задаче`);
+      lines.push(`  ⚠️ ${link} Факт (${factStr}) — нет доступа к задаче`);
     }
 
     lines.push('');
