@@ -186,7 +186,7 @@ async function buildReport(dateStr) {
         });
 
         const visStr = !isVisible ? ' [НЕТ ДОСТУПА]' : '';
-        console.log(`    #${taskId}${visStr} [${info.workType}] Факт:${formatTime(info.seconds)} План:${formatTime(detail?.timeEstimate||0)} Всего:${formatTime(detail?.timeSpentTotal||0)} → EOD: ${eodResult.unknown ? '???' : eodResult.present ? 'YES' : 'NO'}`);
+        console.log(`    #${taskId}${visStr} [${info.workType}] Факт:${formatTime(info.seconds)} План:${formatTime(detail?.timeSpentTotal||0)} Всего:${formatTime(detail?.timeEstimate||0)} → EOD: ${eodResult.unknown ? '???' : eodResult.present ? 'YES' : 'NO'}`);
       }
 
       if (workedTasks.size === 0) {
@@ -399,10 +399,10 @@ function formatReport(dateStr, devResults) {
     // Show visible tasks first
     for (const task of visibleTasks) {
       totalWorked++;
-      // План = timeEstimate (запланировано), Факт = сегодня (elapsed), Всего = timeSpentInLogs (затрачено всего)
-      const planStr = formatTime(task.timeEstimate);
+      // План = timeSpentTotal/Всего из задачи (запланировано), Факт = сегодня (elapsed), Всего = timeEstimate (затраченное)
+      const planStr = formatTime(task.timeSpentTotal);
       const factStr = formatTime(task.timeSpent);
-      const totalStr = formatTime(task.timeSpentTotal);
+      const totalStr = formatTime(task.timeEstimate);
       const timeInfo = ` План (${planStr}) Факт (${factStr}) Всего (${totalStr})`;
       const link = `[URL=${TASK_URL}${task.id}/]${task.title}[/URL]`;
 
