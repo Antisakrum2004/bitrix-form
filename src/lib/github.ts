@@ -16,6 +16,7 @@ async function githubFetch(path: string, options: RequestInit = {}): Promise<any
   const url = `${GITHUB_API}${path}`;
   const res = await fetch(url, {
     ...options,
+    cache: 'no-store', // Prevent Next.js from caching GitHub API responses
     headers: {
       'Authorization': `token ${GITHUB_TOKEN}`,
       'Accept': 'application/vnd.github.v3+json',
@@ -35,9 +36,11 @@ async function githubFetch(path: string, options: RequestInit = {}): Promise<any
 
 /**
  * Read a file from the repository
+ * Adds a cache-busting timestamp to ensure fresh SHA
  */
 export async function getFile(path: string): Promise<GitHubFile> {
-  const data = await githubFetch(`/repos/${GITHUB_REPO}/contents/${path}?ref=main`);
+  const bust = `&_t=${Date.now()}`;
+  const data = await githubFetch(`/repos/${GITHUB_REPO}/contents/${path}?ref=main${bust}`);
   return {
     content: Buffer.from(data.content, 'base64').toString('utf-8'),
     sha: data.sha,
@@ -46,17 +49,28 @@ export async function getFile(path: string): Promise<GitHubFile> {
 
 /**
  * Create or update a file in the repository
+ * Includes retry logic for 409 SHA conflicts
  */
-export async function putFile(path: string, content: string, sha: string, message: string): Promise<any> {
-  return githubFetch(`/repos/${GITHUB_REPO}/contents/${path}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      message,
-      content: Buffer.from(content, 'utf-8').toString('base64'),
-      sha,
-      branch: 'main',
-    }),
-  });
+export async function putFile(path: string, content: string, sha: string, message: string, retryCount = 1): Promise<any> {
+  try {
+    return await githubFetch(`/repos/${GITHUB_REPO}/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message,
+        content: Buffer.from(content, 'utf-8').toString('base64'),
+        sha,
+        branch: 'main',
+      }),
+    });
+  } catch (err: any) {
+    // If 409 conflict, re-fetch the file SHA and retry
+    if (err.message?.includes('409') && retryCount > 0) {
+      console.log(`SHA conflict for ${path}, retrying with fresh SHA...`);
+      const freshFile = await getFile(path);
+      return putFile(path, content, freshFile.sha, message, retryCount - 1);
+    }
+    throw err;
+  }
 }
 
 /**

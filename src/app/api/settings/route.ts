@@ -76,12 +76,10 @@ export async function POST(req: Request) {
     const updatedReminder2 = updateCronInYaml(reminder2File.content, reminder2Cron);
     const updatedReport = updateCronInYaml(reportFile.content, reportCron);
 
-    // Push all updates
-    await Promise.all([
-      putFile(WORKFLOW_FILES.reminder1, updatedReminder1, reminder1File.sha, 'chore: update EOD reminder #1 schedule'),
-      putFile(WORKFLOW_FILES.reminder2, updatedReminder2, reminder2File.sha, 'chore: update EOD reminder #2 schedule'),
-      putFile(WORKFLOW_FILES.report, updatedReport, reportFile.sha, 'chore: update EOD inspector report schedule'),
-    ]);
+    // Push updates sequentially to avoid SHA conflicts from parallel writes
+    await putFile(WORKFLOW_FILES.reminder1, updatedReminder1, reminder1File.sha, 'chore: update EOD reminder #1 schedule');
+    await putFile(WORKFLOW_FILES.reminder2, updatedReminder2, reminder2File.sha, 'chore: update EOD reminder #2 schedule');
+    await putFile(WORKFLOW_FILES.report, updatedReport, reportFile.sha, 'chore: update EOD inspector report schedule');
 
     return NextResponse.json({ success: true, settings });
   } catch (err: any) {
