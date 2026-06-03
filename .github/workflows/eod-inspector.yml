@@ -3,7 +3,7 @@ name: EOD Inspector
 on:
   # Auto-run at 20:00 MSC (17:00 UTC) on weekdays (Mon-Fri)
   schedule:
-    - cron: '0 17 * * 1-5'
+    - cron: '0 16 * * 1-5'
 
   # Manual trigger with optional parameters
   workflow_dispatch:
