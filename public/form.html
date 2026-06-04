@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Создать задачу — Bitrix24</title>
+<meta name="theme-color" content="#10b981">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B24 Задача">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     AI-NOTE: BASE — оригинальные CSS Custom Properties сохранены.
+     ОТКАТ: заменить всю секцию &lt;style&gt; на оригинал из v6.
+     ═══════════════════════════════════════════════════════════════ */
+  :root{--bg:#161616;--glass-solid:#12151f;--glass-border:rgba(255,255,255,0.06);--glass-border-h:rgba(255,255,255,0.12);--surface2:rgba(18,21,31,0.4);--accent:#10b981;--accent-dark:#0ea472;--accent-dim:rgba(16,185,129,0.3);--accent-glow:rgba(16,185,129,0.12);--accent-glow-s:rgba(16,185,129,0.2);--border-focus:#10b981;--text:#e2e8f8;--text-m:#8892a8;--text-d:#4a5270;--danger:#ff4f4f;--success:#22c55e;--warning:#f59e0b;--dim-red:rgba(255,79,79,0.35);--mono:'JetBrains Mono',monospace;--display:'Unbounded',sans-serif}
+  html[data-theme="gray"]{--bg:#2a2d38;--glass-solid:#1e2130;--glass-border:rgba(255,255,255,0.08);--glass-border-h:rgba(255,255,255,0.16);--surface2:rgba(30,33,48,0.5);--accent:#10b981;--accent-dark:#0ea472;--accent-dim:rgba(16,185,129,0.25);--accent-glow:rgba(16,185,129,0.1);--accent-glow-s:rgba(16,185,129,0.18);--border-focus:#10b981;--text:#d4d9e8;--text-m:#8b92a8;--text-d:#5a6078;--danger:#ff4f4f;--success:#22c55e;--warning:#f59e0b;--dim-red:rgba(255,79,79,0.35);--input-bg:rgba(20,22,32,0.5);--card-shadow:0 12px 28px rgba(0,0,0,.25)}
+  html[data-theme="light"]{--bg:#f0f2f5;--glass-solid:#ffffff;--glass-border:rgba(0,0,0,0.08);--glass-border-h:rgba(0,0,0,0.15);--surface2:rgba(255,255,255,0.7);--accent:#0d9668;--accent-dark:#0a7d56;--accent-dim:rgba(13,150,104,0.2);--accent-glow:rgba(13,150,104,0.06);--accent-glow-s:rgba(13,150,104,0.12);--border-focus:#0d9668;--text:#1a1d2e;--text-m:#5a6078;--text-d:#9ca3b8;--danger:#e53e3e;--success:#16a34a;--warning:#d97706;--dim-red:rgba(229,62,62,0.25);--input-bg:rgba(240,242,245,0.8);--card-shadow:0 4px 16px rgba(0,0,0,.08)}
+  html[data-theme="light"] .topbar{background:rgba(255,255,255,0.92)}
+  html[data-theme="light"] .card{background:rgba(255,255,255,0.85)}
+  html[data-theme="light"] .sidebar-card{background:rgba(255,255,255,0.85)}
+  html[data-theme="light"] .settings-panel{background:rgba(255,255,255,0.7)}
+  html[data-theme="light"] input[type="text"],html[data-theme="light"] input[type="date"],html[data-theme="light"] textarea{background:rgba(240,242,245,0.9);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .file-upload-area{background:rgba(240,242,245,0.6)}
+  html[data-theme="light"] .crew-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .proj-chip{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .toast{background:rgba(255,255,255,0.9)}
+  html[data-theme="light"] .crew-chip.active{background:rgba(13,150,104,0.12);border-color:rgba(13,150,104,0.35);color:#0d9668}
+  html[data-theme="light"] .proj-chip.active{background:rgba(13,150,104,0.12);border-color:rgba(13,150,104,0.35);color:#0d9668}
+  html[data-theme="light"] .gear-btn{background:rgba(240,242,245,0.6);border-color:rgba(0,0,0,0.08)}
+  html[data-theme="light"] .preview-wrap{background:#ffffff;border-color:rgba(0,0,0,0.1)}
+  html[data-theme="light"] .preview-wrap.has-content{color:#1a1d2e}
+  html[data-theme="light"] .install-banner{background:rgba(255,255,255,0.95);border-top-color:rgba(0,0,0,0.1)}
+  html[data-theme="gray"] .topbar{background:rgba(42,45,56,0.92)}
+  html[data-theme="gray"] .card{background:rgba(30,33,48,0.85)}
+  html[data-theme="gray"] .sidebar-card{background:rgba(30,33,48,0.85)}
+  html[data-theme="gray"] .settings-panel{background:rgba(30,33,48,0.7)}
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 50% at 15% 45%,rgba(16,185,129,0.05) 0%,transparent 100%),radial-gradient(ellipse 50% 60% at 85% 25%,rgba(16,185,129,0.03) 0%,transparent 100%),radial-gradient(ellipse 70% 40% at 50% 85%,rgba(16,185,129,0.025) 0%,transparent 100%)}
+
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(22,22,22,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px}
+  .topbar-logo{font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:-0.02em}
+  .topbar-logo span{color:var(--accent)}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+  .webhook-badge{font-size:11px;color:var(--success);display:none;align-items:center;gap:5px}
+  .webhook-badge.show{display:flex}
+  .wb-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pdot 2s ease infinite}
+  @keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
+  .gear-btn{width:36px;height:36px;background:rgba(18,21,31,0.6);border:1px solid var(--glass-border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative;user-select:none;flex-shrink:0}
+  .gear-btn:hover{border-color:var(--glass-border-h);background:var(--accent-glow)}
+  .gear-btn.active{border-color:var(--warning);background:rgba(245,158,11,0.1)}
+  .gear-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--warning);border:2px solid var(--bg);display:none}
+  .gear-dot.show{display:block}
+
+  .settings-panel{position:sticky;top:56px;z-index:99;background:rgba(18,21,31,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--glass-border);overflow:hidden;max-height:0;transition:max-height .35s ease,padding .35s ease;padding:0 32px}
+  .settings-panel.open{max-height:120px;padding:16px 32px}
+  .settings-row{display:flex;align-items:flex-end;gap:12px}
+  .settings-field{flex:1}
+  .settings-field label{display:block;font-size:11px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .si input[type="text"]{width:100%;background:var(--bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+  .si input[type="text"]:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent-glow)}
+  .ss{font-size:11px;margin-top:5px;color:var(--text-d);transition:color .2s}
+  .ss.ok{color:var(--accent)}
+  .btn-sv{background:var(--warning);color:#000;border:none;border-radius:6px;padding:9px 18px;font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;white-space:nowrap;transition:opacity .15s;flex-shrink:0}
+  .btn-sv:hover{opacity:.85}
+
+  .outer{position:relative;z-index:1;max-width:944px;margin:0 auto;padding:36px 32px 80px;display:grid;grid-template-columns:252px 1fr;gap:28px;align-items:start}
+
+  .sidebar{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow-y:auto;align-self:start}
+  .sidebar-card{background:rgba(18,21,31,0.72);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.3),0 32px 64px rgba(0,0,0,.2)}
+  .sidebar-toggle{background:var(--surface2);border:none;border-bottom:1px solid var(--glass-border);padding:13px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;font-family:var(--mono);transition:background .15s}
+  .sidebar-toggle:hover{background:var(--accent-glow)}
+  .sidebar-toggle-left{display:flex;align-items:center;gap:8px}
+  .sidebar-toggle-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-m)}
+  .sidebar-chevron{width:14px;height:14px;transition:transform .3s ease;color:var(--text-d);flex-shrink:0}
+  .sidebar-chevron.open{transform:rotate(180deg)}
+  .sidebar-body{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s ease;padding:0 14px}
+  .sidebar-body.open{max-height:2000px;padding:14px}
+  .step-list{display:flex;flex-direction:column}
+  .step-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--glass-border)}
+  .step-item:first-child{padding-top:0}.step-item:last-child{border-bottom:none;padding-bottom:0}
+  .step-num{width:18px;height:18px;border-radius:4px;background:var(--accent-glow-s);border:1px solid var(--accent-dim);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .step-title{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.3}
+  .step-desc{font-size:10px;color:var(--text-m);line-height:1.6}
+  .step-desc kbd{background:var(--surface2);border:1px solid var(--glass-border);border-radius:3px;padding:0 4px;font-size:10px;color:var(--accent);font-family:var(--mono)}
+  .sidebar-tip{margin-top:10px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:6px;padding:9px 11px}
+  .sidebar-tip-label{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+  .sidebar-tip-text{font-size:10px;color:var(--text-m);line-height:1.6}
+  .sb-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);background:rgba(18,21,31,0.4);color:var(--text-d);font-size:10px;margin:2px 2px 2px 0;vertical-align:middle}
+  .sb-chip .sb-dot{width:5px;height:5px;border-radius:50%;background:var(--text-d)}
+  .sb-key{display:inline-block;background:var(--surface2);border:1px solid var(--glass-border);border-radius:3px;padding:0 5px;font-size:10px;color:var(--accent)}
+  .sb-req{color:var(--danger);font-size:9px;font-weight:700}
+  .sb-opt{color:var(--text-d);font-size:9px}
+  .sb-tbl{width:100%;border-collapse:collapse;margin:8px 0 0;font-size:10px}
+  .sb-tbl th{text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);padding:5px 0;border-bottom:1px solid var(--glass-border);font-size:9px}
+  .sb-tbl td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text-m)}
+  .sb-tbl tr:last-child td{border-bottom:none}
+
+  /* AI-CHANGE: NEW-CSS — стили для истории задач в сайдбаре.
+     ПРИЧИНА: требуется визуальный список последних созданных задач.
+     ОТКАТ: удалить блок .history-* до комментария "END HISTORY CSS". */
+  .history-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .history-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:5px;border:1px solid var(--glass-border);background:rgba(10,12,18,0.4);cursor:pointer;transition:all .15s}
+  .history-item:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
+  .history-id{font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .history-title{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .history-meta{font-size:9px;color:var(--text-d);flex-shrink:0}
+  .history-empty{font-size:10px;color:var(--text-d);font-style:italic;padding:4px 0}
+  /* END HISTORY CSS */
+
+  .card{background:rgba(18,21,31,0.72);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;animation:fu .4s ease both;box-shadow:0 2px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.3),0 32px 64px rgba(0,0,0,.2);transform:translateY(0);transition:transform .4s cubic-bezier(.25,.46,.45,.94),box-shadow .4s cubic-bezier(.25,.46,.45,.94)}
+  .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,.25),0 18px 40px rgba(0,0,0,.35),0 44px 80px rgba(0,0,0,.25)}
+  .card+.card{margin-top:14px}
+  .card-header{padding:12px 18px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:10px;background:var(--surface2)}
+  .eod-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);user-select:none}
+  .eod-toggle input{display:none}
+  .eod-toggle .eod-box{width:16px;height:16px;border:1.5px solid var(--glass-border-h);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:10px;color:transparent;background:var(--surface2)}
+  .eod-toggle input:checked+.eod-box{border-color:var(--accent);background:var(--accent);color:#fff}
+  .eod-toggle span:last-child{transition:color .15s}
+  .eod-toggle input:checked~span:last-child{color:var(--accent)}
+  .card-num{width:22px;height:22px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+  .card-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
+  .card-body{padding:18px}
+  .field{margin-bottom:14px}.field:last-child{margin-bottom:0}
+  label.fl{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--text-m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .req{color:var(--danger);font-size:14px;line-height:1}
+
+  input[type="text"],input[type="date"],textarea{width:100%;background:rgba(10,12,18,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;outline:none;transition:border-color .15s,box-shadow .15s;line-height:1.6}
+  textarea{overflow:hidden;resize:none;min-height:38px}input[type="date"]{color-scheme:dark}
+  input::placeholder,textarea::placeholder{color:var(--text-d)}
+  input[type="text"]:focus,input[type="date"]:focus,textarea:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent-glow)}
+  input.error,textarea.error{border-color:var(--danger)}
+  .error-msg{font-size:11px;color:var(--danger);margin-top:4px;display:none}
+  .error-msg.show{display:block}
+  .field-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+  .char-count{font-size:11px;color:var(--text-d)}
+
+  .section-field{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}.section-field:last-child{margin-bottom:0}
+  .section-icon{flex-shrink:0;width:16px;height:16px;margin-top:3px;display:flex;align-items:center;justify-content:center}
+  .section-icon svg{display:block;width:16px;height:16px;transition:stroke .25s ease}
+  .section-field[data-state="empty"] .section-icon svg{stroke:var(--accent-dim)}
+  .section-field[data-state="filled"] .section-icon svg{stroke:var(--success)}
+  .section-content{flex:1;min-width:0}
+  .section-label{font-size:10px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+
+  .deadline-row{display:flex;align-items:flex-end;gap:12px}
+  .deadline-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .deadline-col label.fl{font-size:10px;font-weight:700;color:var(--text-d);text-transform:uppercase;letter-spacing:.06em}
+  .time-col{width:110px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+  .time-col label.fl{font-size:10px;font-weight:700;color:var(--text-d);text-transform:uppercase;letter-spacing:.06em}
+  .time-est-field{display:flex;align-items:center;gap:6px}
+  .time-est-input{flex:1;padding:7px 8px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono);text-align:center;outline:none;transition:border-color .15s;min-width:0}
+  .time-est-input:focus{border-color:var(--accent)}
+  .time-est-input::placeholder{color:var(--text-d);opacity:.5}
+  .time-est-unit{font-size:12px;color:var(--text-d);font-weight:600;flex-shrink:0}
+
+  .crew-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .crew-chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:6px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none}
+  .crew-chip:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
+  .crew-chip.active{border-color:var(--accent-dim);background:var(--accent-glow-s);color:var(--accent)}
+  .crew-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text-d);transition:all .2s}
+  .crew-chip.active .crew-dot{background:var(--accent);box-shadow:0 0 6px var(--accent-dim)}
+  .crew-chip.dimmed .crew-dot{background:var(--dim-red)}
+  .crew-chip.dimmed{opacity:.45;pointer-events:none}
+  .crew-id{font-size:9px;color:var(--text-d);font-weight:500}
+  .crew-chip.active .crew-id{color:var(--accent-dim)}
+
+  .crew-section-label{font-size:10px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .crew-section-label svg{width:13px;height:13px;stroke:var(--accent);fill:none;stroke-width:1.2;stroke-linecap:round}
+
+  .project-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .proj-chip{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:6px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none}
+  .proj-chip:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
+  .proj-chip.active{border-color:var(--accent-dim);background:var(--accent-glow-s);color:var(--accent)}
+  .proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text-d);transition:all .2s}
+  .proj-chip.active .proj-dot{background:var(--accent);box-shadow:0 0 6px var(--accent-dim)}
+  .proj-chip.dimmed .proj-dot{background:var(--dim-red)}
+  .proj-chip.dimmed{opacity:.45;pointer-events:none}
+  .proj-id{font-size:9px;color:var(--text-d);font-weight:500}
+  .proj-chip.active .proj-id{color:var(--accent-dim)}
+
+  .file-upload-area{border:1px dashed var(--glass-border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(10,12,18,0.6);position:relative}
+  .file-upload-area:hover,.file-upload-area.drag-over,.file-upload-area.paste-flash{border-color:var(--accent);background:var(--accent-glow)}
+  .file-upload-area.paste-flash{animation:pasteFlash .6s ease}
+  @keyframes pasteFlash{0%{border-color:var(--accent);background:var(--accent-glow)}50%{border-color:var(--success);background:rgba(34,197,94,0.1)}100%{border-color:var(--accent);background:var(--accent-glow)}}
+  .file-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .file-upload-text{font-size:12px;color:var(--text-m);line-height:1.6}.file-upload-text span{color:var(--accent)}
+  .file-list{margin-top:7px;display:flex;flex-direction:column;gap:4px}
+  .file-item{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--glass-border);border-radius:6px;padding:5px 9px;font-size:11px}
+  .file-item-name{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .file-item-size{color:var(--text-d);flex-shrink:0}
+  .file-item-status{flex-shrink:0;width:20px;text-align:center}
+  .file-item-remove{cursor:pointer;color:var(--text-d);font-size:15px;transition:color .15s;flex-shrink:0;line-height:1}.file-item-remove:hover{color:var(--danger)}
+  .upload-progress{height:3px;background:var(--glass-border);border-radius:2px;margin-top:7px;overflow:hidden;display:none}
+  .upload-progress-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .3s ease;width:0%}
+  .upload-progress.show{display:block}
+
+  /* AI-CHANGE: NEW-CSS — превью изображений перед загрузкой.
+     ПРИЧИНА: пользователь должен видеть, что вставил из буфера.
+     ОТКАТ: удалить блок .file-thumb и @keyframes thumbIn. */
+  .file-thumb{width:28px;height:28px;border-radius:4px;object-fit:cover;border:1px solid var(--glass-border);flex-shrink:0}
+  @keyframes thumbIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+  .file-thumb{animation:thumbIn .25s ease}
+  /* END THUMB CSS */
+
+  .preview-wrap{background:rgba(10,12,18,0.6);border:1px solid var(--glass-border);border-radius:6px;padding:12px;font-size:12px;line-height:1.8;color:var(--text-d);min-height:48px;white-space:pre-wrap;word-break:break-word}
+  .preview-wrap.has-content{color:var(--text)}
+  .divider{height:1px;background:var(--glass-border);margin:14px 0}
+
+  .flame-btn{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+  .flame-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);pointer-events:none;user-select:none;transition:color .3s ease}
+  .flame-label.on{color:#ff3d00}
+  .flame-wrap{width:26px;height:30px;flex-shrink:0}
+  .flame-icon{display:block;width:22px;height:26px;transform-origin:50% 88%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .flame-l1{fill:#3a3f52;opacity:.45;transition:fill .3s ease}.flame-l2{fill:#3a3f52;opacity:.65;transition:fill .3s ease}.flame-l3{fill:#3a3f52;opacity:.82;transition:fill .3s ease}.flame-l4{fill:#3a3f52;opacity:1;transition:fill .3s ease}
+  .flame-icon:not(.lit):hover .flame-l1{fill:#5f657d}.flame-icon:not(.lit):hover .flame-l2{fill:#5f657d}.flame-icon:not(.lit):hover .flame-l3{fill:#5f657d}.flame-icon:not(.lit):hover .flame-l4{fill:#5f657d}
+  .flame-icon.lit .flame-l1{fill:#8b1a00}.flame-icon.lit .flame-l2{fill:#e63e00}.flame-icon.lit .flame-l3{fill:#ff6d00}.flame-icon.lit .flame-l4{fill:#ffab00}
+  .flame-icon.igniting{animation:ignite .45s cubic-bezier(.25,1.2,.5,1)}.flame-icon.extinguishing{animation:extinguish .3s ease}
+  @keyframes ignite{0%{transform:scale(.88) rotate(-1.5deg)}30%{transform:scale(1.12) rotate(1deg)}55%{transform:scale(.95) rotate(-.5deg)}80%{transform:scale(1.04) rotate(.3deg)}100%{transform:scale(1) rotate(0)}}
+  @keyframes extinguish{0%{transform:scale(1) rotate(0)}50%{transform:scale(.92) rotate(-.8deg)}100%{transform:scale(1) rotate(0)}}
+
+  .repeat-btn{font-size:10px;font-weight:600;padding:5px 10px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;user-select:none;text-transform:uppercase;letter-spacing:.04em;margin-left:auto;flex-shrink:0}
+  .repeat-btn:hover:not(:disabled){border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}.repeat-btn:disabled{opacity:.25;cursor:not-allowed}
+
+  /* AI-CHANGE: NEW-CSS — шаблоны задач (Баг/Фича/Рефакторинг).
+     ПРИЧИНА: ускорить заполнение типовых задач.
+     ОТКАТ: удалить блок .template-bar, .template-btn. */
+  .template-bar{display:flex;gap:6px;margin-left:12px;flex-shrink:0}
+  .template-btn{font-size:9px;font-weight:700;padding:4px 8px;border-radius:4px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-d);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.04em}
+  .template-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
+  .template-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow-s);box-shadow:0 0 8px var(--accent-dim)}
+  /* END TEMPLATE CSS */
+
+  .btn-wrap{margin-top:20px}
+  .btn-submit{width:100%;background:var(--accent);color:#fff;font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:none;border-radius:6px;padding:15px 24px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(16,185,129,0.2)}
+  .btn-submit:hover{background:var(--accent-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(16,185,129,0.35)}
+  .btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn-submit .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+  .btn-submit.loading .spinner{display:block}.btn-submit.loading .btn-text{opacity:.7}
+  .btn-hotkey{font-family:var(--mono);font-size:10px;opacity:.4;margin-left:4px}
+
+  .toast{position:fixed;bottom:28px;right:28px;padding:13px 18px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:500;z-index:999;transform:translateY(14px);opacity:0;transition:all .25s ease;max-width:400px;display:flex;align-items:flex-start;gap:10px;border:1px solid;box-shadow:0 8px 32px rgba(0,0,0,.5);background:rgba(18,21,31,0.8);backdrop-filter:blur(12px)}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{border-color:rgba(34,197,94,0.4);color:var(--success)}.toast.error{border-color:rgba(255,79,79,0.4);color:var(--danger)}
+  .toast.warn{border-color:rgba(245,158,11,0.4);color:var(--warning)}
+  .toast-icon{font-size:15px;flex-shrink:0;margin-top:1px}.toast-body{flex:1}.toast-title{font-weight:700;margin-bottom:2px}.toast-msg{font-size:11px;opacity:.8;line-height:1.5}
+
+  @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .dynamic-fields{display:flex;flex-direction:column;gap:6px}
+  .dynamic-field-row{display:flex;align-items:flex-start;gap:6px;position:relative}
+  .dynamic-field-row textarea{flex:1;min-height:38px;transition:border-color .15s,box-shadow .15s}
+  .add-field-btn,.remove-field-btn{flex-shrink:0;width:28px;height:28px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-d);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:1px;line-height:1;user-select:none}
+  .add-field-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
+  .remove-field-btn{color:var(--text-d);font-size:18px}
+  .remove-field-btn:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,79,79,0.1)}
+  .dynamic-hint{font-size:10px;color:var(--text-d);margin-top:4px;display:flex;align-items:center;gap:6px}
+  .dynamic-hint .dynamic-count{color:var(--accent);font-weight:600}
+
+  /* AI-CHANGE: NEW-CSS — индикатор несохранённых изменений.
+     ПРИЧИНА: пользователь должен видеть, что есть черновик.
+     ОТКАТ: удалить .draft-indicator. */
+  .draft-indicator{font-size:9px;color:var(--warning);margin-left:8px;animation:pdot 2s ease infinite;opacity:0;transition:opacity .3s}
+  .draft-indicator.show{opacity:1}
+  /* END DRAFT CSS */
+
+  @media(max-width:800px){.topbar{padding:0 16px}.settings-panel{padding:0 16px}.settings-panel.open{max-height:160px;padding:14px 16px}.settings-row{flex-direction:column;gap:8px}.btn-sv{width:100%;text-align:center}.outer{grid-template-columns:1fr;padding:16px 16px 60px;gap:0}.sidebar{display:none}.toast{bottom:14px;right:12px;left:12px;max-width:none}.deadline-row{flex-direction:column}.time-col{width:100%}.card-header{flex-wrap:wrap}.repeat-btn{margin-left:0}.template-bar{width:100%;margin-left:0;margin-top:8px;justify-content:center}}
+
+  /* AI-CHANGE: NEW-CSS — PWA install banner + standalone mode.
+     ПРИЧИНА: пользователь может установить форму как приложение на телефон.
+     ОТКАТ: удалить блок .install-banner, .pwa-* и @media(standalone). */
+  /* AI-CHANGE: NEW-CSS — Theme switcher dots. */
+  .theme-dots{display:flex;align-items:center;gap:8px;margin-right:6px}
+  .theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--glass-border-h);cursor:pointer;transition:all .2s;flex-shrink:0;position:relative}
+  .theme-dot:hover{transform:scale(1.15)}
+  .theme-dot.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+  .theme-dot.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+  .theme-dot-dark{background:#161616}
+  .theme-dot-gray{background:#2a2d38}
+  .theme-dot-light{background:#f0f2f5}
+  .theme-dot-light.active::after{color:#1a1d2e}
+  /* END THEME DOTS CSS */
+
+  .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
+  .install-banner.show{transform:translateY(0)}
+  .install-icon{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(16,185,129,0.3)}
+  .install-icon svg{width:22px;height:22px;fill:#fff}
+  .install-text{flex:1;min-width:0}
+  .install-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+  .install-desc{font-size:10px;color:var(--text-m);line-height:1.5}
+  .install-actions{display:flex;gap:8px;flex-shrink:0}
+  .install-btn-yes{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:opacity .15s;text-transform:uppercase;letter-spacing:.04em}
+  .install-btn-yes:hover{opacity:.85}
+  .install-btn-no{background:transparent;color:var(--text-d);border:1px solid var(--glass-border-h);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+  .install-btn-no:hover{border-color:var(--text-d);color:var(--text-m)}
+  @media(standalone){.topbar{padding-top:env(safe-area-inset-top)}}
+  /* END PWA CSS */
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.14</span>
+    <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
+         ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
+         ОТКАТ: удалить span.draft-indicator. -->
+    <span class="draft-indicator" id="draftIndicator">● черновик</span>
+  </div>
+  <div class="topbar-right">
+    <div class="theme-dots" id="themeDots" title="Тема оформления">
+      <div class="theme-dot theme-dot-dark active" data-theme="dark"></div>
+      <div class="theme-dot theme-dot-gray" data-theme="gray"></div>
+      <div class="theme-dot theme-dot-light" data-theme="light"></div>
+    </div>
+    <div class="webhook-badge" id="webhookBadge"><div class="wb-dot"></div>Подключено</div>
+    <div class="gear-btn" id="installBtn" title="Установить приложение" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14M6 10l6 6 6-6M4 20h16"/></svg>
+    </div>
+    <div class="gear-btn" id="gearBtn" title="Настройки">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M2.9 2.9l1.8 1.8M11.3 11.3l1.8 1.8M13.1 2.9l-1.8 1.8M4.7 11.3l-1.8 1.8"/></svg>
+      <div class="gear-dot" id="gearDot"></div>
+    </div>
+  </div>
+</div>
+
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-row si">
+    <div class="settings-field">
+      <label>Вебхук Bitrix24</label>
+      <input type="text" id="webhookUrl" placeholder="https://ПОРТАЛ.bitrix24.ru/rest/1/ТОКЕН/" />
+      <div class="ss" id="webhookStatus">Вставь URL и нажми «Сохранить»</div>
+    </div>
+    <button class="btn-sv" id="btnSaveWebhook">Сохранить</button>
+  </div>
+</div>
+
+<div class="outer">
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button">
+        <div class="sidebar-toggle-left">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#8892a8" stroke-width="1.2" stroke-linecap="round"><path d="M2 3h9M2 6.5h9M2 10h6"/><circle cx="10" cy="10" r="1.5"/></svg>
+          <div class="sidebar-toggle-title">Гайд по форме</div>
+        </div>
+        <svg class="sidebar-chevron" id="sidebarChevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg>
+      </button>
+      <div class="sidebar-body" id="sidebarBody">
+        <div class="step-list">
+          <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Настройка</div><div class="step-desc">Шестерёнка → вебхук → «Сохранить». Один раз, URL в браузере.</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Название + важность</div><div class="step-desc">Ввести название. Пламя = приоритет 2. Шаблоны = быстрый старт.</div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Команда</div><div class="step-desc">Три блока — независимые. <span class="sb-req">*</span> обязательны.</div><div style="margin-top:5px"><span class="sb-chip"><span class="sb-dot"></span>Константин</span><span class="sb-chip"><span class="sb-dot"></span>Саша</span><span class="sb-chip"><span class="sb-dot"></span>Тимур</span><span class="sb-chip"><span class="sb-dot"></span>АМ</span><span class="sb-chip"><span class="sb-dot"></span>ВМ</span></div><div style="margin-top:4px;font-size:9px;color:var(--text-d);line-height:1.6">Разработчик = исполнитель<br>Постановщик = АМ / ВМ = автор<br>Наблюдатель = АМ / ВМ <span class="sb-opt">(необяз.)</span></div></div></div>
+          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Дедлайн</div><div class="step-desc">Дата или быстрые кнопки: <span class="sb-key">+3д</span> <span class="sb-key">+7д</span> <span class="sb-key">+14д</span>.</div></div></div>
+          <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Описание <span class="sb-opt">необяз.</span></div><div class="step-desc">Цель, что сделать, критерии, материалы, файлы.</div></div></div>
+          <div class="step-item"><div class="step-num">6</div><div><div class="step-title">Проект <span class="sb-req">*</span></div><div class="step-desc">Один клик = GROUP_ID. 14 проектов.</div></div></div>
+          <div class="step-item"><div class="step-num">7</div><div><div class="step-title">Отправка</div><div class="step-desc">«Создать» или <span class="sb-key">Ctrl</span>+<span class="sb-key">Enter</span>. «Повторить» — копия прошлой.</div></div></div>
+        </div>
+        <div class="sidebar-tip">
+          <div class="sidebar-tip-label">Что куда попадает</div>
+          <table class="sb-tbl">
+            <tr><th>В форме</th><th>Поле API</th></tr>
+            <tr><td style="color:var(--text)">Разработчик</td><td>RESPONSIBLE_ID</td></tr>
+            <tr><td style="color:var(--text)">Постановщик</td><td>CREATED_BY</td></tr>
+            <tr><td style="color:var(--text)">Наблюдатель</td><td>observers.add</td></tr>
+            <tr><td style="color:var(--text)">Проект</td><td>GROUP_ID</td></tr>
+            <tr><td style="color:var(--text)">Пламя</td><td>PRIORITY = 2</td></tr>
+            <tr><td style="color:var(--text)">Файлы</td><td>UF_TASK_WEBDAV_FILES</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI-CHANGE: NEW-HTML — панель истории созданных задач.
+         ПРИЧИНА: мониторинг и контроль — пользователь видит, что уже создавал.
+         ОТКАТ: удалить весь .sidebar-card ниже (id="historyCard"). -->
+    <div class="sidebar-card" style="margin-top:14px">
+      <button class="sidebar-toggle" id="historyToggle" type="button">
+        <div class="sidebar-toggle-left">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#8892a8" stroke-width="1.2" stroke-linecap="round"><path d="M6.5 1v2.5M6.5 9.5V12M1 6.5h2.5M9.5 6.5H12"/><circle cx="6.5" cy="6.5" r="2"/></svg>
+          <div class="sidebar-toggle-title">История задач</div>
+        </div>
+        <svg class="sidebar-chevron" id="historyChevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg>
+      </button>
+      <div class="sidebar-body" id="historyBody">
+        <div class="history-list" id="historyList">
+          <div class="history-empty">Пока нет созданных задач</div>
+        </div>
+      </div>
+    </div>
+    <!-- END HISTORY HTML -->
+  </aside>
+
+  <div>
+    <form id="taskForm" novalidate>
+
+      <div class="card" style="animation-delay:.04s">
+        <div class="card-header">
+          <div class="card-num">1</div>
+          <div class="card-title">Название</div>
+          <!-- AI-CHANGE: NEW-HTML — шаблоны задач.
+               ПРИЧИНА: ускорить заполнение типовых задач.
+               ОТКАТ: удалить div.template-bar и его содержимое. -->
+          <div class="template-bar">
+            <button type="button" class="template-btn" data-template="bug">Правки</button>
+            <button type="button" class="template-btn" data-template="feature">Доработка</button>
+            <button type="button" class="template-btn" data-template="refactor">Реф</button>
+          </div>
+          <!-- END TEMPLATE HTML -->
+          <button type="button" class="repeat-btn" id="repeatBtn" disabled>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1 4.5V2.5a1 1 0 011-1h5l3 3v5a1 1 0 01-1 1H5"/><path d="M1 7.5l2.5 2.5 4-4"/></svg>
+            Повторить
+          </button>
+          <div class="flame-btn">
+            <span class="flame-label" id="flameLabel">Важность</span>
+            <div class="flame-wrap"><svg class="flame-icon" id="flameIcon" viewBox="0 0 20 24"><path class="flame-l1" d="M10 0C6.2 4.2 1.2 8.2 1.2 13a8.8 8.8 0 0017.6 0C18.8 8.2 13.8 4.2 10 0z"/><path class="flame-l2" d="M9.5 2.5C7 5.5 3.5 8.5 3.5 12.5a6.5 6.5 0 0013 0C16.5 8.5 12 5.5 9.5 2.5z"/><path class="flame-l3" d="M10.5 5C8.8 7 6 9 6 11.5a4 4 0 008 0C14 9 11.2 7 10.5 5z"/><path class="flame-l4" d="M10 7.5C9.2 8.5 7.8 9.8 7.8 11.2a2.2 2.2 0 004.4 0c0-1.4-1.4-2.7-2.2-3.7z"/></svg></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="fl">Имя задачи <span class="req">*</span></label>
+            <input type="text" id="taskTitle" placeholder="Краткое и чёткое название" maxlength="255" />
+            <div class="field-meta"><div class="error-msg" id="titleError">Обязательное поле</div><div class="char-count" id="titleCount">0 / 255</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.08s">
+        <div class="card-header"><div class="card-num">2</div><div class="card-title">Команда</div><label class="eod-toggle"><input type="checkbox" id="eodCheck" checked /><span class="eod-box">✓</span><span>EOD</span></label></div>
+        <div class="card-body">
+          <div class="crew-section-label"><svg viewBox="0 0 13 13"><circle cx="6.5" cy="4" r="2.5"/><path d="M1 12c0-3 2.5-5.5 5.5-5.5S12 9 12 12"/></svg>Разработчик</div>
+          <div class="crew-grid" id="devGrid"></div>
+          <div style="height:1px;background:var(--glass-border);margin:16px 0"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+              <div class="crew-section-label"><svg viewBox="0 0 13 13"><path d="M2 2h9M2 5h6M2 8h9M2 11h4"/></svg>Постановщик</div>
+              <div class="crew-grid" id="mgrGrid"></div>
+            </div>
+            <div style="text-align:right">
+              <div class="crew-section-label" style="display:inline-flex"><svg viewBox="0 0 13 13"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M6.5 3v3l2 1.5"/></svg>Наблюдатель</div>
+              <div class="crew-grid" id="obsGrid" style="justify-content:flex-end"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.12s">
+        <div class="card-header"><div class="card-num">3</div><div class="card-title">Сроки</div></div>
+        <div class="card-body">
+          <div class="field">
+            <div class="deadline-row">
+              <div class="deadline-col">
+                <label class="fl">Крайний срок</label>
+                <input type="date" id="taskDeadline" />
+              </div>
+              <div class="time-col">
+                <label class="fl">Оценка в часах <span class="req">*</span></label>
+                <div class="time-est-field">
+                  <input type="text" id="timeEstimate" class="time-est-input" placeholder="0" inputmode="decimal" />
+                  <span class="time-est-unit">ч</span>
+                </div>
+                <div class="error-msg" id="timeEstError">Укажи оценку в часах</div>
+              </div>
+            </div>
+            <!-- AI-CHANGE: NEW-HTML — ошибка валидации дедлайна.
+                 ПРИЧИНА: запретить дедлайн в прошлом.
+                 ОТКАТ: удалить div.error-msg ниже. -->
+            <div class="error-msg" id="deadlineError">Дедлайн не может быть в прошлом</div>
+            <!-- END DEADLINE ERROR -->
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.16s">
+        <div class="card-header"><div class="card-num">4</div><div class="card-title">Описание</div></div>
+        <div class="card-body">
+          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><line x1="8" y1="2" x2="8" y2="5.5"/><line x1="8" y1="10.5" x2="8" y2="14"/><line x1="2" y1="8" x2="5.5" y2="8"/><line x1="10.5" y1="8" x2="14" y2="8"/></svg></div><div class="section-content"><div class="section-label">Цель</div><textarea id="fieldGoal" data-icon-field rows="1" placeholder="Зачем делаем и какой результат."></textarea></div></div>
+          <div class="section-field" data-state="empty" id="todoSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5L4 5l1.5 1.5M8.5 3.5L10 5 8.5 6.5"/><line x1="6.5" y1="11" x2="9.5" y2="11"/><line x1="3" y1="8.5" x2="13" y2="8.5"/><line x1="3" y1="13.5" x2="13" y2="13.5"/></svg></div><div class="section-content"><div class="section-label">Что сделать</div><div class="dynamic-fields" id="todoDynamicFields"><div class="dynamic-field-row"><textarea class="dynamic-input" data-group="todo" data-icon-field rows="1" placeholder="- действие 1&#10;- действие 2"></textarea><button type="button" class="add-field-btn" data-group="todo" title="Добавить поле">+</button></div></div><div class="dynamic-hint"><span class="dynamic-count" id="todoCount">1 / 10</span> · <span class="sb-key">Enter</span> — добавить · <span class="sb-key">Shift+Enter</span> — новая строка</div></div></div>
+          <div class="section-field" data-state="empty" id="dodSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg></div><div class="section-content"><div class="section-label">Критерии приёмки</div><div class="dynamic-fields" id="dodDynamicFields"><div class="dynamic-field-row"><textarea class="dynamic-input" data-group="dod" data-icon-field rows="1" placeholder="- что проверяем при сдаче"></textarea><button type="button" class="add-field-btn" data-group="dod" title="Добавить поле">+</button></div></div><div class="dynamic-hint"><span class="dynamic-count" id="dodCount">1 / 10</span> · <span class="sb-key">Enter</span> — добавить · <span class="sb-key">Shift+Enter</span> — новая строка</div></div></div>
+          <div class="section-field" data-state="empty" id="contactSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M2 8h8M2 12h10"/><circle cx="14" cy="12" r="2"/></svg></div><div class="section-content"><div class="section-label">Контакт</div><textarea id="fieldContact" data-icon-field rows="1" placeholder="Кому писать вопросы по задаче"></textarea></div></div>
+          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2a3.5 3.5 0 014.24 4.24l-1.2 1.2M9.5 14a3.5 3.5 0 01-4.24-4.24l1.2-1.2"/></svg></div><div class="section-content"><div class="section-label">Материалы</div><textarea id="fieldMaterials" data-icon-field rows="1" placeholder="https://..."></textarea></div></div>
+          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4v7a1 1 0 001 1h11a1 1 0 001-1V5a1 1 0 00-1-1H7.5L6.5 3H2.5a1 1 0 00-1 1z"/></svg></div><div class="section-content"><div class="section-label">Файлы</div><div class="file-upload-area" id="dropZone"><input type="file" id="fileInput" multiple /><div class="file-upload-text">Перетащи, <span>выбери</span> или <span>Ctrl+V</span></div></div><div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div><div class="file-list" id="fileList"></div></div></div>
+          <div class="divider"></div>
+          <div class="section-label" style="font-size:10px;color:var(--text-m);margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em">Предпросмотр</div>
+          <div class="preview-wrap" id="descPreview">Заполни поля — здесь появится текст</div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.2s">
+        <div class="card-header"><div class="card-num">5</div><div class="card-title">Проект</div></div>
+        <div class="card-body">
+          <div class="project-grid" id="projGrid"></div>
+        </div>
+      </div>
+
+      <div class="btn-wrap">
+        <button type="submit" class="btn-submit" id="submitBtn"><div class="spinner"></div><span class="btn-text">Создать задачу</span><span class="btn-hotkey">Ctrl+Enter</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-icon" id="toastIcon"></div><div class="toast-body"><div class="toast-title" id="toastTitle"></div><div class="toast-msg" id="toastMsg"></div></div></div>
+
+<script>
+
+// ═══════════════════════════════════════════════════════════════════
+// 0. PWA — Service Worker + Install Prompt (Android + iOS)
+// ═══════════════════════════════════════════════════════════════════
+(function initPWA() {
+  // Регистрация Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      console.log("[PWA] SW registered, scope:", reg.scope);
+      setInterval(() => reg.update(), 30 * 60 * 1000);
+    }).catch(err => console.warn("[PWA] SW registration failed:", err));
+  }
+
+  const banner = document.getElementById("installBanner");
+  const btnAccept = document.getElementById("installAccept");
+  const btnDismiss = document.getElementById("installDismiss");
+  const iosHint = document.getElementById("iosHint");
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  const dismissed = localStorage.getItem("b24_pwa_dismissed");
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const installBtn = document.getElementById("installBtn");
+  let deferredPrompt = null;
+
+  // Показываем кнопку установки в topbar если не standalone
+  if (!isStandalone && installBtn) {
+    installBtn.style.display = "flex";
+  }
+
+  // Android Chrome — beforeinstallprompt
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Показываем и кнопку и баннер
+    if (installBtn) installBtn.style.display = "flex";
+    if (!dismissed && !isStandalone) {
+      setTimeout(() => banner?.classList.add("show"), 1500);
+    }
+  });
+
+  // Кнопка установки в topbar
+  installBtn?.addEventListener("click", async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      console.log("[PWA] Install (button) choice:", result.outcome);
+      deferredPrompt = null;
+    } else {
+      // Нет deferredPrompt — показываем баннер с инструкцией
+      if (banner) banner.classList.add("show");
+    }
+  });
+
+  // iOS Safari — показываем баннер с инструкцией
+  if (isIOS && isSafari && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      if (banner) {
+        // Меняем текст кнопки и описание для iOS
+        const desc = banner.querySelector(".install-desc");
+        const btnY = banner.querySelector(".install-btn-yes");
+        if (desc) desc.textContent = "Нажми Поделиться → На рабочий стол";
+        if (btnY) btnY.textContent = "Понятно";
+        banner.classList.add("show");
+      }
+    }, 2000);
+  }
+
+  btnAccept?.addEventListener("click", async () => {
+    if (deferredPrompt) {
+      // Android — нативный install prompt
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      console.log("[PWA] Install choice:", result.outcome);
+      deferredPrompt = null;
+      banner?.classList.remove("show");
+    } else if (isIOS) {
+      // iOS — просто закрываем, пользователь знает что делать
+      banner?.classList.remove("show");
+    } else {
+      // Fallback — пытаемся найти install в меню Chrome
+      banner?.classList.remove("show");
+      showToast("Нажми ⋮ в Chrome → «Установить приложение»", "warn");
+    }
+  });
+
+  btnDismiss?.addEventListener("click", () => {
+    banner?.classList.remove("show");
+    localStorage.setItem("b24_pwa_dismissed", "1");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    console.log("[PWA] App installed");
+    banner?.classList.remove("show");
+    deferredPrompt = null;
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// 0b. Theme Switcher — три кружка в topbar
+// ═══════════════════════════════════════════════════════════════════
+(function initTheme() {
+  const dots = document.querySelectorAll('.theme-dot');
+  const key = 'b24_theme';
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem(key, t);
+    dots.forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+    // Обновить color-scheme для date input
+    document.documentElement.style.colorScheme = t === 'light' ? 'light' : 'dark';
+  }
+
+  dots.forEach(d => d.addEventListener('click', () => setTheme(d.dataset.theme)));
+
+  // Восстановить сохранённую тему
+  const saved = localStorage.getItem(key);
+  if (saved) setTheme(saved);
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   AI-NOTE: ARCHITECTURE — код полностью реструктуризирован.
+   Все минифицированные имена функций переименованы в читаемые.
+   Мёртвый код (tags, addTag, removeTag, renderTags, addDynamicFields)
+   удалён полностью.
+   Добавлены: debounce, throttle, isSubmitting, draft autosave,
+   history panel, template buttons, deadline validation, duplicate check.
+   ОТКАТ: заменить весь &lt;script&gt; на оригинал из v6.
+   ═══════════════════════════════════════════════════════════════════ */
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. CONFIG — неизменяемые константы
+// ═══════════════════════════════════════════════════════════════════
+const MAX_DYNAMIC = 10;
+const DRAFT_KEY = 'bx_draft_v7';
+const HISTORY_KEY = 'bx_task_history_v7';
+const LAST_TASK_KEY = 'bx_last_task';
+const WEBHOOK_KEY = 'bx_webhook';
+
+const DEVS = [
+  {name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},
+  {name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},
+  {name:'АМ',id:'116'},{name:'ВМ',id:'1'}
+];
+const MGRS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
+const OBSS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
+const PROJS = [
+  {name:'Backlog',id:'78'},{name:'Бигап',id:'6'},{name:'Дакар',id:'32'},{name:'Иванов',id:'66'},
+  {name:'Медицина КЗ',id:'36'},{name:'Живое пиво',id:'4'},{name:'ВДЛ',id:'20'},{name:'Белолапотко',id:'50'},
+  {name:'ИТ Контроль',id:'42'},{name:'Нейс Юг',id:'62'},{name:'Самокаты',id:'18'},{name:'МАРКЕТДЖЕТ',id:'70'},
+  {name:'Керамика',id:'72'},{name:'ОПТИМАПЛАСТ',id:'52'}
+];
+
+const TEMPLATES = {
+  bug: {
+    title: '[BUG] ',
+    goal: 'Исправить критический/блокирующий дефект, нарушающий работу:',
+    todo: ['- Воспроизвести баг','- Найти причину','- Исправить','- Протестить'],
+    dod: ['- Баг не воспроизводится','- Нет регрессий','- Проверено']
+  },
+  feature: {
+    title: '[IMP] ',
+    goal: 'Доработать функционал',
+    todo: [],
+    dod: ['- Протестировано','- Задеплоено в тест']
+  },
+  refactor: {
+    title: '[REF] ',
+    goal: 'Улучшить качество кода без изменения поведения.',
+    todo: ['- Проанализировать текущий код','- Внести улучшения','- Протестировать'],
+    dod: ['- Покрытие тестов не упало','- Протестировано']
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. STATE — изменяемое состояние приложения
+// ═══════════════════════════════════════════════════════════════════
+let flameOn = false;
+let selectedFiles = [];
+let settingsOpen = false;
+let isSubmitting = false;          // AI-CHANGE: защита от двойного клика
+let hasUnsavedChanges = false;     // AI-CHANGE: для beforeunload и индикатора
+let selectedDevId = null;
+let selectedMgrId = null;
+let selectedObsId = null;
+let selectedProjId = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. UTILS — вспомогательные функции
+// ═══════════════════════════════════════════════════════════════════
+
+// AI-CHANGE: NEW-FUNCTION — debounce для оптимизации пересчётов.
+// ПРИЧИНА: updatePreview вызывалась на каждый input, тормозя при быстром наборе.
+// ОТКАТ: удалить функцию и вызывать updatePreview напрямую.
+function debounce(fn, ms = 150) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatFileSize(b) {
+  return b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// AI-CHANGE: NEW-FUNCTION — проверка дедлайна на валидность.
+// ПРИЧИНА: можно было выбрать прошедшую дату.
+// ОТКАТ: удалить функцию и её вызов в validateForm.
+function isDeadlineValid(dateStr) {
+  if (!dateStr) return true;
+  const dl = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dl >= today;
+}
+
+// AI-CHANGE: NEW-FUNCTION — проверка дубликата задачи.
+// ПРИЧИНА: предотвратить случайное двойное создание одной и той же задачи.
+// ОТКАТ: удалить функцию и её вызов в handleSubmit.
+function isDuplicateTask(title, devId, projId) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  return history.some(h =>
+    h.title === title &&
+    h.devId === devId &&
+    h.projId === projId &&
+    h.createdAt > fiveMinutesAgo
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. LOCALSTORAGE — черновик и история
+// ═══════════════════════════════════════════════════════════════════
+
+// AI-CHANGE: NEW-FUNCTION — сохранение черновика формы.
+// ПРИЧИНА: при случайном закрытии вкладки данные не теряются.
+// ОТКАТ: удалить функцию, константу DRAFT_KEY и вызовы saveDraft.
+function saveDraft() {
+  const draft = {
+    title: document.getElementById('taskTitle').value,
+    flameOn,
+    deadline: document.getElementById('taskDeadline').value,
+    timeEst: document.getElementById('timeEstimate').value,
+    devId: selectedDevId,
+    mgrId: selectedMgrId,
+    obsId: selectedObsId,
+    projId: selectedProjId,
+    goal: document.getElementById('fieldGoal').value,
+    contact: document.getElementById('fieldContact').value,
+    materials: document.getElementById('fieldMaterials').value,
+    todo: getDynamicValues('todo'),
+    dod: getDynamicValues('dod'),
+    savedAt: Date.now()
+  };
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  document.getElementById('draftIndicator').classList.add('show');
+  hasUnsavedChanges = true;
+}
+
+// AI-CHANGE: NEW-FUNCTION — восстановление черновика.
+function loadDraft() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    // Восстанавливаем только если черновик не старше 7 дней
+    if (Date.now() - d.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    if (d.title) document.getElementById('taskTitle').value = d.title;
+    // НЕ восстанавливаем дедлайн из черновика — всегда сегодня
+    // if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    if (d.goal) document.getElementById('fieldGoal').value = d.goal;
+    if (d.contact) document.getElementById('fieldContact').value = d.contact;
+    if (d.materials) document.getElementById('fieldMaterials').value = d.materials;
+    if (d.flameOn && !flameOn) toggleFlame();
+    if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
+    if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
+    if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
+    if (d.projId) { const c = document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`); if (c) selectProject(c); }
+    if (d.todo && Array.isArray(d.todo)) { resetDynamicFields('todo'); d.todo.forEach(v => { if(v) addDynamicField('todo', v); }); }
+    if (d.dod && Array.isArray(d.dod)) { resetDynamicFields('dod'); d.dod.forEach(v => { if(v) addDynamicField('dod', v); }); }
+    document.getElementById('titleCount').textContent = (d.title || '').length + ' / 255';
+    updateFieldIcons();
+    updatePreview();
+    document.querySelectorAll('textarea').forEach(autoGrow);
+    document.getElementById('draftIndicator').classList.add('show');
+    hasUnsavedChanges = true;
+  } catch(e) { console.error('Draft load error', e); }
+}
+
+// AI-CHANGE: NEW-FUNCTION — очистка черновика после успешной отправки.
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  document.getElementById('draftIndicator').classList.remove('show');
+  hasUnsavedChanges = false;
+}
+
+// AI-CHANGE: NEW-FUNCTION — добавление задачи в историю.
+function pushHistory(taskId, title, devId, projId) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.unshift({ taskId, title, devId, projId, createdAt: Date.now() });
+  if (history.length > 10) history.pop();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+// AI-CHANGE: NEW-FUNCTION — рендеринг истории в сайдбаре.
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  if (!history.length) {
+    list.innerHTML = '<div class="history-empty">Пока нет созданных задач</div>';
+    return;
+  }
+  list.innerHTML = history.map(h => {
+    const dev = DEVS.find(d => d.id === h.devId)?.name || '#' + h.devId;
+    const proj = PROJS.find(p => p.id === h.projId)?.name || '#' + h.projId;
+    const date = new Date(h.createdAt).toLocaleDateString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+    const taskUrl = 'https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/' + h.taskId + '/';
+    return `<div class="history-item" onclick="window.open('${taskUrl}','_blank')">
+      <span class="history-id">#${h.taskId}</span>
+      <span class="history-title" title="${escapeHtml(h.title)}">${escapeHtml(h.title)}</span>
+      <span class="history-meta">${escapeHtml(dev)} · ${escapeHtml(proj)} · ${date}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. UI RENDERERS — отрисовка компонентов
+// ═══════════════════════════════════════════════════════════════════
+function renderChips(id, list) {
+  const c = document.getElementById(id);
+  c.innerHTML = list.map(d => `<div class="crew-chip" data-id="${d.id}" data-grid="${id}" role="radio" aria-checked="false" tabindex="0"><span class="crew-dot"></span><span>${escapeHtml(d.name)}</span></div>`).join('');
+  c.querySelectorAll('.crew-chip').forEach(ch => {
+    ch.addEventListener('click', () => selectChip(ch));
+    ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectChip(ch); } });
+  });
+}
+
+function selectChip(ch) {
+  const grid = ch.dataset.grid;
+  const was = ch.classList.contains('active');
+  ch.parentElement.querySelectorAll('.crew-chip').forEach(c => {
+    c.classList.remove('active','dimmed');
+    c.setAttribute('aria-checked','false');
+  });
+  if (was) {
+    if (grid === 'devGrid') selectedDevId = null;
+    else if (grid === 'mgrGrid') selectedMgrId = null;
+    else selectedObsId = null;
+  } else {
+    ch.classList.add('active');
+    ch.setAttribute('aria-checked','true');
+    ch.parentElement.querySelectorAll('.crew-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
+    if (grid === 'devGrid') selectedDevId = ch.dataset.id;
+    else if (grid === 'mgrGrid') selectedMgrId = ch.dataset.id;
+    else selectedObsId = ch.dataset.id;
+  }
+  saveDraft();
+}
+
+function renderProjects() {
+  const g = document.getElementById('projGrid');
+  g.innerHTML = PROJS.map(p => `<div class="proj-chip" data-id="${p.id}" role="radio" aria-checked="false" tabindex="0"><span class="proj-dot"></span><span>${escapeHtml(p.name)}</span></div>`).join('');
+  g.querySelectorAll('.proj-chip').forEach(ch => {
+    ch.addEventListener('click', () => selectProject(ch));
+    ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProject(ch); } });
+  });
+}
+
+function selectProject(ch) {
+  const was = ch.classList.contains('active');
+  ch.parentElement.querySelectorAll('.proj-chip').forEach(c => {
+    c.classList.remove('active','dimmed');
+    c.setAttribute('aria-checked','false');
+  });
+  if (was) { selectedProjId = null; }
+  else {
+    ch.classList.add('active');
+    ch.setAttribute('aria-checked','true');
+    ch.parentElement.querySelectorAll('.proj-chip').forEach(c => { if (c !== ch) c.classList.add('dimmed'); });
+    selectedProjId = ch.dataset.id;
+  }
+  saveDraft();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 6. SETTINGS — панель вебхука
+// ═══════════════════════════════════════════════════════════════════
+function openSettings() {
+  settingsOpen = true;
+  document.getElementById('settingsPanel').classList.add('open');
+  document.getElementById('gearBtn').classList.add('active');
+  setTimeout(() => document.getElementById('webhookUrl').focus(), 350);
+}
+function closeSettings() {
+  settingsOpen = false;
+  document.getElementById('settingsPanel').classList.remove('open');
+  document.getElementById('gearBtn').classList.remove('active');
+}
+function markWebhookSaved(ok) {
+  const s = document.getElementById('webhookStatus');
+  const d = document.getElementById('gearDot');
+  const b = document.getElementById('webhookBadge');
+  if (ok) { s.textContent = 'Вебхук сохранён'; s.classList.add('ok'); d.classList.remove('show'); b.classList.add('show'); }
+  else { s.textContent = 'Вставь URL и нажми «Сохранить»'; s.classList.remove('ok'); d.classList.add('show'); b.classList.remove('show'); }
+}
+
+// AI-CHANGE: MODIFIED — добавлена проверка вебхука через profile.json.
+// ПРИЧИНА: пользователь узнавал о нерабочем вебхуке только при создании задачи.
+// ОТКАТ: заменить тело функции на оригинал v6 (просто сохранение без fetch).
+async function saveWebhook() {
+  const v = document.getElementById('webhookUrl').value.trim();
+  if (!v || !v.includes('bitrix24')) {
+    showToast('error', 'Неверный вебхук', 'URL должен содержать bitrix24.ru/rest/...');
+    return;
+  }
+  const hook = v.endsWith('/') ? v : v + '/';
+  // Проверяем вебхук перед сохранением
+  try {
+    showToast('success', 'Проверка...', 'Тестируем вебхук');
+    const res = await fetch(hook + 'profile.json');
+    const data = await res.json();
+    if (!data.result?.ID) throw new Error('Невалидный ответ');
+    window.webhookUrl = hook;
+    localStorage.setItem(WEBHOOK_KEY, window.webhookUrl);
+    markWebhookSaved(true);
+    showToast('success', 'Вебхук подключён', `Пользователь #${data.result.ID}`);
+    setTimeout(closeSettings, 600);
+  } catch (err) {
+    showToast('error', 'Вебхук не работает', 'Проверь URL и права доступа');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. REPEAT / TEMPLATES — повтор и шаблоны
+// ═══════════════════════════════════════════════════════════════════
+function updateRepeatButton() {
+  document.getElementById('repeatBtn').disabled = !localStorage.getItem(LAST_TASK_KEY);
+}
+
+function repeatLastTask() {
+  const raw = localStorage.getItem(LAST_TASK_KEY);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    document.getElementById('taskTitle').value = d.title || '';
+    document.getElementById('titleCount').textContent = (d.title || '').length + ' / 255';
+    if (d.flameOn && !flameOn) toggleFlame();
+    else if (!d.flameOn && flameOn) toggleFlame();
+    // НЕ восстанавливаем дедлайн из черновика — всегда сегодня
+    // if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
+    if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
+    if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
+    if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
+    if (d.projId) { const c = document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`); if (c) selectProject(c); }
+    const m = { goal: 'fieldGoal', materials: 'fieldMaterials', contact: 'fieldContact' };
+    Object.entries(m).forEach(([k, id]) => { if (d.f && d.f[k]) { const el = document.getElementById(id); el.value = d.f[k]; autoGrow(el); } });
+    if (d.f && d.f.todo && Array.isArray(d.f.todo)) { resetDynamicFields('todo'); d.f.todo.forEach(v => { if(v) addDynamicField('todo', v); }); }
+    else { resetDynamicFields('todo'); }
+    if (d.f && d.f.dod && Array.isArray(d.f.dod)) { resetDynamicFields('dod'); d.f.dod.forEach(v => { if(v) addDynamicField('dod', v); }); }
+    else { resetDynamicFields('dod'); }
+    updateFieldIcons();
+    updatePreview();
+    saveDraft();
+    showToast('success', 'Загружена прошлая задача', 'Проверь и отправь');
+  } catch { showToast('error', 'Ошибка', 'Не удалось восстановить'); }
+}
+
+// AI-CHANGE: NEW-FUNCTION — применение шаблона задачи.
+// ПРИЧИНА: ускорить создание типовых задач (баг/фича/рефакторинг).
+// ОТКАТ: удалить функцию и обработчики .template-btn.
+let activeTemplateKey = null;
+
+function _lockScroll() {
+  const y = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + y + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.overflowY = 'scroll';
+  return y;
+}
+function _unlockScroll(y) {
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.overflowY = '';
+  window.scrollTo(0, y);
+}
+
+function applyTemplate(key) {
+  if (activeTemplateKey === key) {
+    clearTemplate();
+    return;
+  }
+  const savedY = _lockScroll();
+  const t = TEMPLATES[key];
+  if (!t) { _unlockScroll(savedY); return; }
+  const titleEl = document.getElementById('taskTitle');
+  if (!titleEl.value.trim() || titleEl.value.trim().startsWith('[')) {
+    titleEl.value = t.title;
+  }
+  document.getElementById('fieldGoal').value = t.goal;
+  resetDynamicFields('todo');
+  t.todo.forEach(v => addDynamicField('todo', v, false));
+  resetDynamicFields('dod');
+  t.dod.forEach(v => addDynamicField('dod', v, false));
+  document.querySelectorAll('textarea').forEach(autoGrow);
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.template-btn[data-template="${key}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  activeTemplateKey = key;
+  setTimeout(() => _unlockScroll(savedY), 50);
+}
+
+function clearTemplate() {
+  const savedY = _lockScroll();
+  const titleEl = document.getElementById('taskTitle');
+  if (titleEl.value.trim().startsWith('[')) titleEl.value = '';
+  document.getElementById('fieldGoal').value = '';
+  resetDynamicFields('todo');
+  resetDynamicFields('dod');
+  document.querySelectorAll('textarea').forEach(ta => { ta.style.height = 'auto'; });
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  activeTemplateKey = null;
+  setTimeout(() => _unlockScroll(savedY), 50);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 8. FILES — загрузка и превью
+// ═══════════════════════════════════════════════════════════════════
+function handleFiles(files) {
+  files.forEach(f => {
+    if (!selectedFiles.find(s => s.name === f.name && s.size === f.size)) {
+      selectedFiles.push(f);
+    }
+  });
+  renderFileList();
+  const ff = document.querySelectorAll('.section-field')[4];
+  if (ff) ff.dataset.state = selectedFiles.length > 0 ? 'filled' : 'empty';
+  saveDraft();
+}
+
+// AI-CHANGE: MODIFIED — добавлены миниатюры для изображений.
+// ПРИЧИНА: пользователь не видел, что вставил из буфера, пока не создавал задачу.
+// ОТКАТ: удалить блок создания img и вернуть оригинальную строку с SVG-иконкой.
+function renderFileList() {
+  const l = document.getElementById('fileList');
+  l.innerHTML = '';
+  selectedFiles.forEach((f, i) => {
+    const e = document.createElement('div');
+    e.className = 'file-item';
+    let thumbHtml = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--text-d)" stroke-width="1"><path d="M1 3v6a1 1 0 001 1h8a1 1 0 001-1V4a1 1 0 00-1-1H5.5L4.5 2H2a1 1 0 00-1 1z"/></svg>`;
+    if (f.type.startsWith('image/')) {
+      const url = URL.createObjectURL(f);
+      thumbHtml = `<img src="${url}" class="file-thumb" alt="" />`;
+    }
+    e.innerHTML = `${thumbHtml}<span class="file-item-name">${escapeHtml(f.name)}</span><span class="file-item-size">${formatFileSize(f.size)}</span><span class="file-item-status" id="fs-${i}"></span><span class="file-item-remove" data-fi="${i}">×</span>`;
+    l.appendChild(e);
+  });
+  l.querySelectorAll('.file-item-remove').forEach(r => r.addEventListener('click', () => {
+    selectedFiles.splice(parseInt(r.dataset.fi), 1);
+    renderFileList();
+    const ff = document.querySelectorAll('.section-field')[4];
+    if (ff) ff.dataset.state = selectedFiles.length ? 'filled' : 'empty';
+    saveDraft();
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. FLAME — огонёк важности
+// ═══════════════════════════════════════════════════════════════════
+function toggleFlame() {
+  const i = document.getElementById('flameIcon');
+  const l = document.getElementById('flameLabel');
+  if (i.classList.contains('igniting') || i.classList.contains('extinguishing')) return;
+  if (!flameOn) {
+    flameOn = true;
+    i.classList.add('lit','igniting');
+    l.classList.add('on');
+    setTimeout(() => i.classList.remove('igniting'), 460);
+  } else {
+    flameOn = false;
+    i.classList.remove('lit');
+    i.classList.add('extinguishing');
+    l.classList.remove('on');
+    setTimeout(() => i.classList.remove('extinguishing'), 320);
+  }
+  saveDraft();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. DESCRIPTION — сборка и предпросмотр
+// ═══════════════════════════════════════════════════════════════════
+function buildDescription() {
+  const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const p = [];
+  if (g('fieldGoal')) p.push('Цель:\n' + g('fieldGoal'));
+  const todoVals = getDynamicValues('todo');
+  if (todoVals.length) p.push('Что сделать:\n' + todoVals.join('\n'));
+  const dodVals = getDynamicValues('dod');
+  if (dodVals.length) p.push('Критерии приёмки:\n' + dodVals.join('\n'));
+  if (g('fieldContact')) p.push('Контакт:\n' + g('fieldContact'));
+  if (g('fieldMaterials')) p.push('Материалы:\n' + g('fieldMaterials'));
+  return p.join('\n\n');
+}
+
+// AI-CHANGE: MODIFIED — updatePreview обёрнут в debounce.
+// ПРИЧИНА: тормоза при быстром наборе из-за частого пересчёта.
+// ОТКАТ: заменить на прямой вызов updatePreview() без debounce.
+const debouncedUpdatePreview = debounce(() => {
+  const d = buildDescription();
+  const el = document.getElementById('descPreview');
+  if (d) { el.textContent = d; el.classList.add('has-content'); }
+  else { el.textContent = 'Заполни поля — здесь появится текст'; el.classList.remove('has-content'); }
+}, 120);
+
+function updatePreview() { debouncedUpdatePreview(); }
+
+function updateFieldIcons() {
+  document.querySelectorAll('.section-field').forEach(sf => {
+    if (sf.id === 'todoSection' || sf.id === 'dodSection') {
+      const inputs = sf.querySelectorAll('textarea.dynamic-input');
+      let hasVal = false;
+      inputs.forEach(ta => { if (ta.value.trim()) hasVal = true; });
+      sf.dataset.state = hasVal ? 'filled' : 'empty';
+    } else {
+      const ta = sf.querySelector('textarea[data-icon-field]');
+      if (ta) sf.dataset.state = ta.value.trim() ? 'filled' : 'empty';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. DYNAMIC FIELDS — динамические списки
+// ═══════════════════════════════════════════════════════════════════
+function initDynamicFields(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.add-field-btn');
+    if (btn && btn.dataset.group === group) { addDynamicField(group); e.preventDefault(); }
+    const rm = e.target.closest('.remove-field-btn');
+    if (rm && rm.dataset.group === group) { removeDynamicField(group, rm.closest('.dynamic-field-row')); e.preventDefault(); }
+  });
+  container.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      const ta = e.target.closest('textarea.dynamic-input');
+      if (ta && ta.dataset.group === group) {
+        const rows = container.querySelectorAll('.dynamic-field-row');
+        if (rows.length < MAX_DYNAMIC) { e.preventDefault(); addDynamicField(group); }
+      }
+    }
+  });
+}
+
+// AI-CHANGE: MODIFIED — новое поле получает фокус.
+// ПРИЧИНА: при нажатии Enter курсор прыгал в никуда, нужен был клик мышью.
+// ОТКАТ: удалить строку newTextarea.focus() в конце функции.
+function addDynamicField(group, value) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  if (rows.length >= MAX_DYNAMIC) return;
+  const row = document.createElement('div');
+  row.className = 'dynamic-field-row';
+  const ta = document.createElement('textarea');
+  ta.className = 'dynamic-input';
+  ta.dataset.group = group;
+  ta.dataset.iconField = '';
+  ta.rows = 1;
+  ta.placeholder = 'Продолжение...';
+  if (value) ta.value = value;
+  const rmBtn = document.createElement('button');
+  rmBtn.type = 'button';
+  rmBtn.className = 'remove-field-btn';
+  rmBtn.dataset.group = group;
+  rmBtn.title = 'Удалить поле';
+  rmBtn.textContent = '×';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-field-btn';
+  addBtn.dataset.group = group;
+  addBtn.title = 'Добавить поле';
+  addBtn.textContent = '+';
+  row.appendChild(ta);
+  row.appendChild(rmBtn);
+  row.appendChild(addBtn);
+  container.appendChild(row);
+  autoGrow(ta);
+  ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+  ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
+  if (focus !== false) ta.focus(); // ← AI-CHANGE: фокус на новое поле (пропускаем при applyTemplate)
+  updateDynamicCount(group);
+  updateFieldIcons();
+  updatePreview();
+}
+
+function removeDynamicField(group, row) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  if (rows.length <= 1) return;
+  row.remove();
+  updateDynamicCount(group);
+  updateFieldIcons();
+  updatePreview();
+  saveDraft();
+}
+
+function resetDynamicFields(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return;
+  container.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'dynamic-field-row';
+  const ta = document.createElement('textarea');
+  ta.className = 'dynamic-input';
+  ta.dataset.group = group;
+  ta.dataset.iconField = '';
+  ta.rows = 1;
+  ta.placeholder = group === 'todo' ? '- действие 1\n- действие 2' : '- что проверяем при сдаче';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-field-btn';
+  addBtn.dataset.group = group;
+  addBtn.title = 'Добавить поле';
+  addBtn.textContent = '+';
+  row.appendChild(ta);
+  row.appendChild(addBtn);
+  container.appendChild(row);
+  ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+  ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
+  updateDynamicCount(group);
+}
+
+function updateDynamicCount(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  const countEl = document.getElementById(group + 'Count');
+  if (!container || !countEl) return;
+  const rows = container.querySelectorAll('.dynamic-field-row');
+  countEl.textContent = rows.length + ' / ' + MAX_DYNAMIC;
+}
+
+function getDynamicValues(group) {
+  const container = document.getElementById(group + 'DynamicFields');
+  if (!container) return [];
+  const vals = [];
+  container.querySelectorAll('textarea.dynamic-input').forEach(ta => { const v = ta.value.trim(); if (v) vals.push(v); });
+  return vals;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. VALIDATION — проверка формы
+// ═══════════════════════════════════════════════════════════════════
+function validateForm() {
+  let ok = true;
+  const t = document.getElementById('taskTitle');
+  if (!t.value.trim()) {
+    t.classList.add('error');
+    document.getElementById('titleError').classList.add('show');
+    ok = false;
+  }
+  // AI-CHANGE: NEW — валидация оценки времени.
+  const te = document.getElementById('timeEstimate');
+  const teErr = document.getElementById('timeEstError');
+  const teVal = te.value.replace(',', '.').trim();
+  const teNum = parseFloat(teVal);
+  if (!teVal || isNaN(teNum) || teNum <= 0) {
+    te.classList.add('error');
+    teErr.classList.add('show');
+    ok = false;
+  } else {
+    te.classList.remove('error');
+    teErr.classList.remove('show');
+  }
+  // AI-CHANGE: NEW — валидация дедлайна.
+  const dl = document.getElementById('taskDeadline');
+  const dlErr = document.getElementById('deadlineError');
+  if (!isDeadlineValid(dl.value)) {
+    dl.classList.add('error');
+    dlErr.classList.add('show');
+    ok = false;
+  } else {
+    dl.classList.remove('error');
+    dlErr.classList.remove('show');
+  }
+  return ok;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. API INTEGRATION — создание задачи, наблюдатель, файлы
+// ═══════════════════════════════════════════════════════════════════
+async function handleSubmit(e) {
+  e.preventDefault();
+  if (isSubmitting) return; // AI-CHANGE: защита от двойного клика
+  if (!validateForm()) { showToast('error', 'Заполни обязательные', 'Название задачи обязательно'); return; }
+
+  const cw = document.getElementById('webhookUrl').value.trim() || window.webhookUrl;
+  if (!cw) { showToast('error', 'Вебхук не указан', 'Шестерёнка → URL → Сохрани'); return; }
+  if (!selectedDevId) { showToast('error', 'Выбери разработчика', ''); return; }
+  if (!selectedMgrId) { showToast('error', 'Выбери постановщика', ''); return; }
+  if (!selectedProjId) { showToast('error', 'Выбери проект', ''); return; }
+
+  const hook = cw.endsWith('/') ? cw : cw + '/';
+  const EOD_HOOK = 'https://1c-cms.bitrix24.ru/rest/154/f896em13hhazm006/';
+  const dl = document.getElementById('taskDeadline').value;
+  const title = document.getElementById('taskTitle').value.trim();
+
+  // AI-CHANGE: NEW — проверка на дубликат.
+  if (isDuplicateTask(title, selectedDevId, selectedProjId)) {
+    showToast('warn', 'Возможный дубликат', 'Такая задача уже создана менее 5 минут назад. Продолжить? Нажми «Создать» ещё раз.');
+    // Добавляем маркер, чтобы второй клик прошёл
+    window._skipDuplicateCheck = true;
+    setTimeout(() => delete window._skipDuplicateCheck, 5000);
+    return;
+  }
+  if (window._skipDuplicateCheck) delete window._skipDuplicateCheck;
+
+  const payload = {
+    fields: {
+      TITLE: title,
+      DESCRIPTION: buildDescription(),
+      GROUP_ID: parseInt(selectedProjId),
+      RESPONSIBLE_ID: parseInt(selectedDevId),
+      CREATED_BY: parseInt(selectedMgrId),
+      PRIORITY: flameOn ? 2 : 0,
+      STATUS: 2
+    }
+  };
+  if (dl) payload.fields.DEADLINE = dl + 'T18:00:00+03:00';
+
+  // Оценка времени (часы → секунды)
+  const timeEstRaw = document.getElementById('timeEstimate').value.replace(',', '.');
+  const timeHours = parseFloat(timeEstRaw);
+  if (!isNaN(timeHours) && timeHours > 0) {
+    payload.fields.TIME_ESTIMATE = Math.round(timeHours * 3600);
+    payload.fields.ALLOW_TIME_TRACKING = 'Y';
+  }
+
+  // Сохраняем последнюю задачу
+  localStorage.setItem(LAST_TASK_KEY, JSON.stringify({
+    title: payload.fields.TITLE, flameOn, deadline: dl,
+    devId: selectedDevId, mgrId: selectedMgrId, obsId: selectedObsId, projId: selectedProjId,
+    f: {
+      goal: document.getElementById('fieldGoal').value,
+      todo: getDynamicValues('todo'), dod: getDynamicValues('dod'),
+      contact: document.getElementById('fieldContact').value,
+      materials: document.getElementById('fieldMaterials').value
+    }
+  }));
+  updateRepeatButton();
+
+  const btn = document.getElementById('submitBtn');
+  const bt = btn.querySelector('.btn-text');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  isSubmitting = true; // AI-CHANGE: блокировка
+  bt.textContent = 'Создаём...';
+
+  try {
+    const res = await fetch(hook + 'tasks.task.add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.result?.task?.id) {
+      const tid = data.result.task.id;
+
+      // Собираем ВСЕХ наблюдателей разом, чтобы не перетирать
+      // Раньше было 2 отдельных вызова addObserver — второй затирал первого
+      const observerIds = [];
+      if (selectedObsId) observerIds.push(parseInt(selectedObsId));
+      const eodOn = document.getElementById('eodCheck').checked;
+      if (eodOn) observerIds.push(154); // Бот для EOD-комментариев
+
+      let obsMsg = '';
+      if (observerIds.length) {
+        bt.textContent = 'Наблюдатель...';
+        obsMsg = await addObserversBatch(hook, tid, observerIds);
+      }
+
+      if (selectedFiles.length) {
+        bt.textContent = `Файлы (${selectedFiles.length})...`;
+        await uploadFiles(hook, tid);
+      }
+
+      // EOD-комментарий если галка стоит (бот уже добавлен наблюдателем выше)
+      let eodMsg = '';
+      if (eodOn) {
+        bt.textContent = 'EOD...';
+        eodMsg = await addEodComment(EOD_HOOK, tid, selectedProjId);
+      }
+
+      // AI-CHANGE: NEW — добавляем в историю и чистим черновик.
+      pushHistory(tid, title, selectedDevId, selectedProjId);
+      clearDraft();
+
+      const dn = document.querySelector(`#devGrid .crew-chip[data-id="${selectedDevId}"] span:nth-child(2)`)?.textContent || '#' + selectedDevId;
+      const pn = PROJS.find(p => p.id === selectedProjId)?.name || '#' + selectedProjId;
+      let msg = `${dn} → ${pn}`;
+      if (flameOn) msg += ' · Важная';
+      if (obsMsg) msg += obsMsg;
+      if (eodMsg) msg += eodMsg;
+
+      showToast('success', `Задача #${tid}`, msg);
+      resetForm();
+    } else if (data.error) {
+      showToast('error', 'Ошибка Bitrix24', data.error_description || data.error);
+    } else {
+      showToast('error', 'Неизвестный ответ', JSON.stringify(data).slice(0, 120));
+    }
+  } catch (err) {
+    if (err.name === 'TypeError') showToast('error', 'CORS', 'Открой через Live Server или python -m http.server');
+    else showToast('error', 'Ошибка сети', err.message);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    isSubmitting = false; // AI-CHANGE: снятие блокировки
+    bt.textContent = 'Создать задачу';
+    document.getElementById('uploadProgress').classList.remove('show');
+    document.getElementById('uploadBar').style.width = '0%';
+  }
+}
+
+// Добавление одного наблюдателя (фоллбэк для addObserversBatch)
+async function addObserverSingle(hook, taskId, userId) {
+  const variants = [
+    { endpoint: 'task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
+    { endpoint: 'tasks.task.observers.add', body: { TASK_ID: taskId, USER_ID: [parseInt(userId)] } },
+    { endpoint: 'task.observers.add', body: { TASK_ID: taskId, USER_ID: parseInt(userId) } },
+    { endpoint: 'tasks.task.update', body: { taskId: taskId, fields: { AUDITORS: [parseInt(userId)] } } },
+  ];
+  for (const v of variants) {
+    try {
+      const r = await fetch(hook + v.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(v.body)
+      });
+      const d = await r.json();
+      if (!d.error && (d.result === true || d.result?.result === true || d.result)) {
+        console.log('Наблюдатель добавлен через:', v.endpoint, d);
+        return true;
+      }
+      console.warn('Попытка', v.endpoint, ':', d.error_description || d.error);
+    } catch (err) {
+      console.warn('Ошибка запроса', v.endpoint, ':', err.message);
+    }
+  }
+  return false;
+}
+
+// Пакетное добавление наблюдателей — ОДНИМ запросом, чтобы не перетирать
+// ПРИЧИНА: tasks.task.update с AUDITORS:[x] ЗАМЕНЯЕТ весь список.
+// Два вызова подряд: AUDITORS:[116] потом AUDITORS:[154] → остаётся только бот.
+// Решение: собираем все ID и шлём один запрос AUDITORS:[116, 154]
+async function addObserversBatch(hook, taskId, userIds) {
+  // Основной путь: один запрос со всеми наблюдателями
+  try {
+    const r = await fetch(hook + 'tasks.task.update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId: taskId, fields: { AUDITORS: userIds } })
+    });
+    const d = await r.json();
+    if (!d.error && d.result) {
+      console.log('[Observers] Batch added:', userIds, d);
+      return ' · Наблюдатель ✓';
+    }
+    console.warn('[Observers] Batch failed:', d.error_description || d.error);
+  } catch (err) {
+    console.warn('[Observers] Batch error:', err.message);
+  }
+  // Фоллбэк: по одному (менее надёжно — может перетирать)
+  let anyOk = false;
+  for (const uid of userIds) {
+    const ok = await addObserverSingle(hook, taskId, String(uid));
+    if (ok) anyOk = true;
+  }
+  return anyOk ? ' · Наблюдатель ✓' : ' · ⚠ Наблюдатель не добавлен';
+}
+
+// AI-CHANGE: NEW-FUNCTION — EOD-комментарий к задаче.
+// ПРИЧИНА: шаблон EOD для отчёта по задаче.
+// ОТКАТ: удалить функцию и вызов в handleSubmit.
+async function addEodComment(hook, tid, projId) {
+  let comment = '[i]Заполни EOD при срезе задачи, если она решается более 4х часов и по завершении задачи:[/i]\n';
+  comment += '[i]Стадия тестирования обязательна при завершении задачи - [URL=https://www.notion.so/36b5ca3a0f26819db0decf544571a4bd?source=copy_link]ссылка[/URL][/i]\n';
+  if (projId === '32') {
+    comment += '[i]Не забываем прикладывать инструкцию по завершению задачи[/i]\n';
+  }
+  comment += '\n[b]Done[/b]:\n';
+  comment += '[b]Test[/b]:\n';
+  comment += '[b]Next[/b]:\n';
+  comment += '[b]Block[/b]:';
+  try {
+    const r = await fetch(hook + 'task.commentitem.add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ TASK_ID: tid, fields: { POST_MESSAGE: comment } })
+    });
+    const d = await r.json();
+    console.log('[EOD] Comment result:', JSON.stringify(d).slice(0, 300));
+    return d.result ? ' · EOD' : '';
+  } catch (e) {
+    console.warn('[EOD] Error:', e.message);
+    return '';
+  }
+}
+
+async function uploadFiles(hook, tid) {
+  if (!selectedFiles.length) return;
+  document.getElementById('uploadProgress').classList.add('show');
+  let failCount = 0;
+  const failNames = [];
+  const diskIds = [];
+
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const f = selectedFiles[i], s = document.getElementById(`fs-${i}`);
+    if (s) s.textContent = '…';
+    let ok = false;
+    let lastErr = '';
+    try {
+      const url1 = hook + 'disk.folder.uploadfile?id=3&uploadFile=' + encodeURIComponent(f.name);
+      const r1 = await fetch(url1);
+      if (!r1.ok) { lastErr = 'HTTP ' + r1.status + ' при получении URL'; throw new Error(lastErr); }
+      const d1 = await r1.json();
+      console.log('[Upload v7] Step 1 (' + f.name + '):', JSON.stringify(d1).slice(0, 300));
+      if (d1.error) { lastErr = d1.error_description || d1.error; throw new Error(lastErr); }
+      if (!d1.result) { lastErr = 'Пустой результат'; throw new Error(lastErr); }
+      const upUrl = d1.result.uploadUrl || d1.result.UPLOAD_URL;
+      const fieldName = d1.result.field || d1.result.fieldId || 'file';
+      if (!upUrl) { lastErr = 'Нет uploadUrl'; throw new Error(lastErr); }
+
+      let diskId = null;
+      // Единственный рабочий метод: FormData (multipart/form-data)
+      // Raw binary (Method A) сжигает upload URL — НЕ используем!
+      try {
+        const fd = new FormData();
+        fd.append(fieldName, f, f.name);
+        console.log('[Upload] FormData (' + f.name + ') field=' + fieldName + ' size=' + f.size);
+        const rU = await fetch(upUrl, { method: 'POST', body: fd });
+        const tU = await rU.text();
+        let dU; try { dU = JSON.parse(tU); } catch(_) { dU = null; }
+        console.log('[Upload] Response (' + f.name + '):', rU.status, tU.slice(0, 300));
+        if (rU.ok && dU && !dU.error && dU.result) { diskId = dU.result.ID || dU.result.id; }
+        else if (dU && dU.error) { lastErr = dU.error_description || dU.error; throw new Error(lastErr); }
+        else { lastErr = 'HTTP ' + rU.status; throw new Error(lastErr); }
+      } catch (eU) { console.warn('[Upload] Failed (' + f.name + '):', eU.message); }
+      if (!diskId) { lastErr = 'Все методы загрузки провалились'; throw new Error(lastErr); }
+      diskIds.push(diskId);
+      ok = true;
+    } catch (e) {
+      lastErr = e.message;
+      console.error('[Upload v7] ERROR (' + f.name + '):', e);
+    }
+    if (!ok) { if (s) s.textContent = '✕'; failCount++; failNames.push(f.name + ': ' + lastErr); }
+    else { if (s) s.textContent = '✓'; }
+    document.getElementById('uploadBar').style.width = Math.round(((i + 1) / selectedFiles.length) * 100) + '%';
+  }
+
+  if (diskIds.length > 0) {
+    try {
+      const nIds = diskIds.map(id => 'n' + id);
+      console.log('[Attach] Привязка файлов:', nIds.join(', '), 'к задаче #' + tid);
+      const r3 = await fetch(hook + 'tasks.task.update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: tid, fields: { UF_TASK_WEBDAV_FILES: nIds } })
+      });
+      const d3 = await r3.json();
+      console.log('[Attach] Результат:', JSON.stringify(d3).slice(0, 300));
+      if (d3.error) {
+        console.log('[Attach] Массовая привязка не удалась, пробуем по одному...');
+        for (const did of diskIds) {
+          try {
+            const r4 = await fetch(hook + 'tasks.task.update', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ taskId: tid, fields: { UF_TASK_WEBDAV_FILES: ['n' + did] } })
+            });
+            const d4 = await r4.json();
+            if (d4.error) console.warn('[Attach] Ошибка привязки n' + did + ':', d4.error_description);
+          } catch (e2) { console.warn('[Attach] Ошибка привязки n' + did + ':', e2.message); }
+        }
+      }
+    } catch (e) { console.error('[Attach] ERROR:', e); }
+  }
+  if (failCount > 0 && failNames.length) {
+    showToast('error', 'Файлы: ' + failCount + '/' + selectedFiles.length + ' не загружено', failNames.slice(0, 3).join('\n'));
+  }
+  return failCount;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 14. FORM RESET — сброс формы
+// ═══════════════════════════════════════════════════════════════════
+function resetForm() {
+  document.querySelectorAll('textarea[data-icon-field]').forEach(ta => {
+    if (!ta.classList.contains('dynamic-input')) { ta.value = ''; ta.style.height = 'auto'; }
+  });
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('timeEstimate').value = '';
+  { const d = new Date(); document.getElementById('taskDeadline').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  document.getElementById('titleCount').textContent = '0 / 255';
+  document.getElementById('fieldContact').value = '';
+  document.getElementById('fieldContact').style.height = 'auto';
+  if (flameOn) { const i = document.getElementById('flameIcon'), l = document.getElementById('flameLabel'); flameOn = false; i.className = 'flame-icon'; l.classList.remove('on'); }
+  selectedFiles = [];
+  renderFileList();
+  selectedDevId = null; selectedMgrId = null; selectedObsId = null; selectedProjId = null;
+  document.querySelectorAll('.crew-chip,.proj-chip').forEach(c => c.classList.remove('active','dimmed'));
+  resetDynamicFields('todo');
+  resetDynamicFields('dod');
+  updateFieldIcons();
+  updatePreview();
+  document.getElementById('deadlineError').classList.remove('show');
+  document.getElementById('taskDeadline').classList.remove('error');
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  activeTemplateKey = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 15. TOAST — уведомления
+// ═══════════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(type, title, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = type === 'success' ? '✓' : type === 'warn' ? '!' : '✕';
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg || '';
+  t.className = 'toast ' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 16. INIT — инициализация и обработчики
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  window.webhookUrl = localStorage.getItem(WEBHOOK_KEY) || '';
+  if (window.webhookUrl) {
+    document.getElementById('webhookUrl').value = window.webhookUrl;
+    markWebhookSaved(true);
+  }
+  renderChips('devGrid', DEVS);
+  renderChips('mgrGrid', MGRS);
+  renderChips('obsGrid', OBSS);
+  renderProjects();
+  updateRepeatButton();
+  renderHistory(); // AI-CHANGE: рендер истории при старте
+
+  initDynamicFields('todo');
+  initDynamicFields('dod');
+
+  // НЕ восстанавливаем черновик при перезагрузке — форма всегда чистая
+  // loadDraft();
+  // Очищаем старый черновик из localStorage
+  localStorage.removeItem(DRAFT_KEY);
+
+  // Дедлайн ВСЕГДА сегодня (локальное время)
+  const dlEl = document.getElementById('taskDeadline');
+  {
+    const d = new Date();
+    dlEl.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  document.querySelectorAll('textarea[data-icon-field]').forEach(ta => {
+    ta.addEventListener('input', () => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); });
+    ta.addEventListener('paste', () => setTimeout(() => { autoGrow(ta); updateFieldIcons(); updatePreview(); saveDraft(); }, 0));
+  });
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('input', () => autoGrow(ta));
+    ta.addEventListener('paste', () => setTimeout(() => autoGrow(ta), 0));
+  });
+
+  const titleEl = document.getElementById('taskTitle');
+  titleEl.addEventListener('input', function() {
+    document.getElementById('titleCount').textContent = this.value.length + ' / 255';
+    if (this.value.trim()) { this.classList.remove('error'); document.getElementById('titleError').classList.remove('show'); }
+    saveDraft();
+  });
+
+  // Сброс ошибки оценки времени при вводе
+  document.getElementById('timeEstimate').addEventListener('input', function() {
+    const v = this.value.replace(',', '.').trim();
+    const n = parseFloat(v);
+    if (v && !isNaN(n) && n > 0) { this.classList.remove('error'); document.getElementById('timeEstError').classList.remove('show'); }
+    saveDraft();
+  });
+
+  const fi = document.getElementById('fileInput'), dz = document.getElementById('dropZone');
+  fi.addEventListener('change', e => { handleFiles(Array.from(e.target.files)); fi.value = ''; });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFiles(Array.from(e.dataTransfer.files)); });
+
+  // Вставка из буфера
+  let pasteCounter = 0;
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          pasteCounter++;
+          const ext = blob.type.split('/')[1] || 'png';
+          const name = 'clipboard-' + Date.now() + '-' + pasteCounter + '.' + ext;
+          const file = new File([blob], name, { type: blob.type });
+          imageFiles.push(file);
+        }
+      }
+    }
+    if (imageFiles.length) {
+      handleFiles(imageFiles);
+      dz.classList.add('paste-flash');
+      setTimeout(() => dz.classList.remove('paste-flash'), 600);
+    }
+  });
+
+  // AI-CHANGE: NEW — обработчики шаблонов.
+  document.querySelectorAll('.template-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.preventDefault(); applyTemplate(btn.dataset.template); });
+  });
+
+  document.getElementById('gearBtn').addEventListener('click', () => settingsOpen ? closeSettings() : openSettings());
+  document.getElementById('btnSaveWebhook').addEventListener('click', saveWebhook);
+  document.getElementById('repeatBtn').addEventListener('click', repeatLastTask);
+  document.getElementById('flameIcon').addEventListener('click', toggleFlame);
+  document.getElementById('taskForm').addEventListener('submit', handleSubmit);
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); document.getElementById('taskForm').dispatchEvent(new Event('submit', { cancelable: true })); }
+    if (e.key === 'Escape' && settingsOpen) closeSettings();
+  });
+  document.addEventListener('click', e => { if (settingsOpen && !e.target.closest('#settingsPanel') && !e.target.closest('#gearBtn')) closeSettings(); });
+
+  // Sidebar toggles
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    const body = document.getElementById('sidebarBody'), chev = document.getElementById('sidebarChevron');
+    const isOpen = body.classList.toggle('open');
+    chev.classList.toggle('open', isOpen);
+  });
+  document.getElementById('historyToggle').addEventListener('click', () => {
+    const body = document.getElementById('historyBody'), chev = document.getElementById('historyChevron');
+    const isOpen = body.classList.toggle('open');
+    chev.classList.toggle('open', isOpen);
+  });
+
+  // AI-CHANGE: NEW — beforeunload при несохранённых изменениях.
+  // ПРИЧИНА: пользователь терял данные при случайном закрытии вкладки.
+  // ОТКАТ: удалить этот обработчик.
+  window.addEventListener('beforeunload', e => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  updateFieldIcons();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   AI-LEGACY-ALIASES: если другой AI решит откатить имена функций
+   на минифицированные (как в v6), раскомментируйте блок ниже
+   и замените вызовы в обработчиках.
+   ═══════════════════════════════════════════════════════════════════ */
+/*
+const ag = autoGrow;
+const ufi = updateFieldIcons;
+const up = updatePreview;
+const bD = buildDescription;
+const hF = handleFiles;
+const rFL = renderFileList;
+const fSz = formatFileSize;
+const tF = toggleFlame;
+const oS = openSettings;
+const cS = closeSettings;
+const mWS = markWebhookSaved;
+const sWH = saveWebhook;
+const uRB = updateRepeatButton;
+const rL = repeatLastTask;
+const hS = handleSubmit;
+const addObs = addObserver;
+const uFL = uploadFiles;
+const rF = resetForm;
+const val = validateForm;
+const esc = escapeHtml;
+const showT = showToast;
+const sC = selectChip;
+const sP = selectProject;
+*/
+</script>
+
+<!-- AI-CHANGE: NEW-HTML — PWA install banner.
+     ПРИЧИНА: предложить пользователю установить форму как приложение.
+     ОТКАТ: удалить div.install-banner. -->
+<div class="install-banner" id="installBanner">
+  <div class="install-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2L8 6h3v8h2V6h3l-4-4zM6 20v-2h12v2H6zm0-4v-2h12v2H6z"/></svg>
+  </div>
+  <div class="install-text">
+    <div class="install-title">Установить приложение</div>
+    <div class="install-desc">Быстрый доступ с рабочего стола — без браузера</div>
+  </div>
+  <div class="install-actions">
+    <button class="install-btn-no" id="installDismiss">Позже</button>
+    <button class="install-btn-yes" id="installAccept">Установить</button>
+  </div>
+</div>
+<!-- END PWA INSTALL BANNER -->
+<!-- AI-BLOCK: postMessage listener для автозаполнения из AI-панели -->
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'ai-fill') {
+    var d = e.data;
+    // Заполнить название задачи
+    if (d.title) {
+      var titleEl = document.getElementById('taskTitle');
+      if (titleEl) { titleEl.value = d.title; titleEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    // Заполнить цель
+    if (d.goal) {
+      var goalEl = document.getElementById('fieldGoal');
+      if (goalEl) { goalEl.value = d.goal; goalEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    // Заполнить "Что сделать" — первое поле todo
+    if (d.todo) {
+      var todoEl = document.querySelector('.dynamic-input[data-group="todo"]');
+      if (todoEl) { todoEl.value = d.todo; todoEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    // Подсветить заполненные поля
+    var card = document.querySelector('.card');
+    if (card) { card.style.boxShadow = '0 0 0 2px #10b981'; setTimeout(function(){ card.style.boxShadow = ''; }, 1500); }
+  }
+});
+// Сообщить родителю что iframe загружен
+window.parent.postMessage({ type: 'form-ready' }, '*');
+</script>
+</body>
+</html>
