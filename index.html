@@ -303,12 +303,59 @@
   .install-btn-no:hover{border-color:var(--text-d);color:var(--text-m)}
   @media(standalone){.topbar{padding-top:env(safe-area-inset-top)}}
   /* END PWA CSS */
+
+  /* ═══════ AI PANEL — правый сайдбар ═══════ */
+  .ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;opacity:0;pointer-events:none;transition:opacity .3s}
+  .ai-overlay.show{opacity:1;pointer-events:auto}
+  .ai-panel{position:fixed;top:0;right:0;bottom:0;width:380px;z-index:151;background:rgba(18,21,31,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1px solid var(--glass-border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+  .ai-panel.open{transform:translateX(0)}
+  .ai-header{padding:14px 18px;border-bottom:1px solid var(--glass-border);background:rgba(18,21,31,.6);display:flex;align-items:center;gap:10px}
+  .ai-icon{width:28px;height:28px;border-radius:6px;background:var(--accent-glow-s);border:1px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .ai-header-text{flex:1;min-width:0}
+  .ai-header-title{font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)}
+  .ai-header-sub{font-size:10px;color:var(--text-d);font-family:var(--mono)}
+  .ai-ver{font-size:9px;color:var(--text-d);font-family:var(--mono);background:rgba(255,255,255,.04);border:1px solid var(--glass-border);border-radius:3px;padding:2px 6px}
+  .ai-close{width:28px;height:28px;border-radius:5px;border:1px solid var(--glass-border);background:var(--surface2);color:var(--text-d);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+  .ai-close:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,79,79,.1)}
+  .ai-input-area{padding:14px 18px;flex:0 0 auto}
+  .ai-textarea{width:100%;height:120px;background:rgba(10,12,18,.6);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;resize:none;line-height:1.6;transition:border-color .15s,box-shadow .15s}
+  .ai-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+  .ai-textarea::placeholder{color:var(--text-d)}
+  .ai-gen-btn{width:100%;margin-top:10px;padding:11px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .ai-gen-btn:hover:not(:disabled){background:var(--accent-dark)}
+  .ai-gen-btn:disabled{opacity:.5;cursor:not-allowed}
+  .ai-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+  .ai-gen-btn.loading .ai-spinner{display:inline-block}
+  .ai-result-area{padding:10px 18px;border-bottom:1px solid var(--glass-border);flex:0 0 auto}
+  .ai-refill-btn{font-size:9px;font-weight:700;color:var(--text-m);background:var(--surface2);border:1px solid var(--glass-border);border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
+  .ai-refill-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
+  .ai-kw{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .ai-kw-tag{font-size:9px;font-weight:600;color:var(--accent);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:3px;padding:2px 6px;font-family:var(--mono)}
+  .ai-error{padding:10px 18px;background:rgba(255,79,79,.08);border-bottom:1px solid rgba(255,79,79,.2);font-size:11px;color:var(--danger);font-family:var(--mono)}
+  .ai-tasks{flex:1;overflow-y:auto;padding:14px 18px}
+  .ai-tasks-title{font-size:10px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .ai-search-kw{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+  .ai-search-kw-label{font-size:8px;font-weight:600;color:var(--text-d);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;line-height:18px}
+  .ai-search-kw-tag{font-size:8px;font-weight:600;color:var(--warning);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:3px;padding:1px 5px;font-family:var(--mono)}
+  .ai-task-empty{font-size:11px;color:var(--text-d);font-style:italic;font-family:var(--mono)}
+  .ai-task-card{display:flex;flex-direction:column;gap:4px;padding:9px 10px;margin-bottom:6px;border-radius:5px;border:1px solid var(--glass-border);background:rgba(10,12,18,.4);text-decoration:none;transition:all .15s;cursor:pointer}
+  .ai-task-card:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
+  .ai-task-top{display:flex;align-items:center;gap:6px}
+  .ai-task-id{font-size:10px;font-weight:700;color:var(--accent);font-family:var(--mono);flex-shrink:0}
+  .ai-task-resp{font-size:10px;color:var(--text-m);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ai-task-name{font-size:11px;color:var(--text);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
+  .ai-task-status{font-size:9px;font-weight:600;font-family:var(--mono);border-radius:3px;padding:1px 5px;display:inline-block}
+  .ai-btn{width:36px;height:36px;background:rgba(18,21,31,.6);border:1px solid var(--glass-border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative;user-select:none;flex-shrink:0;font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+  .ai-btn:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
+  .ai-btn.active{border-color:var(--accent);background:var(--accent-glow-s)}
+  @media(max-width:800px){.ai-panel{width:100%}.ai-btn{display:none}}
+  /* ═══════ END AI PANEL CSS ═══════ */
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.15</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.16</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -324,6 +371,7 @@
     <div class="gear-btn" id="installBtn" title="Установить приложение" style="display:none">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14M6 10l6 6 6-6M4 20h16"/></svg>
     </div>
+    <div class="ai-btn" id="aiToggleBtn" title="AI Ассистент">✦</div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M2.9 2.9l1.8 1.8M11.3 11.3l1.8 1.8M13.1 2.9l-1.8 1.8M4.7 11.3l-1.8 1.8"/></svg>
       <div class="gear-dot" id="gearDot"></div>
@@ -1842,30 +1890,187 @@ const sP = selectProject;
 </div>
 <!-- END PWA INSTALL BANNER -->
 
-<!-- AI-BLOCK: postMessage listener для автозаполнения из AI-панели + кнопка AI -->
-<a href="https://bitrix-form-ai.vercel.app" target="_blank" rel="noopener noreferrer" id="aiBtn" title="Открыть с AI-ассистентом" style="position:fixed;bottom:24px;left:24px;z-index:199;width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#10b981,#0ea472);border:1px solid rgba(16,185,129,0.4);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.3);transition:all .2s;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;text-decoration:none">✦</a>
-<style>#aiBtn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(16,185,129,0.45)}</style>
+<!-- AI PANEL: правый сайдбар -->
+<div class="ai-overlay" id="aiOverlay"></div>
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-icon">✦</div>
+    <div class="ai-header-text">
+      <div class="ai-header-title">AI Ассистент</div>
+      <div class="ai-header-sub">Вставь запрос из чата</div>
+    </div>
+    <div class="ai-ver">v1.1.1</div>
+    <button class="ai-close" id="aiCloseBtn" title="Закрыть">×</button>
+  </div>
+  <div class="ai-input-area">
+    <textarea class="ai-textarea" id="aiInput" placeholder="Вставь скопированный текст из чата..."></textarea>
+    <button class="ai-gen-btn" id="aiGenBtn">✦ Сгенерировать описание</button>
+  </div>
+  <div class="ai-result-area" id="aiResultArea" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <button class="ai-refill-btn" id="aiRefillBtn">↻ Перезаполнить</button>
+    </div>
+    <div class="ai-kw" id="aiKeywords"></div>
+  </div>
+  <div class="ai-error" id="aiError" style="display:none"></div>
+  <div class="ai-tasks">
+    <div class="ai-tasks-title" id="aiTasksTitle">Аналогичные задачи</div>
+    <div id="aiSearchKeywords" style="display:none" class="ai-search-kw">
+      <span class="ai-search-kw-label">Найдено по:</span>
+    </div>
+    <div id="aiTasksList"><div class="ai-task-empty" id="aiTasksEmpty">Здесь появятся аналогичные задачи</div></div>
+  </div>
+</div>
 <script>
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'ai-fill') {
-    var d = e.data;
-    if (d.title) {
-      var titleEl = document.getElementById('taskTitle');
-      if (titleEl) { titleEl.value = d.title; titleEl.dispatchEvent(new Event('input', {bubbles:true})); }
+(function(){
+  var API_BASE = 'https://bitrix-form-ai.vercel.app/api';
+  var panel = document.getElementById('aiPanel');
+  var overlay = document.getElementById('aiOverlay');
+  var toggleBtn = document.getElementById('aiToggleBtn');
+  var closeBtn = document.getElementById('aiCloseBtn');
+  var genBtn = document.getElementById('aiGenBtn');
+  var input = document.getElementById('aiInput');
+  var resultArea = document.getElementById('aiResultArea');
+  var keywordsEl = document.getElementById('aiKeywords');
+  var errorEl = document.getElementById('aiError');
+  var tasksList = document.getElementById('aiTasksList');
+  var tasksEmpty = document.getElementById('aiTasksEmpty');
+  var searchKwEl = document.getElementById('aiSearchKeywords');
+  var refillBtn = document.getElementById('aiRefillBtn');
+  var decomposeResult = null;
+  var isOpen = false;
+
+  function openPanel() { panel.classList.add('open'); overlay.classList.add('show'); isOpen = true; toggleBtn.classList.add('active'); }
+  function closePanel() { panel.classList.remove('open'); overlay.classList.remove('show'); isOpen = false; toggleBtn.classList.remove('active'); }
+
+  toggleBtn.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+
+  function fillForm(data) {
+    if (data.title) {
+      var el = document.getElementById('taskTitle');
+      if (el) { el.value = data.title; el.dispatchEvent(new Event('input', {bubbles:true})); }
     }
-    if (d.goal) {
-      var goalEl = document.getElementById('fieldGoal');
-      if (goalEl) { goalEl.value = d.goal; goalEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    if (data.goal) {
+      var el = document.getElementById('fieldGoal');
+      if (el) { el.value = data.goal; el.dispatchEvent(new Event('input', {bubbles:true})); }
     }
-    if (d.todo) {
-      var todoEl = document.querySelector('.dynamic-input[data-group="todo"]');
-      if (todoEl) { todoEl.value = d.todo; todoEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    if (data.todo) {
+      var el = document.querySelector('.dynamic-input[data-group="todo"]');
+      if (el) { el.value = data.todo; el.dispatchEvent(new Event('input', {bubbles:true})); }
     }
     var card = document.querySelector('.card');
     if (card) { card.style.boxShadow = '0 0 0 2px #10b981'; setTimeout(function(){ card.style.boxShadow = ''; }, 1500); }
   }
-});
-window.parent.postMessage({ type: 'form-ready' }, '*');
+
+  function statusColor(s) {
+    if (s.indexOf('Заверш') >= 0 || s.indexOf('Принят') >= 0) return '#22c55e';
+    if (s.indexOf('работе') >= 0) return '#3b82f6';
+    if (s.indexOf('Ожида') >= 0) return '#f59e0b';
+    if (s.indexOf('Отложен') >= 0) return '#6b7280';
+    if (s.indexOf('Просрочен') >= 0) return '#ef4444';
+    return '#8892a8';
+  }
+
+  function renderTasks(tasks) {
+    tasksList.innerHTML = '';
+    if (!tasks || tasks.length === 0) {
+      tasksList.innerHTML = '<div class="ai-task-empty">' + (decomposeResult ? 'Аналоги не найдены' : 'Здесь появятся аналогичные задачи') + '</div>';
+      return;
+    }
+    tasks.forEach(function(t) {
+      var c = statusColor(t.status);
+      var a = document.createElement('a');
+      a.href = t.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.className = 'ai-task-card';
+      a.innerHTML = '<div class="ai-task-top"><span class="ai-task-id">#' + t.id + '</span><span class="ai-task-resp">' + t.responsible + '</span></div>' +
+        '<div class="ai-task-name">' + t.title + '</div>' +
+        '<span class="ai-task-status" style="color:' + c + ';background:' + c + '15;border:1px solid ' + c + '30">' + t.status + '</span>';
+      tasksList.appendChild(a);
+    });
+  }
+
+  function renderSearchKw(kws) {
+    if (!kws || kws.length === 0) { searchKwEl.style.display = 'none'; return; }
+    searchKwEl.style.display = 'flex';
+    searchKwEl.innerHTML = '<span class="ai-search-kw-label">Найдено по:</span>';
+    kws.forEach(function(kw) {
+      var s = document.createElement('span'); s.className = 'ai-search-kw-tag'; s.textContent = kw;
+      searchKwEl.appendChild(s);
+    });
+  }
+
+  genBtn.addEventListener('click', async function() {
+    var text = input.value.trim();
+    if (!text) return;
+    decomposeResult = null;
+    errorEl.style.display = 'none';
+    resultArea.style.display = 'none';
+    searchKwEl.style.display = 'none';
+    tasksList.innerHTML = '<div class="ai-task-empty">Декомпозиция...</div>';
+    genBtn.classList.add('loading');
+    genBtn.innerHTML = '<span class="ai-spinner"></span>Декомпозиция...';
+    genBtn.disabled = true;
+
+    try {
+      var res = await fetch(API_BASE + '/ai-decompose', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: text})
+      });
+      if (!res.ok) { var e = await res.json(); throw new Error(e.error || 'Ошибка декомпозиции'); }
+      var result = await res.json();
+      decomposeResult = result;
+
+      // Show keywords
+      if (result.keywords && result.keywords.length) {
+        keywordsEl.innerHTML = '';
+        result.keywords.forEach(function(kw) {
+          var s = document.createElement('span'); s.className = 'ai-kw-tag'; s.textContent = kw;
+          keywordsEl.appendChild(s);
+        });
+        resultArea.style.display = 'block';
+      }
+
+      // Fill form
+      fillForm({title: result.title, todo: result.fullBody || result.body});
+
+      // Search
+      genBtn.innerHTML = '<span class="ai-spinner"></span>Поиск аналогов...';
+      tasksList.innerHTML = '<div class="ai-task-empty">Поиск аналогов...</div>';
+
+      try {
+        var sres = await fetch(API_BASE + '/ai-search', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({keywords: result.keywords})
+        });
+        if (sres.ok) {
+          var sdata = await sres.json();
+          renderTasks(sdata.similar || []);
+          renderSearchKw(sdata.usedKeywords || []);
+        } else {
+          renderTasks([]);
+        }
+      } catch(se) {
+        renderTasks([]);
+      }
+    } catch(err) {
+      errorEl.textContent = err.message || 'Ошибка';
+      errorEl.style.display = 'block';
+      tasksList.innerHTML = '<div class="ai-task-empty">Здесь появятся аналогичные задачи</div>';
+    } finally {
+      genBtn.classList.remove('loading');
+      genBtn.innerHTML = '✦ Сгенерировать описание';
+      genBtn.disabled = false;
+    }
+  });
+
+  refillBtn.addEventListener('click', function() {
+    if (decomposeResult) {
+      fillForm({title: decomposeResult.title, todo: decomposeResult.fullBody || decomposeResult.body});
+    }
+  });
+})();
 </script>
 </body>
 </html>
