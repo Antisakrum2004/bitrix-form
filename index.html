@@ -308,7 +308,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.14</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.15</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1841,5 +1841,31 @@ const sP = selectProject;
   </div>
 </div>
 <!-- END PWA INSTALL BANNER -->
+
+<!-- AI-BLOCK: postMessage listener для автозаполнения из AI-панели + кнопка AI -->
+<a href="https://bitrix-form-ai.vercel.app" target="_blank" rel="noopener noreferrer" id="aiBtn" title="Открыть с AI-ассистентом" style="position:fixed;bottom:24px;left:24px;z-index:199;width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#10b981,#0ea472);border:1px solid rgba(16,185,129,0.4);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.3);transition:all .2s;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;text-decoration:none">✦</a>
+<style>#aiBtn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(16,185,129,0.45)}</style>
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'ai-fill') {
+    var d = e.data;
+    if (d.title) {
+      var titleEl = document.getElementById('taskTitle');
+      if (titleEl) { titleEl.value = d.title; titleEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    if (d.goal) {
+      var goalEl = document.getElementById('fieldGoal');
+      if (goalEl) { goalEl.value = d.goal; goalEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    if (d.todo) {
+      var todoEl = document.querySelector('.dynamic-input[data-group="todo"]');
+      if (todoEl) { todoEl.value = d.todo; todoEl.dispatchEvent(new Event('input', {bubbles:true})); }
+    }
+    var card = document.querySelector('.card');
+    if (card) { card.style.boxShadow = '0 0 0 2px #10b981'; setTimeout(function(){ card.style.boxShadow = ''; }, 1500); }
+  }
+});
+window.parent.postMessage({ type: 'form-ready' }, '*');
+</script>
 </body>
 </html>
