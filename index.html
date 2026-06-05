@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Создать задачу — Bitrix24</title>
 <meta name="theme-color" content="#10b981">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="B24 Задача">
 <link rel="manifest" href="manifest.json">
@@ -318,7 +318,7 @@
   .ai-fab:not(.open){animation:aiFabPulse 3s ease infinite}
 
   .ai-panel-overlay{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s ease}
-  .ai-panel-overlay.show{opacity:1;pointer-events:auto}
+  .ai-panel-overlay.show{opacity:1;pointer-events:none}
 
   .ai-panel{position:fixed;top:0;right:0;z-index:170;width:380px;height:100vh;background:var(--glass-solid);border-left:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;overflow:hidden}
   .ai-panel.open{transform:translateX(0)}
@@ -2193,7 +2193,7 @@ async function handleAiGenerate() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('aiFab').addEventListener('click', () => toggleAiPanel());
   document.getElementById('aiClose').addEventListener('click', () => toggleAiPanel(false));
-  document.getElementById('aiOverlay').addEventListener('click', () => toggleAiPanel(false));
+  /* overlay click removed — was causing panel to close when clicking form fields */
   document.getElementById('aiGenerateBtn').addEventListener('click', handleAiGenerate);
   document.getElementById('aiDupConfirmBtn').addEventListener('click', () => {
     aiDuplicateConfirmed = true;
