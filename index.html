@@ -412,7 +412,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.19</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.20</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1241,13 +1241,13 @@ function toggleFlame() {
 function buildDescription() {
   const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const p = [];
-  if (g('fieldGoal')) p.push('Цель:\n' + g('fieldGoal'));
+  if (g('fieldGoal')) p.push('[B]Цель:[/B]\n' + g('fieldGoal'));
   const todoVals = getDynamicValues('todo');
-  if (todoVals.length) p.push('Что сделать:\n' + todoVals.join('\n'));
+  if (todoVals.length) p.push('[B]Что сделать:[/B]\n' + todoVals.join('\n'));
   const dodVals = getDynamicValues('dod');
-  if (dodVals.length) p.push('Критерии приёмки:\n' + dodVals.join('\n'));
-  if (g('fieldContact')) p.push('Контакт:\n' + g('fieldContact'));
-  if (g('fieldMaterials')) p.push('Материалы:\n' + g('fieldMaterials'));
+  if (dodVals.length) p.push('[B]Критерии приёмки:[/B]\n' + dodVals.join('\n'));
+  if (g('fieldContact')) p.push('[B]Контакт:[/B]\n' + g('fieldContact'));
+  if (g('fieldMaterials')) p.push('[B]Материалы:[/B]\n' + g('fieldMaterials'));
   return p.join('\n\n');
 }
 
@@ -2002,12 +2002,12 @@ function aiFillForm(title, fullBody, original) {
   autoGrow(document.getElementById('taskTitle'));
 
   // Описание + оригинал запроса → поле «Что сделать»
-  // Формат: описание задачи, затем [I]Оригинал запроса: "текст"[/I]
+  // Формат: описание задачи, затем [B]Оригинал запроса:[/B] и текст с новой строки
   const firstTodo = document.querySelector('#todoDynamicFields .dynamic-field-row:first-child textarea');
   if (firstTodo) {
     let body = fullBody || '';
     if (original && !body.includes(original)) {
-      body += '\n\n[I]Оригинал запроса: "' + original + '"[/I]';
+      body += '\n\n[B]Оригинал запроса:[/B]\n"' + original + '"';
     }
     firstTodo.value = body;
     firstTodo.dispatchEvent(new Event('input', { bubbles: true }));
