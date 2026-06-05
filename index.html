@@ -251,8 +251,8 @@
   .btn-submit.loading .spinner{display:block}.btn-submit.loading .btn-text{opacity:.7}
   .btn-hotkey{font-family:var(--mono);font-size:10px;opacity:.4;margin-left:4px}
 
-  .toast{position:fixed;bottom:28px;right:28px;padding:13px 18px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:500;z-index:999;transform:translateY(14px);opacity:0;transition:all .25s ease;max-width:400px;display:flex;align-items:flex-start;gap:10px;border:1px solid;box-shadow:0 8px 32px rgba(0,0,0,.5);background:rgba(18,21,31,0.8);backdrop-filter:blur(12px)}
-  .toast.show{transform:translateY(0);opacity:1}
+  .toast{position:fixed;bottom:28px;right:28px;padding:13px 18px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:500;z-index:999;transform:translateY(14px);opacity:0;pointer-events:none;transition:all .25s ease;max-width:400px;display:flex;align-items:flex-start;gap:10px;border:1px solid;box-shadow:0 8px 32px rgba(0,0,0,.5);background:rgba(18,21,31,0.8);backdrop-filter:blur(12px)}
+  .toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
   .toast.success{border-color:rgba(34,197,94,0.4);color:var(--success)}.toast.error{border-color:rgba(255,79,79,0.4);color:var(--danger)}
   .toast.warn{border-color:rgba(245,158,11,0.4);color:var(--warning)}
   .toast-icon{font-size:15px;flex-shrink:0;margin-top:1px}.toast-body{flex:1}.toast-title{font-weight:700;margin-bottom:2px}.toast-msg{font-size:11px;opacity:.8;line-height:1.5}
@@ -293,8 +293,8 @@
   .theme-dot-light.active::after{color:#1a1d2e}
   /* END THEME DOTS CSS */
 
-  .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
-  .install-banner.show{transform:translateY(0)}
+  .install-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(18,21,31,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--accent-dim);padding:14px 20px;display:flex;align-items:center;gap:14px;transform:translateY(100%);pointer-events:none;transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 -4px 24px rgba(0,0,0,.4)}
+  .install-banner.show{transform:translateY(0);pointer-events:auto}
   .install-icon{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(16,185,129,0.3)}
   .install-icon svg{width:22px;height:22px;fill:#fff}
   .install-text{flex:1;min-width:0}
@@ -320,8 +320,8 @@
   .ai-panel-overlay{position:fixed;top:0;left:0;right:380px;bottom:0;z-index:160;background:rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity .3s ease}
   .ai-panel-overlay.show{opacity:1}
 
-  .ai-panel{position:fixed;top:0;right:0;z-index:170;width:380px;height:100vh;background:var(--glass-solid);border-left:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;overflow:hidden}
-  .ai-panel.open{transform:translateX(0)}
+  .ai-panel{position:fixed;top:0;right:0;z-index:170;width:380px;height:100vh;background:var(--glass-solid);border-left:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);pointer-events:none;transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;overflow:hidden}
+  .ai-panel.open{transform:translateX(0);pointer-events:auto}
 
   .ai-panel-header{padding:16px 18px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:10px;background:var(--surface2);flex-shrink:0}
   .ai-panel-header-title{font-family:var(--display);font-size:13px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px;flex:1}
@@ -412,7 +412,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.18</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.19</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
