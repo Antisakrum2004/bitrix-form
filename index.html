@@ -37,6 +37,10 @@
   html[data-theme="light"] .preview-wrap{background:#ffffff;border-color:rgba(0,0,0,0.1)}
   html[data-theme="light"] .preview-wrap.has-content{color:#1a1d2e}
   html[data-theme="light"] .install-banner{background:rgba(255,255,255,0.95);border-top-color:rgba(0,0,0,0.1)}
+  html[data-theme="light"] .ai-fab{background:rgba(255,255,255,0.9);border-color:rgba(13,150,104,0.3)}
+  html[data-theme="light"] .ai-panel{background:rgba(255,255,255,0.95);border-left-color:rgba(0,0,0,0.1)}
+  html[data-theme="light"] .ai-panel-header{background:rgba(240,242,245,0.8)}
+  html[data-theme="light"] .dup-warning{background:rgba(229,62,62,0.06)}
   html[data-theme="gray"] .topbar{background:rgba(42,45,56,0.92)}
   html[data-theme="gray"] .card{background:rgba(30,33,48,0.85)}
   html[data-theme="gray"] .sidebar-card{background:rgba(30,33,48,0.85)}
@@ -302,60 +306,110 @@
   .install-btn-no{background:transparent;color:var(--text-d);border:1px solid var(--glass-border-h);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
   .install-btn-no:hover{border-color:var(--text-d);color:var(--text-m)}
   @media(standalone){.topbar{padding-top:env(safe-area-inset-top)}}
-  /* END PWA CSS */
 
-  /* ═══════ AI PANEL — правый сайдбар ═══════ */
-  .ai-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;opacity:0;pointer-events:none;transition:opacity .3s}
-  .ai-overlay.show{opacity:1;pointer-events:auto}
-  .ai-panel{position:fixed;top:0;right:0;bottom:0;width:380px;z-index:151;background:rgba(18,21,31,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1px solid var(--glass-border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+  /* AI-CHANGE: NEW-CSS — AI Ассистент: FAB, панель, дубликаты.
+     ПРИЧИНА: AI-помощник для декомпозиции текста и поиска дублей.
+     ОТКАТ: удалить блок до комментария "END AI PANEL CSS". */
+  .ai-fab{position:fixed;bottom:28px;right:28px;z-index:150;width:52px;height:52px;border-radius:50%;border:1px solid var(--accent-dim);background:var(--glass-solid);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim);transition:all .25s ease;user-select:none}
+  .ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(16,185,129,0.35),0 0 0 4px var(--accent-glow)}
+  .ai-fab:active{transform:scale(.95)}
+  .ai-fab.open{background:var(--accent);color:#fff;border-color:var(--accent)}
+  @keyframes aiFabPulse{0%,100%{box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim)}50%{box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 8px var(--accent-glow)}}
+  .ai-fab:not(.open){animation:aiFabPulse 3s ease infinite}
+
+  .ai-panel-overlay{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .ai-panel-overlay.show{opacity:1;pointer-events:auto}
+
+  .ai-panel{position:fixed;top:0;right:0;z-index:170;width:380px;height:100vh;background:var(--glass-solid);border-left:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;overflow:hidden}
   .ai-panel.open{transform:translateX(0)}
-  .ai-header{padding:14px 18px;border-bottom:1px solid var(--glass-border);background:rgba(18,21,31,.6);display:flex;align-items:center;gap:10px}
-  .ai-icon{width:28px;height:28px;border-radius:6px;background:var(--accent-glow-s);border:1px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-  .ai-header-text{flex:1;min-width:0}
-  .ai-header-title{font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)}
-  .ai-header-sub{font-size:10px;color:var(--text-d);font-family:var(--mono)}
-  .ai-ver{font-size:9px;color:var(--text-d);font-family:var(--mono);background:rgba(255,255,255,.04);border:1px solid var(--glass-border);border-radius:3px;padding:2px 6px}
-  .ai-close{width:28px;height:28px;border-radius:5px;border:1px solid var(--glass-border);background:var(--surface2);color:var(--text-d);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
-  .ai-close:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,79,79,.1)}
-  .ai-input-area{padding:14px 18px;flex:0 0 auto}
-  .ai-textarea{width:100%;height:120px;background:rgba(10,12,18,.6);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;resize:none;line-height:1.6;transition:border-color .15s,box-shadow .15s}
-  .ai-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
-  .ai-textarea::placeholder{color:var(--text-d)}
-  .ai-gen-btn{width:100%;margin-top:10px;padding:11px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-  .ai-gen-btn:hover:not(:disabled){background:var(--accent-dark)}
-  .ai-gen-btn:disabled{opacity:.5;cursor:not-allowed}
-  .ai-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
-  .ai-gen-btn.loading .ai-spinner{display:inline-block}
-  .ai-result-area{padding:10px 18px;border-bottom:1px solid var(--glass-border);flex:0 0 auto}
-  .ai-refill-btn{font-size:9px;font-weight:700;color:var(--text-m);background:var(--surface2);border:1px solid var(--glass-border);border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
-  .ai-refill-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow)}
-  .ai-kw{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
-  .ai-kw-tag{font-size:9px;font-weight:600;color:var(--accent);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:3px;padding:2px 6px;font-family:var(--mono)}
-  .ai-error{padding:10px 18px;background:rgba(255,79,79,.08);border-bottom:1px solid rgba(255,79,79,.2);font-size:11px;color:var(--danger);font-family:var(--mono)}
-  .ai-tasks{flex:1;overflow-y:auto;padding:14px 18px}
-  .ai-tasks-title{font-size:10px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);display:flex;align-items:center;gap:8px;margin-bottom:6px}
-  .ai-search-kw{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
-  .ai-search-kw-label{font-size:8px;font-weight:600;color:var(--text-d);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;line-height:18px}
-  .ai-search-kw-tag{font-size:8px;font-weight:600;color:var(--warning);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:3px;padding:1px 5px;font-family:var(--mono)}
-  .ai-task-empty{font-size:11px;color:var(--text-d);font-style:italic;font-family:var(--mono)}
-  .ai-task-card{display:flex;flex-direction:column;gap:4px;padding:9px 10px;margin-bottom:6px;border-radius:5px;border:1px solid var(--glass-border);background:rgba(10,12,18,.4);text-decoration:none;transition:all .15s;cursor:pointer}
-  .ai-task-card:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
-  .ai-task-top{display:flex;align-items:center;gap:6px}
-  .ai-task-id{font-size:10px;font-weight:700;color:var(--accent);font-family:var(--mono);flex-shrink:0}
-  .ai-task-resp{font-size:10px;color:var(--text-m);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ai-task-name{font-size:11px;color:var(--text);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
-  .ai-task-status{font-size:9px;font-weight:600;font-family:var(--mono);border-radius:3px;padding:1px 5px;display:inline-block}
-  .ai-btn{width:36px;height:36px;background:rgba(18,21,31,.6);border:1px solid var(--glass-border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative;user-select:none;flex-shrink:0;font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)}
-  .ai-btn:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
-  .ai-btn.active{border-color:var(--accent);background:var(--accent-glow-s)}
-  @media(max-width:800px){.ai-panel{width:100%}.ai-btn{display:none}}
-  /* ═══════ END AI PANEL CSS ═══════ */
+
+  .ai-panel-header{padding:16px 18px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:10px;background:var(--surface2);flex-shrink:0}
+  .ai-panel-header-title{font-family:var(--display);font-size:13px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px;flex:1}
+  .ai-panel-header-title .ai-icon{font-size:16px}
+  .ai-panel-ver{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:var(--accent-glow);border:1px solid var(--accent-dim);color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+  .ai-panel-close{width:32px;height:32px;border-radius:6px;border:1px solid var(--glass-border-h);background:transparent;color:var(--text-m);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;line-height:1}
+  .ai-panel-close:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,79,79,0.1)}
+
+  .ai-panel-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+  .ai-panel-body::-webkit-scrollbar{width:4px}
+  .ai-panel-body::-webkit-scrollbar-track{background:transparent}
+  .ai-panel-body::-webkit-scrollbar-thumb{background:var(--glass-border-h);border-radius:2px}
+
+  #aiInput{min-height:90px;max-height:200px;resize:vertical;font-size:12px;line-height:1.6}
+  .ai-generate-btn{width:100%;padding:12px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 2px 12px rgba(16,185,129,0.2)}
+  .ai-generate-btn:hover{background:var(--accent-dark);transform:translateY(-1px)}
+  .ai-generate-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .ai-generate-btn .ai-btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+  .ai-generate-btn.loading .ai-btn-spinner{display:block}
+  .ai-generate-btn.loading .ai-btn-text{opacity:.7}
+
+  .ai-status{font-size:11px;color:var(--text-m);display:none;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--glass-border)}
+  .ai-status.show{display:flex}
+  .ai-status .ai-status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pdot 1.5s ease infinite;flex-shrink:0}
+
+  .ai-keywords{display:none;flex-wrap:wrap;gap:5px}
+  .ai-keywords.show{display:flex}
+  .ai-keyword-chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;border:1px solid var(--accent-dim);background:var(--accent-glow);color:var(--accent);letter-spacing:.02em}
+
+  .ai-similar-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-m);margin-bottom:4px;display:none}
+  .ai-similar-title.show{display:block}
+  .ai-similar-list{display:flex;flex-direction:column;gap:6px}
+  .ai-similar-item{padding:10px 12px;border-radius:6px;border:1px solid var(--glass-border);background:var(--surface2);cursor:pointer;transition:all .15s;text-decoration:none;color:inherit}
+  .ai-similar-item:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
+  .ai-similar-item-id{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:2px}
+  .ai-similar-item-name{font-size:11px;color:var(--text);line-height:1.4;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .ai-similar-item-meta{display:flex;gap:8px;font-size:10px;color:var(--text-d)}
+  .ai-similar-item-status{padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .ai-similar-item-status.s-pending{background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid rgba(245,158,11,0.25)}
+  .ai-similar-item-status.s-progress{background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent-dim)}
+  .ai-similar-item-status.s-done{background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.25)}
+  .ai-similar-item-status.s-default{background:var(--surface2);color:var(--text-d);border:1px solid var(--glass-border)}
+
+  .ai-dup-warning-panel{display:none;padding:12px;border-radius:6px;border:1px solid rgba(255,79,79,0.4);background:rgba(255,79,79,0.08)}
+  .ai-dup-warning-panel.show{display:block}
+  .ai-dup-warning-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .ai-dup-warning-icon{font-size:16px;color:var(--danger)}
+  .ai-dup-warning-title{font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em}
+  .ai-dup-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .ai-dup-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05)}
+  .ai-dup-item-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+  .ai-dup-item-id{font-size:10px;font-weight:700;color:var(--danger)}
+  .ai-dup-item-sim{font-size:9px;font-weight:700;color:var(--danger);padding:1px 5px;border-radius:3px;background:rgba(255,79,79,0.15);margin-left:auto}
+  .ai-dup-item-name{font-size:11px;color:var(--text);line-height:1.4}
+  .ai-dup-item-meta{font-size:10px;color:var(--text-d);margin-top:3px}
+  .ai-dup-item-reason{font-size:10px;color:var(--text-m);font-style:italic;margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,79,79,0.1)}
+  .ai-dup-confirm-btn{width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,79,79,0.5);background:rgba(255,79,79,0.1);color:var(--danger);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
+  .ai-dup-confirm-btn:hover{background:rgba(255,79,79,0.2);border-color:var(--danger)}
+
+  /* Duplicate warning in main form area */
+  .dup-warning{display:none;padding:14px 16px;border-radius:8px;border:2px solid var(--danger);background:rgba(255,79,79,0.08);margin-bottom:16px;animation:dupFlash .5s ease}
+  .dup-warning.show{display:block}
+  @keyframes dupFlash{0%{opacity:0;transform:translateY(-4px)}50%{border-color:rgba(255,79,79,0.8)}100%{opacity:1;transform:translateY(0)}}
+  .dup-warning-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .dup-warning-icon{font-size:18px;color:var(--danger)}
+  .dup-warning-title{font-size:12px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em}
+  .dup-warning-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .dup-warning-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05);font-size:11px;color:var(--text);line-height:1.4}
+  .dup-warning-item-id{font-weight:700;color:var(--danger);margin-right:6px}
+  .dup-warning-item-sim{font-size:9px;font-weight:700;color:var(--danger);float:right}
+  .dup-warning-item-meta{font-size:10px;color:var(--text-d);margin-top:2px}
+  .dup-warning-btn{width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,79,79,0.5);background:rgba(255,79,79,0.15);color:var(--danger);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
+  .dup-warning-btn:hover{background:rgba(255,79,79,0.25);border-color:var(--danger)}
+
+  @media(max-width:800px){
+    .ai-fab{bottom:18px;right:16px;width:46px;height:46px;font-size:19px}
+    .ai-panel{width:100%}
+    .toast{bottom:72px}
+  }
+  /* END AI PANEL CSS */
+
+  /* END PWA CSS */
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.16</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.15</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -371,7 +425,6 @@
     <div class="gear-btn" id="installBtn" title="Установить приложение" style="display:none">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14M6 10l6 6 6-6M4 20h16"/></svg>
     </div>
-    <div class="ai-btn" id="aiToggleBtn" title="AI Ассистент">✦</div>
     <div class="gear-btn" id="gearBtn" title="Настройки">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M2.9 2.9l1.8 1.8M11.3 11.3l1.8 1.8M13.1 2.9l-1.8 1.8M4.7 11.3l-1.8 1.8"/></svg>
       <div class="gear-dot" id="gearDot"></div>
@@ -545,6 +598,18 @@
         <div class="card-body">
           <div class="project-grid" id="projGrid"></div>
         </div>
+      </div>
+
+      <!-- AI-CHANGE: NEW-HTML — предупреждение об AI-дубле перед кнопкой отправки.
+           ПРИЧИНА: блокировка отправки, если AI нашёл дублирующую задачу.
+           ОТКАТ: удалить div.dup-warning. -->
+      <div class="dup-warning" id="dupWarning">
+        <div class="dup-warning-header">
+          <span class="dup-warning-icon">⚠</span>
+          <div class="dup-warning-title">Обнаружен дубликат</div>
+        </div>
+        <div class="dup-warning-list" id="dupWarningList"></div>
+        <button type="button" class="dup-warning-btn" id="dupConfirmBtn">Всё равно создать</button>
       </div>
 
       <div class="btn-wrap">
@@ -1385,6 +1450,12 @@ async function handleSubmit(e) {
   const dl = document.getElementById('taskDeadline').value;
   const title = document.getElementById('taskTitle').value.trim();
 
+  // AI-CHANGE: NEW — проверка AI-дубля
+  if (aiDuplicatesFound && !aiDuplicateConfirmed) {
+    showToast('warn', 'Обнаружен дубль', 'Подтверди создание — нажми «Всё равно создать» в предупреждении');
+    return;
+  }
+
   // AI-CHANGE: NEW — проверка на дубликат.
   if (isDuplicateTask(title, selectedDevId, selectedProjId)) {
     showToast('warn', 'Возможный дубликат', 'Такая задача уже создана менее 5 минут назад. Продолжить? Нажми «Создать» ещё раз.');
@@ -1697,6 +1768,8 @@ function resetForm() {
   document.getElementById('taskDeadline').classList.remove('error');
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   activeTemplateKey = null;
+  // AI-CHANGE: NEW — сброс состояния AI при очистке формы
+  if (typeof resetAiState === 'function') resetAiState();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1870,6 +1943,275 @@ const showT = showToast;
 const sC = selectChip;
 const sP = selectProject;
 */
+
+// ═══════════════════════════════════════════════════════════════════
+// AI MODULE — Ассистент: декомпозиция, поиск похожих, дубликаты
+// ═══════════════════════════════════════════════════════════════════
+const AI_API = 'https://bitrix-form-ai.vercel.app/api';
+let aiPanelOpen = false;
+let aiDecomposeResult = null;
+let aiSimilarTasks = [];
+let aiDuplicatesFound = false;
+let aiDuplicateConfirmed = false;
+
+function toggleAiPanel(forceState) {
+  const panel = document.getElementById('aiPanel');
+  const overlay = document.getElementById('aiOverlay');
+  const fab = document.getElementById('aiFab');
+  const open = typeof forceState === 'boolean' ? forceState : !aiPanelOpen;
+  aiPanelOpen = open;
+  if (open) {
+    panel.classList.add('open');
+    overlay.classList.add('show');
+    fab.classList.add('open');
+    fab.textContent = '×';
+    document.getElementById('aiInput').focus();
+  } else {
+    panel.classList.remove('open');
+    overlay.classList.remove('show');
+    fab.classList.remove('open');
+    fab.textContent = '✦';
+  }
+}
+
+function resetAiState() {
+  aiDecomposeResult = null;
+  aiSimilarTasks = [];
+  aiDuplicatesFound = false;
+  aiDuplicateConfirmed = false;
+  document.getElementById('aiInput').value = '';
+  document.getElementById('aiStatus').classList.remove('show');
+  document.getElementById('aiStatusText').textContent = '';
+  document.getElementById('aiKeywords').classList.remove('show');
+  document.getElementById('aiKeywords').innerHTML = '';
+  document.getElementById('aiDupWarning').classList.remove('show');
+  document.getElementById('aiDupList').innerHTML = '';
+  document.getElementById('aiSimilarTitle').classList.remove('show');
+  document.getElementById('aiSimilarList').innerHTML = '';
+  document.getElementById('aiGenerateBtn').classList.remove('loading');
+  document.getElementById('aiGenerateBtn').disabled = false;
+  hideDuplicateWarning();
+}
+
+function aiFillForm(title, fullBody) {
+  document.getElementById('taskTitle').value = title;
+  const firstTodo = document.querySelector('#todoFields .dynamic-field-row:first-child textarea');
+  if (firstTodo) firstTodo.value = fullBody;
+  updatePreview();
+  autoGrow(document.getElementById('taskTitle'));
+  if (firstTodo) autoGrow(firstTodo);
+  saveDraft();
+  hasUnsavedChanges = true;
+  document.getElementById('draftIndicator').classList.add('show');
+  // Update title char count
+  const len = title.length;
+  document.getElementById('titleCount').textContent = len + ' / 255';
+}
+
+function showDuplicateWarning(duplicates) {
+  aiDuplicatesFound = true;
+  aiDuplicateConfirmed = false;
+
+  // Panel warning
+  const aiDupList = document.getElementById('aiDupList');
+  aiDupList.innerHTML = '';
+  duplicates.forEach(d => {
+    aiDupList.innerHTML += `<div class="ai-dup-item">
+      <div class="ai-dup-item-top"><span class="ai-dup-item-id">#${escapeHtml(String(d.id))}</span><span class="ai-dup-item-sim">${Math.round((d.similarity || 0) * 100)}%</span></div>
+      <div class="ai-dup-item-name">${escapeHtml(d.title)}</div>
+      <div class="ai-dup-item-meta">${escapeHtml(d.responsible || '')} · ${escapeHtml(d.status || '')}</div>
+      ${d.reason ? '<div class="ai-dup-item-reason">' + escapeHtml(d.reason) + '</div>' : ''}
+    </div>`;
+  });
+  document.getElementById('aiDupWarning').classList.add('show');
+
+  // Main form warning
+  const dupList = document.getElementById('dupWarningList');
+  dupList.innerHTML = '';
+  duplicates.forEach(d => {
+    dupList.innerHTML += `<div class="dup-warning-item">
+      <span class="dup-warning-item-id">#${escapeHtml(String(d.id))}</span>${escapeHtml(d.title)}
+      <span class="dup-warning-item-sim">${Math.round((d.similarity || 0) * 100)}%</span>
+      <div class="dup-warning-item-meta">${escapeHtml(d.responsible || '')} · ${escapeHtml(d.status || '')}</div>
+    </div>`;
+  });
+  document.getElementById('dupWarning').classList.add('show');
+
+  // Scroll form warning into view
+  document.getElementById('dupWarning').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hideDuplicateWarning() {
+  document.getElementById('dupWarning').classList.remove('show');
+  document.getElementById('dupWarningList').innerHTML = '';
+  document.getElementById('aiDupWarning').classList.remove('show');
+  document.getElementById('aiDupList').innerHTML = '';
+}
+
+function aiSetStatus(text) {
+  const el = document.getElementById('aiStatus');
+  document.getElementById('aiStatusText').textContent = text;
+  if (text) { el.classList.add('show'); } else { el.classList.remove('show'); }
+}
+
+function aiRenderKeywords(keywords) {
+  const el = document.getElementById('aiKeywords');
+  el.innerHTML = '';
+  if (keywords && keywords.length) {
+    keywords.forEach(k => {
+      el.innerHTML += `<span class="ai-keyword-chip">${escapeHtml(k)}</span>`;
+    });
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+function aiRenderSimilar(tasks) {
+  const listEl = document.getElementById('aiSimilarList');
+  const titleEl = document.getElementById('aiSimilarTitle');
+  listEl.innerHTML = '';
+  if (tasks && tasks.length) {
+    titleEl.classList.add('show');
+    tasks.forEach(t => {
+      let statusClass = 's-default';
+      const s = (t.status || '').toLowerCase();
+      if (s.includes('ожида') || s.includes('pending') || s.includes('новая')) statusClass = 's-pending';
+      else if (s.includes('работ') || s.includes('progress') || s.includes('в работе')) statusClass = 's-progress';
+      else if (s.includes('заверш') || s.includes('done') || s.includes('закрыт')) statusClass = 's-done';
+      listEl.innerHTML += `<a class="ai-similar-item" href="${escapeHtml(t.url || '#')}" target="_blank" rel="noopener">
+        <div class="ai-similar-item-id">#${escapeHtml(String(t.id))}</div>
+        <div class="ai-similar-item-name">${escapeHtml(t.title)}</div>
+        <div class="ai-similar-item-meta">
+          <span>${escapeHtml(t.responsible || '')}</span>
+          <span class="ai-similar-item-status ${statusClass}">${escapeHtml(t.status || '')}</span>
+        </div>
+      </a>`;
+    });
+  } else {
+    titleEl.classList.remove('show');
+  }
+}
+
+async function handleAiGenerate() {
+  const text = document.getElementById('aiInput').value.trim();
+  if (!text) { showToast('warn', 'Вставь текст', 'Поле не может быть пустым'); return; }
+
+  const btn = document.getElementById('aiGenerateBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // Clear previous results
+  hideDuplicateWarning();
+  aiDuplicatesFound = false;
+  aiDuplicateConfirmed = false;
+  aiSimilarTasks = [];
+  aiDecomposeResult = null;
+  document.getElementById('aiSimilarTitle').classList.remove('show');
+  document.getElementById('aiSimilarList').innerHTML = '';
+  document.getElementById('aiKeywords').classList.remove('show');
+  document.getElementById('aiKeywords').innerHTML = '';
+
+  try {
+    // Step 1: Decompose
+    aiSetStatus('Декомпозиция текста...');
+    const decRes = await fetch(AI_API + '/ai-decompose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (!decRes.ok) throw new Error('Ошибка декомпозиции: ' + decRes.status);
+    const decData = await decRes.json();
+    aiDecomposeResult = decData;
+
+    // Show keywords
+    aiRenderKeywords(decData.keywords || []);
+
+    // Auto-fill form
+    aiFillForm(decData.title, decData.fullBody || decData.body);
+
+    // Step 2: Search similar tasks
+    if (decData.keywords && decData.keywords.length) {
+      aiSetStatus('Поиск похожих задач...');
+      const searchRes = await fetch(AI_API + '/ai-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: decData.keywords })
+      });
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        aiSimilarTasks = searchData.similar || [];
+        aiRenderSimilar(aiSimilarTasks);
+      }
+    }
+
+    // Step 3: Check duplicates
+    if (aiSimilarTasks.length > 0) {
+      aiSetStatus('Проверка на дубликаты...');
+      const dupRes = await fetch(AI_API + '/ai-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: decData.title,
+          body: decData.body || decData.fullBody,
+          similarTasks: aiSimilarTasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            responsible: t.responsible,
+            status: t.status
+          }))
+        })
+      });
+      if (dupRes.ok) {
+        const dupData = await dupRes.json();
+        if (dupData.hasDuplicates && dupData.duplicates && dupData.duplicates.length) {
+          showDuplicateWarning(dupData.duplicates);
+          aiSetStatus('Найден дубликат!');
+        } else {
+          aiSetStatus('Дубликатов не найдено ✓');
+        }
+      } else {
+        aiSetStatus('Готово. Дубликаты не проверены.');
+      }
+    } else {
+      aiSetStatus('Готово. Похожих задач не найдено ✓');
+    }
+
+    showToast('success', 'AI: готово', 'Форма заполнена автоматически');
+
+  } catch (err) {
+    console.error('AI error:', err);
+    aiSetStatus('');
+    showToast('error', 'Ошибка AI', err.message || 'Не удалось обработать текст');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// AI event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('aiFab').addEventListener('click', () => toggleAiPanel());
+  document.getElementById('aiClose').addEventListener('click', () => toggleAiPanel(false));
+  document.getElementById('aiOverlay').addEventListener('click', () => toggleAiPanel(false));
+  document.getElementById('aiGenerateBtn').addEventListener('click', handleAiGenerate);
+  document.getElementById('aiDupConfirmBtn').addEventListener('click', () => {
+    aiDuplicateConfirmed = true;
+    document.getElementById('aiDupWarning').classList.remove('show');
+    document.getElementById('dupWarning').classList.remove('show');
+    showToast('success', 'Подтверждено', 'Дубликат принят, можно создавать задачу');
+  });
+  document.getElementById('dupConfirmBtn').addEventListener('click', () => {
+    aiDuplicateConfirmed = true;
+    document.getElementById('aiDupWarning').classList.remove('show');
+    document.getElementById('dupWarning').classList.remove('show');
+    showToast('success', 'Подтверждено', 'Дубликат принят, можно создавать задачу');
+  });
+  // Escape to close panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aiPanelOpen) toggleAiPanel(false);
+  });
+});
 </script>
 
 <!-- AI-CHANGE: NEW-HTML — PWA install banner.
@@ -1890,187 +2232,37 @@ const sP = selectProject;
 </div>
 <!-- END PWA INSTALL BANNER -->
 
-<!-- AI PANEL: правый сайдбар -->
-<div class="ai-overlay" id="aiOverlay"></div>
+<!-- AI-CHANGE: NEW-HTML — AI Ассистент: FAB, overlay, панель.
+     ПРИЧИНА: AI-помощник для декомпозиции текста и поиска дублей.
+     ОТКАТ: удалить .ai-fab, .ai-panel-overlay, .ai-panel. -->
+<button class="ai-fab" id="aiFab" type="button" title="AI Ассистент">✦</button>
+<div class="ai-panel-overlay" id="aiOverlay"></div>
 <div class="ai-panel" id="aiPanel">
-  <div class="ai-header">
-    <div class="ai-icon">✦</div>
-    <div class="ai-header-text">
-      <div class="ai-header-title">AI Ассистент</div>
-      <div class="ai-header-sub">Вставь запрос из чата</div>
-    </div>
-    <div class="ai-ver">v1.1.1</div>
-    <button class="ai-close" id="aiCloseBtn" title="Закрыть">×</button>
+  <div class="ai-panel-header">
+    <div class="ai-panel-header-title"><span class="ai-icon">✦</span> AI Ассистент</div>
+    <span class="ai-panel-ver">beta</span>
+    <button class="ai-panel-close" id="aiClose" type="button">×</button>
   </div>
-  <div class="ai-input-area">
-    <textarea class="ai-textarea" id="aiInput" placeholder="Вставь скопированный текст из чата..."></textarea>
-    <button class="ai-gen-btn" id="aiGenBtn">✦ Сгенерировать описание</button>
-  </div>
-  <div class="ai-result-area" id="aiResultArea" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <button class="ai-refill-btn" id="aiRefillBtn">↻ Перезаполнить</button>
+  <div class="ai-panel-body">
+    <textarea id="aiInput" placeholder="Вставь скопированный текст из чата..."></textarea>
+    <button class="ai-generate-btn" id="aiGenerateBtn" type="button">
+      <div class="ai-btn-spinner"></div>
+      <span class="ai-btn-text">✦ Сгенерировать описание</span>
+    </button>
+    <div class="ai-status" id="aiStatus"><div class="ai-status-dot"></div><span id="aiStatusText"></span></div>
+    <div class="ai-keywords" id="aiKeywords"></div>
+    <div class="ai-dup-warning-panel" id="aiDupWarning">
+      <div class="ai-dup-warning-header">
+        <span class="ai-dup-warning-icon">⚠</span>
+        <div class="ai-dup-warning-title">Обнаружен дубликат</div>
+      </div>
+      <div class="ai-dup-list" id="aiDupList"></div>
+      <button class="ai-dup-confirm-btn" id="aiDupConfirmBtn" type="button">Всё равно создать</button>
     </div>
-    <div class="ai-kw" id="aiKeywords"></div>
-  </div>
-  <div class="ai-error" id="aiError" style="display:none"></div>
-  <div class="ai-tasks">
-    <div class="ai-tasks-title" id="aiTasksTitle">Аналогичные задачи</div>
-    <div id="aiSearchKeywords" style="display:none" class="ai-search-kw">
-      <span class="ai-search-kw-label">Найдено по:</span>
-    </div>
-    <div id="aiTasksList"><div class="ai-task-empty" id="aiTasksEmpty">Здесь появятся аналогичные задачи</div></div>
+    <div class="ai-similar-title" id="aiSimilarTitle">Похожие задачи</div>
+    <div class="ai-similar-list" id="aiSimilarList"></div>
   </div>
 </div>
-<script>
-(function(){
-  var API_BASE = 'https://bitrix-form-ai.vercel.app/api';
-  var panel = document.getElementById('aiPanel');
-  var overlay = document.getElementById('aiOverlay');
-  var toggleBtn = document.getElementById('aiToggleBtn');
-  var closeBtn = document.getElementById('aiCloseBtn');
-  var genBtn = document.getElementById('aiGenBtn');
-  var input = document.getElementById('aiInput');
-  var resultArea = document.getElementById('aiResultArea');
-  var keywordsEl = document.getElementById('aiKeywords');
-  var errorEl = document.getElementById('aiError');
-  var tasksList = document.getElementById('aiTasksList');
-  var tasksEmpty = document.getElementById('aiTasksEmpty');
-  var searchKwEl = document.getElementById('aiSearchKeywords');
-  var refillBtn = document.getElementById('aiRefillBtn');
-  var decomposeResult = null;
-  var isOpen = false;
-
-  function openPanel() { panel.classList.add('open'); overlay.classList.add('show'); isOpen = true; toggleBtn.classList.add('active'); }
-  function closePanel() { panel.classList.remove('open'); overlay.classList.remove('show'); isOpen = false; toggleBtn.classList.remove('active'); }
-
-  toggleBtn.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
-  closeBtn.addEventListener('click', closePanel);
-  overlay.addEventListener('click', closePanel);
-
-  function fillForm(data) {
-    if (data.title) {
-      var el = document.getElementById('taskTitle');
-      if (el) { el.value = data.title; el.dispatchEvent(new Event('input', {bubbles:true})); }
-    }
-    if (data.goal) {
-      var el = document.getElementById('fieldGoal');
-      if (el) { el.value = data.goal; el.dispatchEvent(new Event('input', {bubbles:true})); }
-    }
-    if (data.todo) {
-      var el = document.querySelector('.dynamic-input[data-group="todo"]');
-      if (el) { el.value = data.todo; el.dispatchEvent(new Event('input', {bubbles:true})); }
-    }
-    var card = document.querySelector('.card');
-    if (card) { card.style.boxShadow = '0 0 0 2px #10b981'; setTimeout(function(){ card.style.boxShadow = ''; }, 1500); }
-  }
-
-  function statusColor(s) {
-    if (s.indexOf('Заверш') >= 0 || s.indexOf('Принят') >= 0) return '#22c55e';
-    if (s.indexOf('работе') >= 0) return '#3b82f6';
-    if (s.indexOf('Ожида') >= 0) return '#f59e0b';
-    if (s.indexOf('Отложен') >= 0) return '#6b7280';
-    if (s.indexOf('Просрочен') >= 0) return '#ef4444';
-    return '#8892a8';
-  }
-
-  function renderTasks(tasks) {
-    tasksList.innerHTML = '';
-    if (!tasks || tasks.length === 0) {
-      tasksList.innerHTML = '<div class="ai-task-empty">' + (decomposeResult ? 'Аналоги не найдены' : 'Здесь появятся аналогичные задачи') + '</div>';
-      return;
-    }
-    tasks.forEach(function(t) {
-      var c = statusColor(t.status);
-      var a = document.createElement('a');
-      a.href = t.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      a.className = 'ai-task-card';
-      a.innerHTML = '<div class="ai-task-top"><span class="ai-task-id">#' + t.id + '</span><span class="ai-task-resp">' + t.responsible + '</span></div>' +
-        '<div class="ai-task-name">' + t.title + '</div>' +
-        '<span class="ai-task-status" style="color:' + c + ';background:' + c + '15;border:1px solid ' + c + '30">' + t.status + '</span>';
-      tasksList.appendChild(a);
-    });
-  }
-
-  function renderSearchKw(kws) {
-    if (!kws || kws.length === 0) { searchKwEl.style.display = 'none'; return; }
-    searchKwEl.style.display = 'flex';
-    searchKwEl.innerHTML = '<span class="ai-search-kw-label">Найдено по:</span>';
-    kws.forEach(function(kw) {
-      var s = document.createElement('span'); s.className = 'ai-search-kw-tag'; s.textContent = kw;
-      searchKwEl.appendChild(s);
-    });
-  }
-
-  genBtn.addEventListener('click', async function() {
-    var text = input.value.trim();
-    if (!text) return;
-    decomposeResult = null;
-    errorEl.style.display = 'none';
-    resultArea.style.display = 'none';
-    searchKwEl.style.display = 'none';
-    tasksList.innerHTML = '<div class="ai-task-empty">Декомпозиция...</div>';
-    genBtn.classList.add('loading');
-    genBtn.innerHTML = '<span class="ai-spinner"></span>Декомпозиция...';
-    genBtn.disabled = true;
-
-    try {
-      var res = await fetch(API_BASE + '/ai-decompose', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({text: text})
-      });
-      if (!res.ok) { var e = await res.json(); throw new Error(e.error || 'Ошибка декомпозиции'); }
-      var result = await res.json();
-      decomposeResult = result;
-
-      // Show keywords
-      if (result.keywords && result.keywords.length) {
-        keywordsEl.innerHTML = '';
-        result.keywords.forEach(function(kw) {
-          var s = document.createElement('span'); s.className = 'ai-kw-tag'; s.textContent = kw;
-          keywordsEl.appendChild(s);
-        });
-        resultArea.style.display = 'block';
-      }
-
-      // Fill form
-      fillForm({title: result.title, todo: result.fullBody || result.body});
-
-      // Search
-      genBtn.innerHTML = '<span class="ai-spinner"></span>Поиск аналогов...';
-      tasksList.innerHTML = '<div class="ai-task-empty">Поиск аналогов...</div>';
-
-      try {
-        var sres = await fetch(API_BASE + '/ai-search', {
-          method: 'POST', headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({keywords: result.keywords})
-        });
-        if (sres.ok) {
-          var sdata = await sres.json();
-          renderTasks(sdata.similar || []);
-          renderSearchKw(sdata.usedKeywords || []);
-        } else {
-          renderTasks([]);
-        }
-      } catch(se) {
-        renderTasks([]);
-      }
-    } catch(err) {
-      errorEl.textContent = err.message || 'Ошибка';
-      errorEl.style.display = 'block';
-      tasksList.innerHTML = '<div class="ai-task-empty">Здесь появятся аналогичные задачи</div>';
-    } finally {
-      genBtn.classList.remove('loading');
-      genBtn.innerHTML = '✦ Сгенерировать описание';
-      genBtn.disabled = false;
-    }
-  });
-
-  refillBtn.addEventListener('click', function() {
-    if (decomposeResult) {
-      fillForm({title: decomposeResult.title, todo: decomposeResult.fullBody || decomposeResult.body});
-    }
-  });
-})();
-</script>
+<!-- END AI PANEL HTML -->
 </body>
 </html>
