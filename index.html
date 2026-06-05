@@ -310,7 +310,7 @@
   /* AI-CHANGE: NEW-CSS — AI Ассистент: FAB, панель, дубликаты.
      ПРИЧИНА: AI-помощник для декомпозиции текста и поиска дублей.
      ОТКАТ: удалить блок до комментария "END AI PANEL CSS". */
-  .ai-fab{position:fixed;bottom:28px;right:28px;z-index:150;width:52px;height:52px;border-radius:50%;border:1px solid var(--accent-dim);background:var(--glass-solid);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim);transition:all .25s ease;user-select:none}
+  .ai-fab{position:fixed;bottom:28px;right:28px;z-index:180;width:52px;height:52px;border-radius:50%;border:1px solid var(--accent-dim);background:var(--glass-solid);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim);transition:all .25s ease;user-select:none}
   .ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(16,185,129,0.35),0 0 0 4px var(--accent-glow)}
   .ai-fab:active{transform:scale(.95)}
   .ai-fab.open{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -371,7 +371,8 @@
   .ai-dup-warning-icon{font-size:16px;color:var(--danger)}
   .ai-dup-warning-title{font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em}
   .ai-dup-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
-  .ai-dup-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05)}
+  .ai-dup-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05);cursor:pointer;transition:all .15s;text-decoration:none;color:inherit;display:block}
+  .ai-dup-item:hover{border-color:rgba(255,79,79,0.5);background:rgba(255,79,79,0.12);transform:translateX(2px)}
   .ai-dup-item-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
   .ai-dup-item-id{font-size:10px;font-weight:700;color:var(--danger)}
   .ai-dup-item-sim{font-size:9px;font-weight:700;color:var(--danger);padding:1px 5px;border-radius:3px;background:rgba(255,79,79,0.15);margin-left:auto}
@@ -389,7 +390,8 @@
   .dup-warning-icon{font-size:18px;color:var(--danger)}
   .dup-warning-title{font-size:12px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em}
   .dup-warning-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
-  .dup-warning-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05);font-size:11px;color:var(--text);line-height:1.4}
+  .dup-warning-item{padding:8px 10px;border-radius:5px;border:1px solid rgba(255,79,79,0.25);background:rgba(255,79,79,0.05);font-size:11px;color:var(--text);line-height:1.4;cursor:pointer;transition:all .15s;text-decoration:none;display:block}
+  .dup-warning-item:hover{border-color:rgba(255,79,79,0.5);background:rgba(255,79,79,0.12)}
   .dup-warning-item-id{font-weight:700;color:var(--danger);margin-right:6px}
   .dup-warning-item-sim{font-size:9px;font-weight:700;color:var(--danger);float:right}
   .dup-warning-item-meta{font-size:10px;color:var(--text-d);margin-top:2px}
@@ -2012,28 +2014,30 @@ function showDuplicateWarning(duplicates) {
   aiDuplicatesFound = true;
   aiDuplicateConfirmed = false;
 
-  // Panel warning
+  // Panel warning — each item is a clickable link to Bitrix24
   const aiDupList = document.getElementById('aiDupList');
   aiDupList.innerHTML = '';
   duplicates.forEach(d => {
-    aiDupList.innerHTML += `<div class="ai-dup-item">
+    const dupUrl = d.url || `https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`;
+    aiDupList.innerHTML += `<a class="ai-dup-item" href="${escapeHtml(dupUrl)}" target="_blank" rel="noopener noreferrer" title="Открыть задачу в Bitrix24">
       <div class="ai-dup-item-top"><span class="ai-dup-item-id">#${escapeHtml(String(d.id))}</span><span class="ai-dup-item-sim">${Math.round((d.similarity || 0) * 100)}%</span></div>
       <div class="ai-dup-item-name">${escapeHtml(d.title)}</div>
       <div class="ai-dup-item-meta">${escapeHtml(d.responsible || '')} · ${escapeHtml(d.status || '')}</div>
       ${d.reason ? '<div class="ai-dup-item-reason">' + escapeHtml(d.reason) + '</div>' : ''}
-    </div>`;
+    </a>`;
   });
   document.getElementById('aiDupWarning').classList.add('show');
 
-  // Main form warning
+  // Main form warning — each item is a clickable link to Bitrix24
   const dupList = document.getElementById('dupWarningList');
   dupList.innerHTML = '';
   duplicates.forEach(d => {
-    dupList.innerHTML += `<div class="dup-warning-item">
+    const dupUrl = d.url || `https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`;
+    dupList.innerHTML += `<a class="dup-warning-item" href="${escapeHtml(dupUrl)}" target="_blank" rel="noopener noreferrer" title="Открыть задачу в Bitrix24">
       <span class="dup-warning-item-id">#${escapeHtml(String(d.id))}</span>${escapeHtml(d.title)}
       <span class="dup-warning-item-sim">${Math.round((d.similarity || 0) * 100)}%</span>
       <div class="dup-warning-item-meta">${escapeHtml(d.responsible || '')} · ${escapeHtml(d.status || '')}</div>
-    </div>`;
+    </a>`;
   });
   document.getElementById('dupWarning').classList.add('show');
 
@@ -2158,7 +2162,8 @@ async function handleAiGenerate() {
             id: t.id,
             title: t.title,
             responsible: t.responsible,
-            status: t.status
+            status: t.status,
+            url: t.url || ''
           }))
         })
       });
@@ -2235,8 +2240,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- AI-CHANGE: NEW-HTML — AI Ассистент: FAB, overlay, панель.
      ПРИЧИНА: AI-помощник для декомпозиции текста и поиска дублей.
      ОТКАТ: удалить .ai-fab, .ai-panel-overlay, .ai-panel. -->
-<button class="ai-fab" id="aiFab" type="button" title="AI Ассистент">✦</button>
 <div class="ai-panel-overlay" id="aiOverlay"></div>
+<button class="ai-fab" id="aiFab" type="button" title="AI Ассистент">✦</button>
 <div class="ai-panel" id="aiPanel">
   <div class="ai-panel-header">
     <div class="ai-panel-header-title"><span class="ai-icon">✦</span> AI Ассистент</div>
