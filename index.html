@@ -318,7 +318,7 @@
   .ai-fab:not(.open){animation:aiFabPulse 3s ease infinite}
 
   .ai-panel-overlay{position:fixed;top:0;left:0;right:380px;bottom:0;z-index:160;background:rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity .3s ease}
-  .ai-panel-overlay.show{opacity:1;pointer-events:auto}
+  .ai-panel-overlay.show{opacity:1}
 
   .ai-panel{position:fixed;top:0;right:0;z-index:170;width:380px;height:100vh;background:var(--glass-solid);border-left:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;overflow:hidden}
   .ai-panel.open{transform:translateX(0)}
@@ -412,7 +412,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.17</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.18</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -2001,22 +2001,17 @@ function aiFillForm(title, fullBody, original) {
   document.getElementById('taskTitle').value = title;
   autoGrow(document.getElementById('taskTitle'));
 
-  // Описание → поле «Что сделать» (первый textarea в todoDynamicFields)
+  // Описание + оригинал запроса → поле «Что сделать»
+  // Формат: описание задачи, затем [I]Оригинал запроса: "текст"[/I]
   const firstTodo = document.querySelector('#todoDynamicFields .dynamic-field-row:first-child textarea');
   if (firstTodo) {
-    firstTodo.value = fullBody || '';
+    let body = fullBody || '';
+    if (original && !body.includes(original)) {
+      body += '\n\n[I]Оригинал запроса: "' + original + '"[/I]';
+    }
+    firstTodo.value = body;
     firstTodo.dispatchEvent(new Event('input', { bubbles: true }));
     autoGrow(firstTodo);
-  }
-
-  // Оригинал запроса → поле «Цель» (курсивом через preview)
-  if (original) {
-    const goalEl = document.getElementById('fieldGoal');
-    if (goalEl) {
-      goalEl.value = original;
-      goalEl.dispatchEvent(new Event('input', { bubbles: true }));
-      autoGrow(goalEl);
-    }
   }
 
   updatePreview();
@@ -2150,7 +2145,7 @@ async function handleAiGenerate() {
     aiRenderKeywords(decData.keywords || []);
 
     // Auto-fill form: title + body + original
-    aiFillForm(decData.title, decData.body || '', decData.original || '');
+    aiFillForm(decData.title, decData.fullBody || decData.body || '', decData.original || '');
 
     // Step 2: Search similar tasks
     if (decData.keywords && decData.keywords.length) {
@@ -2217,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('aiFab').addEventListener('click', (e) => { e.stopPropagation(); toggleAiPanel(); });
   document.getElementById('aiClose').addEventListener('click', () => toggleAiPanel(false));
   // Click on overlay (dark area left of panel) = close
-  document.getElementById('aiOverlay').addEventListener('click', () => toggleAiPanel(false));
+  // Overlay is pointer-events:none — clicks pass through to FAB
   document.getElementById('aiGenerateBtn').addEventListener('click', handleAiGenerate);
   document.getElementById('aiDupConfirmBtn').addEventListener('click', () => {
     aiDuplicateConfirmed = true;
