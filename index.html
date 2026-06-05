@@ -310,7 +310,7 @@
   /* AI-CHANGE: NEW-CSS — AI Ассистент: FAB, панель, дубликаты.
      ПРИЧИНА: AI-помощник для декомпозиции текста и поиска дублей.
      ОТКАТ: удалить блок до комментария "END AI PANEL CSS". */
-  .ai-fab{position:fixed;bottom:28px;right:28px;z-index:180;width:52px;height:52px;border-radius:50%;border:1px solid var(--accent-dim);background:var(--glass-solid);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim);transition:all .25s ease;user-select:none}
+  .ai-fab{position:fixed;bottom:28px;right:28px;z-index:180;width:56px;height:56px;border-radius:50%;border:1px solid var(--accent-dim);background:var(--glass-solid);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.25),0 0 0 0 var(--accent-dim);transition:all .25s ease;user-select:none;-webkit-tap-highlight-color:transparent;padding:0;outline:none;touch-action:manipulation}
   .ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(16,185,129,0.35),0 0 0 4px var(--accent-glow)}
   .ai-fab:active{transform:scale(.95)}
   .ai-fab.open{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -399,7 +399,7 @@
   .dup-warning-btn:hover{background:rgba(255,79,79,0.25);border-color:var(--danger)}
 
   @media(max-width:800px){
-    .ai-fab{bottom:18px;right:16px;width:46px;height:46px;font-size:19px}
+    .ai-fab{bottom:18px;right:16px;width:52px;height:52px;font-size:20px}
     .ai-panel{width:100%}
     .toast{bottom:72px}
   }
@@ -411,7 +411,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.15</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.16</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
