@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://antisakrum2004.github.io",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 const BITRIX24_WEBHOOK = process.env.BITRIX24_WEBHOOK || "";
 
 // Маппинг статусов задач
@@ -36,11 +46,11 @@ export async function POST(req: NextRequest) {
     const { keywords, text } = await req.json();
 
     if (!keywords && !text) {
-      return NextResponse.json({ error: "Нужны keywords или text" }, { status: 400 });
+      return NextResponse.json({ error: "Нужны keywords или text" }, { status: 400, headers: CORS_HEADERS });
     }
 
     if (!BITRIX24_WEBHOOK) {
-      return NextResponse.json({ error: "Bitrix24 webhook не настроен" }, { status: 500 });
+      return NextResponse.json({ error: "Bitrix24 webhook не настроен" }, { status: 500, headers: CORS_HEADERS });
     }
 
     // Извлечь ключевые слова если передан только текст
@@ -53,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (searchTerms.length === 0) {
-      return NextResponse.json({ similar: [], total: 0, usedKeywords: [] });
+      return NextResponse.json({ similar: [], total: 0, usedKeywords: [] }, { headers: CORS_HEADERS });
     }
 
     // Стратегия: SEARCH_INDEX — полнотекстовый поиск Bitrix24
@@ -156,9 +166,9 @@ export async function POST(req: NextRequest) {
         changedDate: task.changedDate,
       }));
 
-    return NextResponse.json({ similar, total: similar.length, usedKeywords });
+    return NextResponse.json({ similar, total: similar.length, usedKeywords }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error("AI search error:", error);
-    return NextResponse.json({ error: "Ошибка поиска задач" }, { status: 500 });
+    return NextResponse.json({ error: "Ошибка поиска задач" }, { status: 500, headers: CORS_HEADERS });
   }
 }

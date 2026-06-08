@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://antisakrum2004.github.io",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { text } = await req.json();
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
-      return NextResponse.json({ error: "Текст запроса обязателен" }, { status: 400 });
+      return NextResponse.json({ error: "Текст запроса обязателен" }, { status: 400, headers: CORS_HEADERS });
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "API ключ OpenRouter не настроен" },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -101,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (!content) {
       return NextResponse.json(
         { error: "ИИ недоступен. Попробуй позже.", details: lastError },
-        { status: 502 }
+        { status: 502, headers: CORS_HEADERS }
       );
     }
 
@@ -114,29 +124,29 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = JSON.parse(cleaned);
 
-      // Сформировать тело задачи: описание + отдельный блок оригинала как цитата
+      // Сформировать тело задачи: описание + оригинал запроса жирным
       const bodyText = parsed.body || "";
       const originalText = parsed.original || text;
-      // BBCode-цитата для Bitrix24 (отобразится как блок-цитата в описании задачи)
-      const fullBody = `${bodyText}\n\n[QUOTE]оригинал запроса:\n${originalText}[/QUOTE]`;
+      // BBCode: заголовок жирным, текст оригинала с новой строки в кавычках
+      const fullBody = `${bodyText}\n\n[B]Оригинал запроса:[/B]\n"${originalText}"`;
 
       const result = {
         title: typeof parsed.title === "string" ? parsed.title.slice(0, 255) : "",
         body: typeof parsed.body === "string" ? parsed.body : "",
-        fullBody, // body + оригинал в BBCode-цитате — для заполнения в форму
+        fullBody,
         original: originalText,
         keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : [],
       };
-      return NextResponse.json(result);
+      return NextResponse.json(result, { headers: CORS_HEADERS });
     } catch {
       console.error("Failed to parse AI response:", cleaned);
       return NextResponse.json(
         { error: "ИИ вернул неверный формат. Попробуй переформулировать.", raw: cleaned },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
   } catch (error) {
     console.error("AI decompose error:", error);
-    return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
+    return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500, headers: CORS_HEADERS });
   }
 }
