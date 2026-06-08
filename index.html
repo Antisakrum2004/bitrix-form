@@ -412,7 +412,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.20</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.21</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1473,6 +1473,7 @@ async function handleSubmit(e) {
     fields: {
       TITLE: title,
       DESCRIPTION: buildDescription(),
+      DESCRIPTION_FORMAT: '2',
       GROUP_ID: parseInt(selectedProjId),
       RESPONSIBLE_ID: parseInt(selectedDevId),
       CREATED_BY: parseInt(selectedMgrId),
