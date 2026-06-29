@@ -336,6 +336,13 @@
   .ai-panel-body::-webkit-scrollbar-thumb{background:var(--glass-border-h);border-radius:2px}
 
   #aiInput{min-height:90px;max-height:200px;resize:vertical;font-size:12px;line-height:1.6}
+
+  /* AI-CHANGE: NEW-CSS — поле ключевых слов для ручного поиска похожих задач.
+     ПРИЧИНА: пользователь может явно указать слова/фразы для поиска, не полагаясь на автонарезку текста.
+     ОТКАТ: удалить блок #aiKeywordsInput и связанный JS. */
+  .ai-keywords-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-m);margin-bottom:-6px}
+  #aiKeywordsInput{min-height:34px;max-height:80px;resize:vertical;font-size:11px;line-height:1.5;font-family:var(--mono);color:var(--accent)}
+  #aiKeywordsInput::placeholder{color:var(--text-d);font-family:var(--body);font-style:italic}
   .ai-generate-btn{width:100%;padding:12px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 2px 12px rgba(16,185,129,0.2)}
   .ai-generate-btn:hover{background:var(--accent-dark);transform:translateY(-1px)}
   .ai-generate-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
@@ -412,7 +419,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.24</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.25</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -2111,9 +2118,48 @@ function aiRenderSimilar(tasks) {
   }
 }
 
+// AI-CHANGE: NEW-FUNCTION — парсинг пользовательских ключевых слов.
+// ПРИЧИНА: поддержка слов и фраз в кавычках с любыми разделителями.
+// Логика: сначала вырезаем фразы в кавычках, потом оставшееся режем по запятым/пробелам/точкам с запятой.
+// ОТКАТ: удалить функцию и использовать простую нарезку decData.keywords.
+function parseUserKeywords(raw) {
+  if (!raw) return [];
+  const result = [];
+  const seen = new Set();
+  // Фразы в двойных или одинарных кавычках — забираем целиком как один термин
+  const quoteRe = /["'«]([^"'»]+)["'»]/g;
+  let m;
+  let rest = raw;
+  while ((m = quoteRe.exec(raw)) !== null) {
+    const phrase = m[1].trim();
+    if (phrase && !seen.has(phrase.toLowerCase())) {
+      seen.add(phrase.toLowerCase());
+      result.push(phrase);
+    }
+    rest = rest.replace(m[0], ' ');
+  }
+  // Оставшееся режем по запятым, точкам с запятой, пробелам, переносам
+  rest.split(/[\s,;]+/).forEach(w => {
+    const word = w.trim();
+    if (word && !seen.has(word.toLowerCase())) {
+      seen.add(word.toLowerCase());
+      result.push(word);
+    }
+  });
+  // Лимит 10 терминов — чтобы не уйти в >10 запросов к Bitrix24
+  return result.slice(0, 10);
+}
+
 async function handleAiGenerate() {
   const text = document.getElementById('aiInput').value.trim();
   if (!text) { showToast('warn', 'Вставь текст', 'Поле не может быть пустым'); return; }
+
+  // AI-CHANGE: NEW — парсинг ключевых слов из ручного поля.
+  // ПРИЧИНА: пользователь может явно указать слова/фразы для поиска похожих задач.
+  // Поддержка: слова через запятую/пробел/точку с запятой, фразы в кавычках ("мобильная шапка").
+  // ОТКАТ: удалить блок и использовать только decData.keywords ниже.
+  const rawKw = document.getElementById('aiKeywordsInput').value.trim();
+  const userKeywords = parseUserKeywords(rawKw);
 
   const btn = document.getElementById('aiGenerateBtn');
   btn.classList.add('loading');
@@ -2149,12 +2195,16 @@ async function handleAiGenerate() {
     aiFillForm(decData.title, decData.fullBody || decData.body || '', decData.original || '');
 
     // Step 2: Search similar tasks
-    if (decData.keywords && decData.keywords.length) {
-      aiSetStatus('Поиск похожих задач...');
+    // AI-CHANGE: MODIFIED — приоритет userKeywords над decData.keywords.
+    // ПРИЧИНА: если пользователь явно указал ключевые слова — используем их, иначе fallback на AI-нарезку.
+    // ОТКАТ: вернуть проверку только на decData.keywords.
+    const searchKeywords = userKeywords.length ? userKeywords : (decData.keywords || []);
+    if (searchKeywords.length) {
+      aiSetStatus(userKeywords.length ? 'Поиск по твоим ключевым словам...' : 'Поиск похожих задач...');
       const searchRes = await fetch(AI_API + '/ai-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: decData.keywords })
+        body: JSON.stringify({ keywords: searchKeywords })
       });
       if (searchRes.ok) {
         const searchData = await searchRes.json();
@@ -2265,6 +2315,14 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <div class="ai-panel-body">
     <textarea id="aiInput" placeholder="Вставь скопированный текст из чата..."></textarea>
+    <!-- AI-CHANGE: NEW-HTML — поле ключевых слов для ручного управления поиском похожих задач.
+         ПРИЧИНА: дать пользователю контроль над тем, по каким словам искать похожие задачи в Bitrix24.
+         Поддержка: слова через запятую/пробел, фразы в кавычках ("мобильная шапка").
+         ОТКАТ: удалить блок .ai-keywords-block. -->
+    <div class="ai-keywords-block">
+      <div class="ai-keywords-label">Ключевые слова для поиска (необязательно)</div>
+      <textarea id="aiKeywordsInput" placeholder="Бигап, &quot;мобильная шапка&quot;, авторизация"></textarea>
+    </div>
     <button class="ai-generate-btn" id="aiGenerateBtn" type="button">
       <div class="ai-btn-spinner"></div>
       <span class="ai-btn-text">✦ Сгенерировать описание</span>
