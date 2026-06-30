@@ -400,6 +400,104 @@
     .filter-group{padding:3px 6px}
     .filter-group label{display:none}
     .results-list,.results-meta{padding:0 14px}
+    .graph-panel{display:none !important}
+  }
+
+  /* ═══ Граф задач (справа) ═══ */
+  .graph-panel{
+    position:fixed;
+    top:50px;right:0;
+    width:380px;height:calc(100vh - 90px);
+    background:rgba(18,21,31,0.92);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-left:1px solid var(--glass-border);
+    z-index:80;
+    display:flex;flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .3s ease;
+    box-shadow:-8px 0 32px rgba(0,0,0,.4);
+  }
+  .graph-panel.show{transform:translateX(0)}
+  .graph-header{
+    padding:12px 16px;
+    border-bottom:1px solid var(--glass-border);
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface2);
+  }
+  .graph-title{
+    font-family:var(--display);font-size:12px;font-weight:700;
+    color:var(--accent);letter-spacing:.02em;
+  }
+  .graph-close{
+    width:24px;height:24px;
+    background:transparent;border:1px solid var(--glass-border);
+    border-radius:4px;color:var(--text-m);
+    cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;
+  }
+  .graph-close:hover{border-color:var(--danger);color:var(--danger)}
+  .graph-body{
+    flex:1;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at center,rgba(16,185,129,0.04) 0%,transparent 70%);
+  }
+  .graph-empty{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:var(--text-d);text-align:center;
+    padding:20px;
+  }
+  .graph-empty svg{
+    width:48px;height:48px;
+    stroke:var(--text-d);fill:none;stroke-width:1.2;
+    margin-bottom:14px;opacity:.5;
+  }
+  .graph-empty-title{
+    font-size:13px;font-weight:600;color:var(--text-m);
+    margin-bottom:6px;
+  }
+  .graph-empty-sub{
+    font-size:11px;color:var(--text-d);line-height:1.5;
+  }
+  .graph-legend{
+    padding:8px 16px;
+    border-top:1px solid var(--glass-border);
+    display:flex;gap:14px;
+    background:var(--surface2);
+    font-size:10px;color:var(--text-m);
+  }
+  .gl-item{display:flex;align-items:center;gap:5px}
+  .gl-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  /* Узлы графа */
+  .graph-node{
+    cursor:pointer;
+    transition:opacity .2s;
+  }
+  .graph-node:hover{opacity:.85}
+  .graph-node circle{
+    stroke-width:2;
+    transition:r .2s;
+  }
+  .graph-node:hover circle{
+    stroke-width:3;
+  }
+  .graph-node text{
+    font-family:var(--mono);font-size:10px;
+    fill:var(--text);pointer-events:none;
+    text-anchor:middle;
+  }
+  .graph-link{
+    stroke:var(--accent-dim);
+    stroke-width:1.5;
+    stroke-opacity:.5;
+    fill:none;
+  }
+  .graph-link-label{
+    font-family:var(--mono);font-size:8px;
+    fill:var(--text-d);text-anchor:middle;
   }
 </style>
 </head>
@@ -494,10 +592,42 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28.1 · semantic + lexical search via Supabase pgvector + pg_trgm</span>
+  <span>v7.28.2 · semantic + lexical search · graph visualization</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
+<!-- ═══ Граф задач (справа) ═══ -->
+<div class="graph-panel" id="graphPanel">
+  <div class="graph-header">
+    <span class="graph-title">Граф похожих задач</span>
+    <button class="graph-close" id="graphClose" title="Скрыть">×</button>
+  </div>
+  <div class="graph-body" id="graphBody">
+    <div class="graph-empty" id="graphEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="5" cy="5" r="2"/>
+        <circle cx="19" cy="5" r="2"/>
+        <circle cx="5" cy="19" r="2"/>
+        <circle cx="19" cy="19" r="2"/>
+        <line x1="12" y1="12" x2="5" y2="5"/>
+        <line x1="12" y1="12" x2="19" y2="5"/>
+        <line x1="12" y1="12" x2="5" y2="19"/>
+        <line x1="12" y1="12" x2="19" y2="19"/>
+      </svg>
+      <div class="graph-empty-title">Кликните задачу в списке</div>
+      <div class="graph-empty-sub">и здесь появится её «семейство»<br>с top-3 похожих + их соседей</div>
+    </div>
+    <svg id="graphSvg" style="display:none;width:100%;height:100%"></svg>
+  </div>
+  <div class="graph-legend">
+    <span class="gl-item"><span class="gl-dot" style="background:var(--accent)"></span>anchor</span>
+    <span class="gl-item"><span class="gl-dot" style="background:var(--warning)"></span>top-3</span>
+    <span class="gl-item"><span class="gl-dot" style="background:var(--text-d)"></span>сосед</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // КОНФИГ
@@ -566,6 +696,21 @@ function simClass(sim) {
   const v = Number(sim) || 0;
   if (v >= 0.7) return 'high';
   return 'mid';
+}
+
+// v7.28.2: читаемые подписи для бейджа типа совпадения
+function matchKindLabel(kind, type) {
+  if (type === 'both') return 'семантика + точное';
+  if (type === 'semantic') return 'семантика';
+  // type === 'lexical' —细化 по kind
+  switch (kind) {
+    case 'phrase_title': return 'фраза в заголовке';
+    case 'phrase_desc': return 'фраза в описании';
+    case 'all_words': return 'все слова';
+    case 'half_words': return 'часть слов';
+    case 'trgm': return 'похоже по буквам';
+    default: return 'точное';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -651,12 +796,14 @@ function renderResults(items) {
     card.href = t.url || '#';
     card.target = '_blank';
     card.rel = 'noopener';
+    card.dataset.taskId = String(t.id);
+    card.dataset.taskTitle = t.title || '';
 
     card.innerHTML = `
       <div class="result-card-top">
         <span class="result-id">#${escapeHtml(String(t.id))}</span>
         <span class="result-sim ${sCls}">${simPct}%</span>
-        ${t.match_type ? `<span class="result-match m-${t.match_type}">${t.match_type === 'both' ? 'семантика + точное' : (t.match_type === 'semantic' ? 'семантика' : 'точное')}</span>` : ''}
+        ${t.match_type ? `<span class="result-match m-${t.match_type}" title="${escapeHtml(matchKindLabel(t.match_kind, t.match_type))}">${escapeHtml(matchKindLabel(t.match_kind, t.match_type))}</span>` : ''}
         <span class="result-title">${escapeHtml(t.title || '')}</span>
       </div>
       ${desc ? `<div class="result-desc">${escapeHtml(desc)}</div>` : ''}
@@ -844,6 +991,210 @@ document.querySelectorAll('.quick-chip').forEach(chip => {
     }
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Граф задач (D3.js) — справа от результатов
+// ═══════════════════════════════════════════════════════════════════
+const $graphPanel = document.getElementById('graphPanel');
+const $graphClose = document.getElementById('graphClose');
+const $graphSvg = document.getElementById('graphSvg');
+const $graphEmpty = document.getElementById('graphEmpty');
+let graphState = { taskId: null, query: '' };
+
+$graphClose.addEventListener('click', () => {
+  $graphPanel.classList.remove('show');
+});
+
+// Делегирование кликов на result-card
+document.addEventListener('click', async (e) => {
+  const card = e.target.closest('.result-card');
+  if (!card) return;
+  e.preventDefault();
+  const id = card.dataset.taskId;
+  const title = card.dataset.taskTitle;
+  if (!id) return;
+  // Не открываем Bitrix24 — рисуем граф
+  $graphPanel.classList.add('show');
+  await drawTaskGraph(id, title);
+});
+
+async function drawTaskGraph(taskId, taskTitle) {
+  graphState = { taskId, query: taskTitle || '' };
+  $graphEmpty.style.display = 'none';
+  $graphSvg.style.display = 'block';
+  $graphSvg.innerHTML = '';
+
+  // Заголовок-индикатор
+  const headerTitle = document.querySelector('.graph-title');
+  headerTitle.textContent = `Граф для #${taskId}`;
+
+  // Шаг 1: получить top-3 похожих на выбранную задачу
+  const queryText = (taskTitle || '').slice(0, 1000);
+  let top3 = [];
+  try {
+    const r = await fetch(AI_API + '/ai-similar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: queryText, threshold: 0.4, limit: 5 }),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      top3 = (d.similar || [])
+        .filter(t => String(t.id) !== String(taskId))
+        .slice(0, 3);
+    }
+  } catch (e) { console.warn('graph top-3 fetch failed', e); }
+
+  // Шаг 2: для каждой из top-3 — получить её top-2 (исключая anchor и других top-3)
+  const top3Ids = new Set([String(taskId), ...top3.map(t => String(t.id))]);
+  const nodes = [
+    { id: taskId, label: `#${taskId}`, title: taskTitle, kind: 'anchor', sim: 1.0 }
+  ];
+  const links = [];
+  const childrenPromises = top3.map(async (t) => {
+    nodes.push({ id: t.id, label: `#${t.id}`, title: t.title, kind: 'top3', sim: t.similarity });
+    links.push({ source: taskId, target: t.id, sim: t.similarity });
+    // Дети
+    try {
+      const r = await fetch(AI_API + '/ai-similar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: (t.title + ' ' + (t.description || '')).slice(0, 1000), threshold: 0.5, limit: 5 }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const kids = (d.similar || [])
+          .filter(s => !top3Ids.has(String(s.id)) && String(s.id) !== String(t.id))
+          .filter(s => Number(s.similarity) >= 0.5)
+          .slice(0, 2);
+        kids.forEach(k => {
+          nodes.push({ id: k.id, label: `#${k.id}`, title: k.title, kind: 'child', sim: k.similarity });
+          links.push({ source: t.id, target: k.id, sim: k.similarity });
+        });
+      }
+    } catch (e) { /* ignore */ }
+  });
+  await Promise.all(childrenPromises);
+
+  // Дедуп узлов (на случай дубликатов детей)
+  const uniqNodes = [];
+  const seenIds = new Set();
+  nodes.forEach(n => {
+    if (!seenIds.has(String(n.id))) {
+      seenIds.add(String(n.id));
+      uniqNodes.push(n);
+    }
+  });
+
+  renderGraph(uniqNodes, links);
+}
+
+function renderGraph(nodes, links) {
+  const width = $graphSvg.clientWidth || 360;
+  const height = $graphSvg.clientHeight || 500;
+
+  const svg = d3.select('#graphSvg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('width', '100%')
+    .attr('height', '100%');
+
+  svg.selectAll('*').remove();
+
+  // Цвета по kind
+  const colors = {
+    anchor: '#10b981',  // accent
+    top3: '#f59e0b',    // warning
+    child: '#4a5270',   // text-d
+  };
+
+  // Размер узла по sim
+  const radius = (n) => {
+    const s = Number(n.sim) || 0;
+    if (n.kind === 'anchor') return 16;
+    if (n.kind === 'top3') return 10 + s * 6;
+    return 6 + s * 4;
+  };
+
+  // Симуляция force-directed
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => {
+      // Расстояние обратно пропорционально similarity
+      const s = Number(d.sim) || 0.3;
+      return 100 - s * 40;  // 60-100
+    }).strength(0.7))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => radius(d) + 8));
+
+  // Линии
+  const link = svg.append('g')
+    .attr('class', 'links')
+    .selectAll('line')
+    .data(links)
+    .enter().append('line')
+    .attr('class', 'graph-link')
+    .attr('stroke-width', d => 1 + (Number(d.sim) || 0) * 2);
+
+  // Подписи similarity на линиях
+  const linkLabel = svg.append('g')
+    .selectAll('text')
+    .data(links)
+    .enter().append('text')
+    .attr('class', 'graph-link-label')
+    .text(d => `${Math.round((Number(d.sim) || 0) * 100)}%`);
+
+  // Узлы
+  const node = svg.append('g')
+    .attr('class', 'nodes')
+    .selectAll('g')
+    .data(nodes)
+    .enter().append('g')
+    .attr('class', 'graph-node')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) sim.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end', (event, d) => {
+        if (!event.active) sim.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      }));
+
+  node.append('circle')
+    .attr('r', d => radius(d))
+    .attr('fill', d => colors[d.kind] || colors.child)
+    .attr('stroke', '#fff')
+    .attr('stroke-opacity', 0.3);
+
+  node.append('text')
+    .attr('dy', 4)
+    .text(d => d.label)
+    .attr('fill', '#fff')
+    .attr('font-weight', d => d.kind === 'anchor' ? 'bold' : 'normal');
+
+  // Tooltip на hover
+  node.append('title')
+    .text(d => `${d.label} — ${d.title || ''}\n${d.kind === 'anchor' ? 'anchor (выбранная)' : 'sim: ' + Math.round((Number(d.sim)||0)*100) + '%'}`);
+
+  // Клик по узлу → открыть задачу в Bitrix24
+  node.on('click', (event, d) => {
+    window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`, '_blank');
+  });
+
+  // Tick
+  sim.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+    linkLabel
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
 
 // Старт
 loadTaskCount();

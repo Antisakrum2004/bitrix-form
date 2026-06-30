@@ -21,6 +21,7 @@ interface LexicalTask {
   description?: string;
   created_at?: string | null;
   match_type: "lexical";
+  match_kind?: string;  // v7.28.2: phrase_title | phrase_desc | all_words | half_words | trgm
 }
 
 /**
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
       description: (row.description || "").slice(0, 500),
       created_at: row.created_at || null,
       match_type: "lexical" as const,
+      match_kind: row.match_kind || "trgm",
     }));
 
     return NextResponse.json(
