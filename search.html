@@ -133,7 +133,7 @@
 
   .search-title{
     font-family:var(--display);
-    font-size:42px;
+    font-size:30px;            /* v7.28.4: было 42px, -30% */
     font-weight:700;
     letter-spacing:-0.02em;
     margin-bottom:8px;
@@ -499,6 +499,41 @@
     font-family:var(--mono);font-size:8px;
     fill:var(--text-d);text-anchor:middle;
   }
+
+  /* v7.28.4: подсветка карточки жёлтым ореолом */
+  .result-card.highlighted{
+    border-color:var(--warning) !important;
+    box-shadow:0 0 0 3px rgba(245,158,11,0.4), 0 0 30px rgba(245,158,11,0.3);
+    background:rgba(245,158,11,0.05) !important;
+    animation:highlightPulse 1s ease-in-out 2;
+  }
+  @keyframes highlightPulse{
+    0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4), 0 0 30px rgba(245,158,11,0.3)}
+    50%{box-shadow:0 0 0 5px rgba(245,158,11,0.6), 0 0 50px rgba(245,158,11,0.5)}
+  }
+
+  /* v7.28.4: ссылка "открыть в битрикс" внизу карточки */
+  .result-card .card-open-link{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10px;font-weight:600;
+    color:var(--accent);text-decoration:none;
+    padding:4px 10px;border-radius:4px;
+    border:1px solid var(--accent-dim);
+    background:var(--accent-glow);
+    margin-top:6px;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .result-card .card-open-link:hover{
+    background:var(--accent);color:#fff;
+    border-color:var(--accent);
+  }
+  .result-card .card-open-link svg{
+    width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;
+  }
+  .result-card .card-bottom{
+    display:flex;justify-content:flex-end;margin-top:8px;
+  }
 </style>
 </head>
 <body>
@@ -553,7 +588,7 @@
 
   <h1 class="search-title" id="searchTitle">База знаний</h1>
   <p class="search-subtitle" id="searchSubtitle">
-    Поиск по <b id="taskCount">…</b> задачам — работает семантически (понимает смысл, не только слова)
+    <b id="taskCount">…</b> · обновлено <b id="taskUpdated">…</b>
   </p>
 
   <div class="search-wrap">
@@ -592,7 +627,7 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28.2 · semantic + lexical search · graph visualization</span>
+  <span>v7.28.4 · semantic + lexical search · graph pan/zoom</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
@@ -621,9 +656,10 @@
     <svg id="graphSvg" style="display:none;width:100%;height:100%"></svg>
   </div>
   <div class="graph-legend">
-    <span class="gl-item"><span class="gl-dot" style="background:var(--accent)"></span>anchor</span>
-    <span class="gl-item"><span class="gl-dot" style="background:var(--warning)"></span>top-3</span>
-    <span class="gl-item"><span class="gl-dot" style="background:var(--text-d)"></span>сосед</span>
+    <span class="gl-item"><span class="gl-dot" style="background:var(--accent)"></span>выбранная</span>
+    <span class="gl-item"><span class="gl-dot" style="background:var(--warning)"></span>похожие</span>
+    <span class="gl-item"><span class="gl-dot" style="background:var(--text-d)"></span>соседние</span>
+    <span class="gl-item" style="margin-left:auto;opacity:.6">колесо — zoom · перетаскивание — pan</span>
   </div>
 </div>
 
@@ -791,13 +827,11 @@ function renderResults(items) {
     const sClass = statusClass(t.status);
     const sCls = simClass(sim);
 
-    const card = document.createElement('a');
+    const card = document.createElement('div');
     card.className = 'result-card';
-    card.href = t.url || '#';
-    card.target = '_blank';
-    card.rel = 'noopener';
     card.dataset.taskId = String(t.id);
     card.dataset.taskTitle = t.title || '';
+    card.dataset.taskUrl = t.url || '';
 
     card.innerHTML = `
       <div class="result-card-top">
@@ -812,6 +846,12 @@ function renderResults(items) {
         ${t.responsible ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>${escapeHtml(t.responsible)}</span>` : ''}
         ${t.project_name ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>${escapeHtml(t.project_name)}</span>` : ''}
         ${dateStr ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${dateStr}</span>` : ''}
+      </div>
+      <div class="card-bottom">
+        <a class="card-open-link" href="${escapeHtml(t.url || '#')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H10M17 7V14"/></svg>
+          открыть в битрикс
+        </a>
       </div>
     `;
     list.appendChild(card);
@@ -941,16 +981,49 @@ function scheduleSearch() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Счётчик задач (для подзаголовка) — простой запрос к Supabase
+// Счётчик задач + дата последнего обновления (v7.28.4)
 // ═══════════════════════════════════════════════════════════════════
 async function loadTaskCount() {
   try {
-    // Используем /ai-similar с пустым запросом и очень низким порогом — быстро и бесплатно
-    // (или просто показываем «1000+»)
-    $taskCount.textContent = '1200+';
-  } catch {
-    $taskCount.textContent = '1000+';
+    // Запрос: count (HEAD с Prefer: count=exact) + max(indexed_at) через RPC или select
+    // Делаем одним GET-запросом: order=indexed_at.desc&limit=1 + Prefer header
+    const res = await fetch('https://nopccnooivztriqdkbie.supabase.co/rest/v1/tasks?select=indexed_at&order=indexed_at.desc&limit=1', {
+      method: 'GET',
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcGNjbm9vaXZ6dHJpcWRrYmllIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mjc3NjY3MiwiZXhwIjoyMDk4MzUyNjcyfQ.20owGWCfla-9Hfv2pRq3wM2kFLI3SjLMvP-Poyr2VtU',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcGNjbm9vaXZ6dHJpcWRrYmllIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mjc3NjY3MiwiZXhwIjoyMDk4MzUyNjcyfQ.20owGWCfla-9Hfv2pRq3wM2kFLI3SjLMvP-Poyr2VtU',
+        'Prefer': 'count=exact',
+      },
+    });
+    if (!res.ok) throw new Error('count fetch failed');
+    const range = res.headers.get('content-range') || '';  // "0-0/1201"
+    const count = range.split('/')[1] || '—';
+    const data = await res.json();
+    const lastIdx = data?.[0]?.indexed_at;
+    $taskCount.textContent = `${count} задач`;
+    $taskUpdated.textContent = lastIdx ? fmtRelative(lastIdx) : 'неизвестно';
+  } catch (e) {
+    console.warn('loadTaskCount failed', e);
+    $taskCount.textContent = '1200+ задач';
+    $taskUpdated.textContent = 'неизвестно';
   }
+}
+
+function fmtRelative(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    const dateStr = d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+    if (diffMin < 1) return 'только что';
+    if (diffMin < 60) return `${diffMin} мин назад (${dateStr})`;
+    if (diffHr < 24) return `сегодня в ${d.toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })}`;
+    if (diffDay === 1) return `вчера в ${d.toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })}`;
+    return dateStr;
+  } catch { return isoStr; }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1101,18 +1174,36 @@ function renderGraph(nodes, links) {
   const width = $graphSvg.clientWidth || 360;
   const height = $graphSvg.clientHeight || 500;
 
+  // v7.28.4: Очищаем через d3.select (правильнее чем innerHTML='')
+  d3.select('#graphSvg').selectAll('*').remove();
+
   const svg = d3.select('#graphSvg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', '100%')
-    .attr('height', '100%');
+    .attr('height', '100%')
+    .attr('preserveAspectRatio', 'xMidYMid meet');
 
-  svg.selectAll('*').remove();
+  // v7.28.4: добавляем <g> для pan+zoom
+  const container = svg.append('g').attr('class', 'graph-container');
+
+  // v7.28.4: zoom через d3.zoom — wheel = zoom, drag background = pan
+  const zoom = d3.zoom()
+    .scaleExtent([0.2, 4])  // от 0.2x до 4x
+    .wheelDelta((event) => {
+      // Ускоряем wheel — быстрее реагирует
+      return -event.deltaY * 0.002;
+    })
+    .on('zoom', (event) => {
+      container.attr('transform', event.transform);
+    });
+
+  svg.call(zoom);
 
   // Цвета по kind
   const colors = {
-    anchor: '#10b981',  // accent
-    top3: '#f59e0b',    // warning
-    child: '#4a5270',   // text-d
+    anchor: '#10b981',
+    top3: '#f59e0b',
+    child: '#4a5270',
   };
 
   // Размер узла по sim
@@ -1126,16 +1217,15 @@ function renderGraph(nodes, links) {
   // Симуляция force-directed
   const sim = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(links).id(d => d.id).distance(d => {
-      // Расстояние обратно пропорционально similarity
       const s = Number(d.sim) || 0.3;
-      return 100 - s * 40;  // 60-100
+      return 100 - s * 40;
     }).strength(0.7))
     .force('charge', d3.forceManyBody().strength(-200))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide().radius(d => radius(d) + 8));
 
   // Линии
-  const link = svg.append('g')
+  const link = container.append('g')
     .attr('class', 'links')
     .selectAll('line')
     .data(links)
@@ -1144,7 +1234,7 @@ function renderGraph(nodes, links) {
     .attr('stroke-width', d => 1 + (Number(d.sim) || 0) * 2);
 
   // Подписи similarity на линиях
-  const linkLabel = svg.append('g')
+  const linkLabel = container.append('g')
     .selectAll('text')
     .data(links)
     .enter().append('text')
@@ -1152,7 +1242,7 @@ function renderGraph(nodes, links) {
     .text(d => `${Math.round((Number(d.sim) || 0) * 100)}%`);
 
   // Узлы
-  const node = svg.append('g')
+  const node = container.append('g')
     .attr('class', 'nodes')
     .selectAll('g')
     .data(nodes)
@@ -1181,16 +1271,29 @@ function renderGraph(nodes, links) {
     .attr('fill', '#fff')
     .attr('font-weight', d => d.kind === 'anchor' ? 'bold' : 'normal');
 
-  // Tooltip на hover
+  // Tooltip
   node.append('title')
-    .text(d => `${d.label} — ${d.title || ''}\n${d.kind === 'anchor' ? 'anchor (выбранная)' : 'sim: ' + Math.round((Number(d.sim)||0)*100) + '%'}`);
+    .text(d => `${d.label} — ${d.title || ''}\n${d.kind === 'anchor' ? 'выбранная задача' : 'схожесть: ' + Math.round((Number(d.sim)||0)*100) + '%'}\n\nклик → подсветит слева\nдвойной клик → откроет в Bitrix24`);
 
-  // Клик по узлу → открыть задачу в Bitrix24
+  // v7.28.4: SINGLE click = highlight card слева (на 5 сек)
+  // DOUBLE click = open in Bitrix24
+  let clickTimer = null;
   node.on('click', (event, d) => {
-    window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`, '_blank');
+    event.stopPropagation();
+    if (clickTimer) {
+      // Двойной клик — открываем в Bitrix24
+      clearTimeout(clickTimer);
+      clickTimer = null;
+      window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`, '_blank');
+    } else {
+      // Одинарный клик — ждём 250мс, если не двойной — подсвечиваем
+      clickTimer = setTimeout(() => {
+        clickTimer = null;
+        highlightCard(d.id);
+      }, 250);
+    }
   });
 
-  // Tick
   sim.on('tick', () => {
     link
       .attr('x1', d => d.source.x)
@@ -1202,6 +1305,20 @@ function renderGraph(nodes, links) {
       .attr('y', d => (d.source.y + d.target.y) / 2);
     node.attr('transform', d => `translate(${d.x},${d.y})`);
   });
+}
+
+// v7.28.4: подсветка карточки задачи жёлтым ореолом на 5 сек
+function highlightCard(taskId) {
+  document.querySelectorAll('.result-card.highlighted').forEach(el => el.classList.remove('highlighted'));
+  const card = document.querySelector(`.result-card[data-task-id="${taskId}"]`);
+  if (!card) {
+    // Если карточки нет в выдаче (например, ребёнок не из выдачи) — просто покажем tooltip
+    console.log(`Карточка #${taskId} не в выдаче`);
+    return;
+  }
+  card.classList.add('highlighted');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => card.classList.remove('highlighted'), 5000);
 }
 
 // Старт
