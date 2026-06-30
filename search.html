@@ -295,6 +295,7 @@
     color:inherit;
     display:block;
     position:relative;
+    cursor:pointer;  /* v7.28.5: показываем руку на всю карточку */
   }
   .result-card:hover{
     border-color:var(--accent-dim);
@@ -500,40 +501,99 @@
     fill:var(--text-d);text-anchor:middle;
   }
 
-  /* v7.28.4: подсветка карточки жёлтым ореолом */
+  /* v7.28.5: подсветка карточки зелёным ореолом — потише, без жирной рамки */
   .result-card.highlighted{
-    border-color:var(--warning) !important;
-    box-shadow:0 0 0 3px rgba(245,158,11,0.4), 0 0 30px rgba(245,158,11,0.3);
-    background:rgba(245,158,11,0.05) !important;
-    animation:highlightPulse 1s ease-in-out 2;
-  }
-  @keyframes highlightPulse{
-    0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4), 0 0 30px rgba(245,158,11,0.3)}
-    50%{box-shadow:0 0 0 5px rgba(245,158,11,0.6), 0 0 50px rgba(245,158,11,0.5)}
+    border-color:var(--accent) !important;
+    background:rgba(16,185,129,0.08) !important;
+    box-shadow:0 0 0 2px var(--accent-dim), 0 0 24px rgba(16,185,129,0.25);
   }
 
-  /* v7.28.4: ссылка "открыть в битрикс" внизу карточки */
-  .result-card .card-open-link{
-    display:inline-flex;align-items:center;gap:5px;
-    font-size:10px;font-weight:600;
+  /* v7.28.5: ссылка 'открыть в битрикс' в meta-строке, без фрейма */
+  .result-card .open-bitrix{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;font-weight:500;
     color:var(--accent);text-decoration:none;
-    padding:4px 10px;border-radius:4px;
-    border:1px solid var(--accent-dim);
-    background:var(--accent-glow);
-    margin-top:6px;
     cursor:pointer;
+    margin-left:auto;
+    transition:opacity .15s;
+  }
+  .result-card .open-bitrix:hover{opacity:.75}
+  .result-card .open-bitrix svg{
+    width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;
+  }
+
+  /* v7.28.5: звёздочка избранного */
+  .star-btn{
+    position:absolute;top:10px;right:12px;
+    cursor:pointer;background:none;border:none;
+    color:var(--text-d);font-size:18px;line-height:1;
+    padding:0;opacity:.5;
+    transition:opacity .15s, color .15s;
+  }
+  .star-btn:hover{opacity:1}
+  .star-btn.active{color:var(--warning);opacity:1}
+  .star-btn.active:hover{color:var(--accent-dark)}
+
+  /* v7.28.5: подсветка найденного слова в выдаче — мягкая, не яркая */
+  .result-title mark, .result-desc mark{
+    background:rgba(245,158,11,0.18);
+    color:inherit;
+    padding:0 2px;
+    border-radius:2px;
+    font-weight:600;
+  }
+
+  /* v7.28.5: auto-suggestions dropdown */
+  .suggestions{
+    position:absolute;
+    top:100%;left:0;right:0;
+    background:var(--glass-solid);
+    border:1px solid var(--glass-border-h);
+    border-radius:0 0 12px 12px;
+    margin-top:2px;
+    max-height:280px;
+    overflow-y:auto;
+    z-index:200;
+    display:none;
+    box-shadow:0 12px 32px rgba(0,0,0,.4);
+  }
+  .suggestions.show{display:block}
+  .suggestion-item{
+    padding:10px 18px 10px 50px;
+    font-size:13px;
+    color:var(--text);
+    cursor:pointer;
+    transition:background .1s;
+    border-bottom:1px solid var(--glass-border);
+    line-height:1.4;
+  }
+  .suggestion-item:last-child{border-bottom:none}
+  .suggestion-item:hover,.suggestion-item.active{
+    background:var(--accent-glow);
+    color:var(--accent);
+  }
+  .suggestion-item .sug-tag{
+    display:inline-block;
+    font-size:9px;
+    color:var(--text-d);
+    margin-left:6px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  /* v7.28.5: фильтр избранного */
+  .filter-fav{
+    margin-left:auto;
+    color:var(--text-d);
+    cursor:pointer;
+    font-size:11px;
+    display:flex;align-items:center;gap:5px;
+    padding:4px 10px;border-radius:5px;
     transition:all .15s;
+    user-select:none;
   }
-  .result-card .card-open-link:hover{
-    background:var(--accent);color:#fff;
-    border-color:var(--accent);
-  }
-  .result-card .card-open-link svg{
-    width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;
-  }
-  .result-card .card-bottom{
-    display:flex;justify-content:flex-end;margin-top:8px;
-  }
+  .filter-fav:hover{color:var(--warning)}
+  .filter-fav.active{color:var(--warning);background:rgba(245,158,11,0.08)}
 </style>
 </head>
 <body>
@@ -581,6 +641,13 @@
       <option value="50">50</option>
     </select>
   </div>
+
+  <!-- v7.28.5: фильтр избранного -->
+  <div class="filter-fav" id="filterFav" title="Только избранные задачи (звёздочки)">
+    <span id="favIcon">☆</span>
+    <span>избранное</span>
+    <span id="favCount" style="opacity:.6"></span>
+  </div>
 </div>
 
 <!-- ═══ Центральная зона ═══ -->
@@ -606,6 +673,8 @@
         autofocus
       >
       <button class="search-clear" id="searchClear" title="Очистить (Esc)">×</button>
+      <!-- v7.28.5: auto-suggestions dropdown -->
+      <div class="suggestions" id="suggestions"></div>
     </div>
 
     <div class="search-hint" id="searchHint">
@@ -627,7 +696,7 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28.4 · semantic + lexical search · graph pan/zoom</span>
+  <span>v7.28.5 · semantic + lexical + word-roots · favorites · suggestions · graph pan/zoom</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
@@ -756,6 +825,12 @@ function matchKindLabel(kind, type) {
 function applyFiltersAndSort(items) {
   let out = items.slice();
 
+  // v7.28.5: фильтр избранного
+  if (document.getElementById('filterFav').classList.contains('active')) {
+    const favs = new Set(getFavorites());
+    out = out.filter(t => favs.has(String(t.id)));
+  }
+
   // Фильтр по статусу
   const sf = $filterStatus.value;
   if (sf === 'open') {
@@ -834,32 +909,149 @@ function renderResults(items) {
     card.dataset.taskTitle = t.title || '';
     card.dataset.taskUrl = t.url || '';
 
+    // v7.28.5: подсветка найденных слов — обёртка в <mark>
+    const highlightedTitle = highlightMatches(t.title || '', lastQuery);
+    const highlightedDesc = desc ? highlightMatches(desc, lastQuery) : '';
+
+    // v7.28.5: star (избранное)
+    const isFav = isFavorite(t.id);
+    const starSvg = isFav ? '★' : '☆';
+
+    // v7.28.5: ссылка в meta-строке (без фрейма)
     card.innerHTML = `
+      <button class="star-btn ${isFav ? 'active' : ''}" data-task-id="${escapeHtml(String(t.id))}" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">${starSvg}</button>
       <div class="result-card-top">
         <span class="result-id">#${escapeHtml(String(t.id))}</span>
         <span class="result-sim ${sCls}">${simPct}%</span>
         ${t.match_type ? `<span class="result-match m-${t.match_type}" title="${escapeHtml(matchKindLabel(t.match_kind, t.match_type))}">${escapeHtml(matchKindLabel(t.match_kind, t.match_type))}</span>` : ''}
-        <span class="result-title">${escapeHtml(t.title || '')}</span>
+        <span class="result-title">${highlightedTitle}</span>
       </div>
-      ${desc ? `<div class="result-desc">${escapeHtml(desc)}</div>` : ''}
+      ${highlightedDesc ? `<div class="result-desc">${highlightedDesc}</div>` : ''}
       <div class="result-meta">
         <span class="result-status ${sClass}">${escapeHtml(t.status || '')}</span>
         ${t.responsible ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>${escapeHtml(t.responsible)}</span>` : ''}
         ${t.project_name ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>${escapeHtml(t.project_name)}</span>` : ''}
         ${dateStr ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${dateStr}</span>` : ''}
-      </div>
-      <div class="card-bottom">
-        <a class="card-open-link" href="${escapeHtml(t.url || '#')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-          <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H10M17 7V14"/></svg>
+        <a class="open-bitrix" href="${escapeHtml(t.url || '#')}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Открыть задачу в Bitrix24">
           открыть в битрикс
+          <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H10M17 7V14"/></svg>
         </a>
       </div>
     `;
     list.appendChild(card);
+
+    // v7.28.5: обработчик star
+    const starBtn = card.querySelector('.star-btn');
+    starBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = starBtn.dataset.taskId;
+      const nowFav = toggleFavorite(id);
+      starBtn.textContent = nowFav ? '★' : '☆';
+      starBtn.classList.toggle('active', nowFav);
+      updateFavCount();
+    });
   });
 
   $center.appendChild(list);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.28.5: Подсветка найденных слов в тексте
+// ═══════════════════════════════════════════════════════════════════
+function highlightMatches(text, query) {
+  if (!text || !query) return escapeHtml(text);
+  // Разбиваем query на слова >=3 символов, берём корни (6 символов) + полную фразу
+  const words = (query.toLowerCase().match(/\S+/g) || []).filter(w => w.length >= 3);
+  const roots = [...new Set(words.map(w => w.slice(0, 6)).filter(r => r.length >= 3))];
+  // Список паттернов: вся фраза + каждый корень
+  const patterns = [query.toLowerCase(), ...roots];
+  // Экранируем regex-спецсимволы
+  const escaped = patterns.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+  return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.28.5: Избранное (localStorage)
+// ═══════════════════════════════════════════════════════════════════
+const FAV_KEY = 'kb-favorites';
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
+function isFavorite(id) {
+  return getFavorites().includes(String(id));
+}
+function toggleFavorite(id) {
+  const favs = getFavorites();
+  const idStr = String(id);
+  const idx = favs.indexOf(idStr);
+  if (idx >= 0) { favs.splice(idx, 1); }
+  else { favs.push(idStr); }
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  return idx < 0;
+}
+function updateFavCount() {
+  const count = getFavorites().length;
+  document.getElementById('favCount').textContent = count ? `(${count})` : '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.28.5: Auto-suggestions
+// ═══════════════════════════════════════════════════════════════════
+let suggestionTimer = null;
+let lastQuery = '';
+const $suggestions = document.getElementById('suggestions');
+
+function scheduleSuggestions() {
+  if (suggestionTimer) clearTimeout(suggestionTimer);
+  const val = $input.value.trim();
+  if (val.length < 3) {
+    $suggestions.classList.remove('show');
+    return;
+  }
+  suggestionTimer = setTimeout(() => fetchSuggestions(val), 250);
+}
+
+async function fetchSuggestions(q) {
+  try {
+    const r = await fetch(AI_API + '/ai-lexical', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: q, limit: 5 }),
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+    const items = (d.similar || []).slice(0, 5);
+    if (!items.length) {
+      $suggestions.classList.remove('show');
+      return;
+    }
+    $suggestions.innerHTML = items.map((t, i) => `
+      <div class="suggestion-item ${i === 0 ? 'active' : ''}" data-task-id="${escapeHtml(String(t.id))}">
+        <span>#${escapeHtml(String(t.id))}</span> ${escapeHtml((t.title || '').slice(0, 80))}
+        <span class="sug-tag">${escapeHtml(matchKindLabel(t.match_kind, t.match_type))}</span>
+      </div>
+    `).join('');
+    $suggestions.classList.add('show');
+
+    // Клик по suggestion → подставить в инпут и искать
+    $suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        $input.value = item.querySelector('span').nextSibling.textContent.trim().slice(0, 80);
+        $suggestions.classList.remove('show');
+        runSearch($input.value);
+      });
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// Прячем suggestions при клике вне
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) {
+    $suggestions.classList.remove('show');
+  }
+});
 
 function renderInitial() {
   // Сброс к начальному виду
@@ -931,6 +1123,7 @@ async function runSearch(q) {
     });
 
     lastResults = Array.from(seen.values());
+    lastQuery = query;  // v7.28.5: запоминаем для подсветки
 
     // Сортировка по умолчанию: phrase_title (100%) > phrase_desc (85%) > semantic > lexical word/trgm
     // Если у задачи match_kind = phrase_title — она самая релевантная.
@@ -943,6 +1136,7 @@ async function runSearch(q) {
         if (t.match_type === 'semantic') return 500 + s;        // 500+
         if (t.match_kind === 'all_words') return 400 + s;
         if (t.match_kind === 'half_words') return 300 + s;
+        if (t.match_kind === 'single_word') return 200 + s;
         return s;  // lexical trgm/word — по similarity
       };
       return score(b) - score(a);
@@ -1032,13 +1226,19 @@ function fmtRelative(isoStr) {
 // ═══════════════════════════════════════════════════════════════════
 // Event listeners
 // ═══════════════════════════════════════════════════════════════════
-$input.addEventListener('input', scheduleSearch);
+$input.addEventListener('input', () => {
+  scheduleSearch();
+  scheduleSuggestions();  // v7.28.5: auto-suggestions
+});
 $input.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     if (searchTimer) clearTimeout(searchTimer);
+    if (suggestionTimer) clearTimeout(suggestionTimer);
+    $suggestions.classList.remove('show');
     runSearch($input.value);
   } else if (e.key === 'Escape') {
+    $suggestions.classList.remove('show');
     $input.value = '';
     renderInitial();
     $clear.classList.remove('show');
@@ -1093,17 +1293,22 @@ $graphClose.addEventListener('click', () => {
 document.addEventListener('click', async (e) => {
   const card = e.target.closest('.result-card');
   if (!card) return;
+  // v7.28.5: не реагируем если клик был на star или на open-bitrix
+  if (e.target.closest('.star-btn') || e.target.closest('.open-bitrix')) return;
   e.preventDefault();
   const id = card.dataset.taskId;
   const title = card.dataset.taskTitle;
   if (!id) return;
-  // Не открываем Bitrix24 — рисуем граф
   $graphPanel.classList.add('show');
   await drawTaskGraph(id, title);
 });
 
 async function drawTaskGraph(taskId, taskTitle) {
-  graphState = { taskId, query: taskTitle || '' };
+  // v7.28.5: кэш — если клик на ту же задачу, не перезагружаем граф
+  if (graphState.taskId === String(taskId)) {
+    return; // граф уже построен, ничего не делаем
+  }
+  graphState = { taskId: String(taskId), query: taskTitle || '' };
   $graphEmpty.style.display = 'none';
   $graphSvg.style.display = 'block';
   $graphSvg.innerHTML = '';
@@ -1326,7 +1531,21 @@ function highlightCard(taskId) {
 
 // Старт
 loadTaskCount();
+updateFavCount();  // v7.28.5: показать счётчик избранного
 $input.focus();
+
+// v7.28.5: клик на фильтр избранного
+document.getElementById('filterFav').addEventListener('click', () => {
+  const el = document.getElementById('filterFav');
+  const icon = document.getElementById('favIcon');
+  el.classList.toggle('active');
+  const isActive = el.classList.contains('active');
+  icon.textContent = isActive ? '★' : '☆';
+  if (lastResults.length) {
+    const filtered = applyFiltersAndSort(lastResults);
+    renderResults(filtered);
+  }
+});
 </script>
 
 </body>
