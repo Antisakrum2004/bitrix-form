@@ -22,15 +22,25 @@
  */
 
 // ─── Config ──────────────────────────────────────────────────────────────
+// AI-CHANGE: MODIFIED v7.26 — переключение с OpenAI прямого на OpenRouter (proxy).
+// ПРИЧИНА: у пользователя есть OpenRouter ключ, OpenAI ключа нет. OpenRouter проксирует embeddings на OpenAI.
+// Цены те же (~$0.02/1M токенов), формат ответа идентичный.
+// ОТКАТ: вернуть OPENAI_KEY и URL https://api.openai.com/v1/embeddings.
 const BITRIX_WEBHOOK = process.env.BITRIX24_WEBHOOK;
-const OPENAI_KEY     = process.env.OPENAI_API_KEY;
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 const SUPA_URL       = process.env.SUPABASE_URL || 'https://nopccnooivztriqdkbie.supabase.co';
 const SUPA_KEY       = process.env.SUPABASE_SERVICE_KEY;
 
-const SINCE_DATE  = '2026-01-01';
+// AI-CHANGE: MODIFIED v7.26 — фильтр по дате вынесен в env, по умолчанию с 2026-01-01.
+// Для тестов: SINCE_DATE=2026-06-01 node scripts/sync-bitrix-to-supabase.mjs
+const SINCE_DATE  = process.env.SINCE_DATE || '2026-01-01';
 const PAGE_SIZE   = 50;
 const EMBED_BATCH = 100;
 const DELAY_MS    = 200;
+
+// Embeddings endpoint: OpenRouter (proxy to OpenAI)
+const EMBEDDINGS_URL = 'https://openrouter.ai/api/v1/embeddings';
+const EMBEDDINGS_MODEL = 'text-embedding-3-small';
 
 // Bitrix24 status mapping (matches ai-search/route.ts)
 const STATUS_MAP = {
@@ -129,27 +139,42 @@ async function fetchAllTasks() {
   return all;
 }
 
-// ─── OpenAI embeddings (batched) ─────────────────────────────────────────
+// ─── OpenAI embeddings via OpenRouter (batched) ──────────────────────────
+let totalTokensUsed = 0;
+let totalCostUsd = 0;
+
 async function getEmbeddings(texts) {
   // texts: array of strings, up to 100 items
-  const res = await fetch('https://api.openai.com/v1/embeddings', {
+  const res = await fetch(EMBEDDINGS_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`,
+      'Authorization': `Bearer ${OPENROUTER_KEY}`,
     },
     body: JSON.stringify({
-      model: 'text-embedding-3-small',
+      model: EMBEDDINGS_MODEL,
       input: texts,
     }),
   });
 
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`OpenAI ${res.status}: ${txt.slice(0, 300)}`);
+    throw new Error(`OpenRouter embeddings ${res.status}: ${txt.slice(0, 300)}`);
   }
 
   const data = await res.json();
+
+  // Track usage/cost
+  if (data.usage) {
+    totalTokensUsed += data.usage.total_tokens || 0;
+    if (data.usage.cost !== undefined) {
+      totalCostUsd += data.usage.cost;
+    } else {
+      // Fallback: $0.02 per 1M tokens
+      totalCostUsd += (data.usage.total_tokens || 0) * 0.02 / 1_000_000;
+    }
+  }
+
   // Sort by index (OpenAI returns in order, but be safe)
   return data.data
     .sort((a, b) => a.index - b.index)
@@ -202,18 +227,19 @@ async function main() {
   // Validate env
   const missing = [];
   if (!BITRIX_WEBHOOK) missing.push('BITRIX24_WEBHOOK');
-  if (!OPENAI_KEY)     missing.push('OPENAI_API_KEY');
-  if (!SUPA_URL)       missing.push('SUPABASE_URL');
-  if (!SUPA_KEY)       missing.push('SUPABASE_SERVICE_KEY');
+  if (!OPENROUTER_KEY)  missing.push('OPENROUTER_API_KEY (or OPENAI_API_KEY)');
+  if (!SUPA_URL)        missing.push('SUPABASE_URL');
+  if (!SUPA_KEY)        missing.push('SUPABASE_SERVICE_KEY');
   if (missing.length) {
     console.error('Missing env vars:', missing.join(', '));
-    console.error('Set them in shell: export BITRIX24_WEBHOOK=... && ...');
+    console.error('Set them in shell or scripts/.env.local');
     process.exit(1);
   }
 
   console.log('=== Bitrix24 → Supabase sync ===');
   console.log(`Supabase URL: ${SUPA_URL}`);
   console.log(`Since: ${SINCE_DATE}`);
+  console.log(`Embeddings: ${EMBEDDINGS_URL} (${EMBEDDINGS_MODEL})`);
   console.log('');
 
   // 1. Fetch all tasks
@@ -318,12 +344,18 @@ async function main() {
 
   console.log(`\n✓ Done. ${inserted} tasks indexed in Supabase.`);
 
+  // Cost report
+  console.log('\n=== Usage & Cost ===');
+  console.log(`Tokens used: ${totalTokensUsed.toLocaleString()}`);
+  console.log(`Estimated cost: $${totalCostUsd.toFixed(6)} USD`);
+  console.log(`(at $0.02 / 1M tokens)`);
+
   // 5. Verify
   const count = await supaCount();
   if (count !== null) {
-    console.log(`Supabase tasks table now has ${count} rows.`);
+    console.log(`\nSupabase tasks table now has ${count} rows.`);
   } else {
-    console.log('Could not verify count (Supabase HEAD request failed).');
+    console.log('\nCould not verify count (Supabase HEAD request failed).');
   }
 }
 

@@ -51,20 +51,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const openaiKey = process.env.OPENAI_API_KEY;
+    const openaiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
     const supaUrl = process.env.SUPABASE_URL || "https://nopccnooivztriqdkbie.supabase.co";
     const supaKey = process.env.SUPABASE_SERVICE_KEY;
 
+    // AI-CHANGE: MODIFIED v7.26 — using OpenRouter as proxy for OpenAI embeddings.
+    // ПРИЧИНА: у пользователя OpenRouter ключ, прямого OpenAI нет. OpenRouter проксирует.
+    // ОТКАТ: вернуть URL https://api.openai.com/v1/embeddings и env var OPENAI_API_KEY.
+    const embeddingsUrl = process.env.OPENROUTER_API_KEY
+      ? "https://openrouter.ai/api/v1/embeddings"
+      : "https://api.openai.com/v1/embeddings";
+
     if (!openaiKey || !supaKey) {
-      console.warn("ai-similar: missing env (OPENAI_API_KEY or SUPABASE_SERVICE_KEY)");
+      console.warn("ai-similar: missing env (OPENROUTER_API_KEY or SUPABASE_SERVICE_KEY)");
       return NextResponse.json(
         { similar: [], total: 0, source: "supabase", reason: "missing_env" },
         { headers: CORS_HEADERS }
       );
     }
 
-    // 1. Get embedding from OpenAI
-    const embRes = await fetch("https://api.openai.com/v1/embeddings", {
+    // 1. Get embedding from OpenAI (via OpenRouter proxy)
+    const embRes = await fetch(embeddingsUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
