@@ -688,6 +688,39 @@ git push origin main --force
 - **Не заменяет** существующий `OPENAI_API_KEY` в Vercel — чат-маршруты (`/api/ai-task`, `/api/ai-search`, `/api/ai-decompose`, `/api/ai-duplicate`) продолжают работать как есть. `OPENROUTER_API_KEY` используется ТОЛЬКО в `/api/ai-similar` для embeddings.
 - **Rollback tag:** `v7.25-rollback-2026-06-30` (создан в v7.26) — точка отката к моменту ДО внедрения семантического поиска. Откат: `git reset --hard v7.25-rollback-2026-06-30 && git push origin main --force`.
 
+### v7.26.2 — Vercel deploy + cross-repo sync ✅ (2026-06-30)
+- **Что:** Vercel project `bitrix-form-ai` задеплоил v7.26.1 код. Endpoint `/api/ai-similar` работает на production.
+- **Проблема:** Vercel подключён к репо `Antisakrum2004/bitrix-form-AI` (с суффиксом -AI), а не к `bitrix-form`. Этот репо был на старой версии v1.1.1 (без Supabase, без ai-similar route).
+- **Решение:**
+  1. Через Vercel REST API добавил 3 env vars (`OPENROUTER_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`) для всех окружений (production/preview/development)
+  2. Скопировал новые/обновлённые route files из `bitrix-form/src/app/api/` в `bitrix-form-AI/src/app/api/`:
+     - `ai-similar/route.ts` (NEW)
+     - `ai-task/route.ts` (с Мариной)
+     - `ai-decompose/route.ts`, `ai-duplicate/route.ts`, `ai-search/route.ts` (synced)
+  3. Обновил memory bank `bitrix-form-AI/docs/PROJECT_BRAIN.md` (добавил секцию 11. CHANGELOG с описанием v7.26.1)
+  4. Запушил в `bitrix-form-AI` через GitHub PAT (commit 78d156f)
+  5. Vercel автоматически задеплоил (commit → build → READY за ~60 сек)
+- **Результат теста production endpoint:**
+  ```
+  curl -X POST https://bitrix-form-ai.vercel.app/api/ai-similar \
+    -d '{"text":"минус резерв","threshold":0.3,"limit":5}'
+  → 5 задач найдено:
+    1. #7932 "Проверить резервы" — sim=0.561
+    2. #7646 "Проверить почему пишет минус резерв по остатки" — sim=0.543 ← та самая!
+    3. #5864 "ТЗ ОГФ Резерв" — sim=0.525
+    4. #6362 "Создание минусовое приобретения..." — sim=0.457
+    5. #6832 "УПР держит резерв" — sim=0.412
+  ```
+- **CORS** проверен — `https://antisakrum2004.github.io` разрешён, preflight 204 OK
+- **Архитектура (уточнение для будущих сессий):**
+  - `Antisakrum2004/bitrix-form` (GitHub Pages) — фронтенд `index.html` + EOD-инспектор + скрипты + Supabase DDL
+  - `Antisakrum2004/bitrix-form-AI` (Vercel) — Next.js API routes, подключён к Vercel project `bitrix-form-ai`
+  - Supabase project `nopccnooivztriqdkbie` — pgvector БД
+  - При изменении API route нужно синхронизировать оба репо: код в `bitrix-form/src/app/api/` (основной) + copy в `bitrix-form-AI/src/app/api/` (для деплоя на Vercel)
+- **Vercel project ID:** `prj_d57EqbCnDMOdWHtOpCpum5CKZt5x`
+- **Team ID:** `team_FZzl1NrBI13a1rApX3p5LRF4`
+- **Production URL:** `https://bitrix-form-ai.vercel.app` (alias к последнему production deployment)
+
 ### v7.10 — Оценка времени ✅
 - Поле «Оценка в часах» в карточке «Сроки» рядом с дедлайном
 - Лейблы «Крайний срок» и «Оценка в часах» на одной плоскости

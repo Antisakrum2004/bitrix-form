@@ -120,3 +120,46 @@ Stage Summary:
 - Инструкция в docs/VERCEL_ENV_VARS.md — пользователь добавит через dashboard за 1 минуту
 - Существующий OPENAI_API_KEY в Vercel НЕ трогаем — чат-маршруты работают как прежде
 - Rollback tag v7.25-rollback-2026-06-30 — на случай отката всей v7.26 серии
+
+---
+Task ID: v7.26.2
+Agent: main
+Task: Настроить Vercel env vars, задеплоить v7.26.1 код, обновить memory bank
+
+Work Log:
+- Получил Vercel token (vcp_8eKHrQ...) и GitHub PAT (ghp_6OPVW...)
+- Проверил Vercel token: аккаунт antisakrum555-6798, проект bitrix-form-ai
+- Линковал локальный bitrix-form к Vercel проекту (vercel link --project bitrix-form-ai)
+- Через Vercel REST API добавил 3 env vars для production/preview/development:
+  * OPENROUTER_API_KEY = sk-or-v1-...
+  * SUPABASE_URL = https://nopccnooivztriqdkbie.supabase.co
+  * SUPABASE_SERVICE_KEY = eyJ... (service_role)
+- ОТКРЫТИЕ: Vercel проект bitrix-form-ai подключён к GitHub репо Antisakrum2004/bitrix-form-AI (с суффиксом -AI), а не к bitrix-form!
+- bitrix-form-AI был на старой версии v1.1.1 (без Supabase, без ai-similar)
+- Скопировал обновлённые route.ts из bitrix-form/src/app/api/ в bitrix-form-AI/src/app/api/:
+  * ai-similar/route.ts (NEW — главный endpoint семантического поиска)
+  * ai-task/route.ts (с Мариной)
+  * ai-decompose/route.ts, ai-duplicate/route.ts, ai-search/route.ts (synced)
+- Обновил bitrix-form-AI/docs/PROJECT_BRAIN.md — добавил секцию 11. CHANGELOG с записью v7.26.1
+- Закоммитил (78d156f) и запушил в bitrix-form-AI через GitHub PAT
+- Vercel автоматически начал build → через ~60 сек READY
+- Тест production endpoint:
+  curl -X POST https://bitrix-form-ai.vercel.app/api/ai-similar \
+    -d '{"text":"минус резерв","threshold":0.3,"limit":5}'
+  → 5 релевантных задач найдено:
+    1. #7932 "Проверить резервы" — sim=0.561 (Ольга, Дакар)
+    2. #7646 "Проверить почему пишет минус резерв по остатки" — sim=0.543 ← ЦЕЛЕВАЯ!
+    3. #5864 "ТЗ ОГФ Резерв" — sim=0.525 (Саша, Медицина КЗ)
+    4. #6362 "Создание минусовое приобретения..." — sim=0.457 (Константин, Бигап)
+    5. #6832 "УПР держит резерв" — sim=0.412 (Константин, Бигап)
+- CORS preflight проверен: 204 OK, Access-Control-Allow-Origin: https://antisakrum2004.github.io
+- Обновил bitrix-form/docs/PROJECT_BRAIN.md — добавил запись v7.26.2
+
+Stage Summary:
+- Production endpoint /api/ai-similar работает на https://bitrix-form-ai.vercel.app
+- Фронтенд на GitHub Pages теперь будет использовать семантический поиск через Supabase
+- При ошибке fallback на старый /ai-search (лексический) — ничего не сломается
+- Memory bank обновлён в ОБА репо: bitrix-form/docs/PROJECT_BRAIN.md и bitrix-form-AI/docs/PROJECT_BRAIN.md
+- Vercel project ID: prj_d57EqbCnDMOdWHtOpCpum5CKZt5x
+- Team ID: team_FZzl1NrBI13a1rApX3p5LRF4
+- Next: cron-синхронизация новых задач, гибридный скоринг, AI re-rank
