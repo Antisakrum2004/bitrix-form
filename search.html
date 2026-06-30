@@ -319,6 +319,15 @@
   }
   .result-sim.high{color:var(--warning);border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)}
   .result-sim.mid{color:var(--accent);border-color:var(--accent-dim);background:var(--accent-glow)}
+  /* v7.28.1: бейдж типа совпадения — семантика / точное / оба */
+  .result-match{
+    font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+    padding:1px 6px;border-radius:3px;flex-shrink:0;
+    border:1px solid;
+  }
+  .result-match.m-both{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .result-match.m-semantic{color:var(--accent);border-color:var(--accent-dim);background:var(--accent-glow)}
+  .result-match.m-lexical{color:var(--warning);border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)}
   .result-title{
     font-size:15px;font-weight:600;color:var(--text);
     line-height:1.35;flex:1;
@@ -459,7 +468,7 @@
         type="text"
         id="searchInput"
         class="search-input"
-        placeholder="опишите задачу: «минус резерв», «выгрузка в excel», «права доступа»…"
+        placeholder="опишите задачу или введите точное слово: «номенклатура», «FTP», «минус резерв»…"
         autocomplete="off"
         autofocus
       >
@@ -471,12 +480,12 @@
     </div>
 
     <div class="quick-examples" id="quickExamples">
+      <span class="quick-chip" data-q="номенклатура">номенклатура</span>
+      <span class="quick-chip" data-q="FTP">FTP</span>
       <span class="quick-chip" data-q="минус резерв">минус резерв</span>
       <span class="quick-chip" data-q="выгрузка в excel">выгрузка в excel</span>
       <span class="quick-chip" data-q="права доступа">права доступа</span>
-      <span class="quick-chip" data-q="тормозит база">тормозит база</span>
-      <span class="quick-chip" data-q="интеграция озон">интеграция озон</span>
-      <span class="quick-chip" data-q="отчёт по продажам">отчёт по продажам</span>
+      <span class="quick-chip" data-q="озон">озон</span>
     </div>
   </div>
 
@@ -485,7 +494,7 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28 · semantic search via Supabase pgvector + OpenAI embeddings</span>
+  <span>v7.28.1 · semantic + lexical search via Supabase pgvector + pg_trgm</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
@@ -585,10 +594,8 @@ function applyFiltersAndSort(items) {
     out.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   } else if (sort === 'date_asc') {
     out.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
-  } else {
-    // relevance — по умолчанию, /ai-similar уже возвращает отсортированным
-    out.sort((a, b) => (Number(b.similarity) || 0) - (Number(a.similarity) || 0));
   }
+  // relevance — сохраняем исходный порядок из runSearch (both > semantic > lexical, внутри по sim)
 
   return out;
 }
@@ -649,6 +656,7 @@ function renderResults(items) {
       <div class="result-card-top">
         <span class="result-id">#${escapeHtml(String(t.id))}</span>
         <span class="result-sim ${sCls}">${simPct}%</span>
+        ${t.match_type ? `<span class="result-match m-${t.match_type}">${t.match_type === 'both' ? 'семантика + точное' : (t.match_type === 'semantic' ? 'семантика' : 'точное')}</span>` : ''}
         <span class="result-title">${escapeHtml(t.title || '')}</span>
       </div>
       ${desc ? `<div class="result-desc">${escapeHtml(desc)}</div>` : ''}
@@ -688,32 +696,76 @@ async function runSearch(q) {
   }
 
   $clear.classList.add('show');
-  $status.innerHTML = '<span class="spinner"></span>Ищем похожие задачи…';
+  $status.innerHTML = '<span class="spinner"></span>Ищем — семантика + точные совпадения…';
   $status.className = 'search-status';
 
   const threshold = parseFloat($filterThreshold.value);
   const limit = parseInt($filterLimit.value);
 
+  // v7.28.1: параллельный запрос к /ai-similar (семантика) и /ai-lexical (точные слова).
+  // ПРИЧИНА: семантика не находит короткие аббревиатуры (FTP) и специфичные термины
+  // (номенклатура в длинных заголовках). Лексика добавляет их через pg_trgm.
+  // ОБЪЕДИНЕНИЕ: берём все семантические + лексические, дедуп по id, сортируем.
   try {
-    const res = await fetch(AI_API + '/ai-similar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: query, threshold, limit }),
-    });
+    const [semRes, lexRes] = await Promise.allSettled([
+      fetch(AI_API + '/ai-similar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: query, threshold, limit }),
+      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-similar ${r.status}`))),
+      fetch(AI_API + '/ai-lexical', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: query, limit: limit * 2, min_score: 0.05 }),
+      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-lexical ${r.status}`))),
+    ]);
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`/ai-similar ${res.status}: ${txt.slice(0, 200)}`);
+    const semantic = semRes.status === 'fulfilled' ? (semRes.value.similar || []) : [];
+    const lexical  = lexRes.status === 'fulfilled' ? (lexRes.value.similar || []) : [];
+
+    if (semRes.status === 'rejected' && lexRes.status === 'rejected') {
+      throw new Error(semRes.reason?.message || lexRes.reason?.message || 'оба поиска упали');
     }
 
-    const data = await res.json();
-    lastResults = data.similar || [];
+    // Объединение: дедуп по id, помечаем match_type
+    const seen = new Map();
+    semantic.forEach(t => {
+      seen.set(String(t.id), { ...t, match_type: t.match_type || 'semantic' });
+    });
+    lexical.forEach(t => {
+      const id = String(t.id);
+      if (seen.has(id)) {
+        // Задача нашлась обоими способами — помечаем как 'both'
+        seen.get(id).match_type = 'both';
+      } else {
+        seen.set(id, { ...t, match_type: 'lexical' });
+      }
+    });
 
-    // Применяем фильтры и сортировку
+    lastResults = Array.from(seen.values());
+
+    // Сортировка по умолчанию: 'both' > 'semantic' > 'lexical', внутри — по similarity DESC
+    lastResults.sort((a, b) => {
+      const order = { both: 0, semantic: 1, lexical: 2 };
+      const o = order[a.match_type] - order[b.match_type];
+      if (o !== 0) return o;
+      return (Number(b.similarity) || 0) - (Number(a.similarity) || 0);
+    });
+
     const filtered = applyFiltersAndSort(lastResults);
     renderResults(filtered);
 
-    $status.innerHTML = '';
+    // Статус: сколько нашли каким способом
+    const semCount = semantic.length;
+    const lexCount = lexical.length;
+    const bothCount = lastResults.filter(t => t.match_type === 'both').length;
+    if (semCount === 0 && lexCount > 0) {
+      $status.innerHTML = `<span style="color:var(--warning)">⚠ Семантика ничего не нашла — показываем только точные совпадения (${lexCount})</span>`;
+    } else if (semCount > 0 && lexCount === 0) {
+      $status.innerHTML = `<span style="opacity:.7">Семантика: ${semCount} · точных совпадений: 0</span>`;
+    } else {
+      $status.innerHTML = `<span style="opacity:.7">Семантика: ${semCount} · точных: ${lexCount} · совпали оба: ${bothCount}</span>`;
+    }
   } catch (err) {
     console.error('search error:', err);
     $status.innerHTML = '⚠ Ошибка поиска: ' + (err.message || err);
