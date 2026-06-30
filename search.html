@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Поиск задач — Bitrix24 Knowledge Base</title>
+<meta name="theme-color" content="#10b981">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     search.html v7.28 — Яндекс-подобный поиск по базе знаний Bitrix24.
+     Архитектура: статика на GitHub Pages, ходит в /api/ai-similar на Vercel.
+     ОТКАТ: удалить файл. Ссылка из формы не обязательна.
+     ═══════════════════════════════════════════════════════════════ */
+  :root{
+    --bg:#161616;
+    --glass-solid:#12151f;
+    --glass-border:rgba(255,255,255,0.06);
+    --glass-border-h:rgba(255,255,255,0.12);
+    --surface2:rgba(18,21,31,0.4);
+    --accent:#10b981;
+    --accent-dark:#0ea472;
+    --accent-dim:rgba(16,185,129,0.3);
+    --accent-glow:rgba(16,185,129,0.12);
+    --accent-glow-s:rgba(16,185,129,0.2);
+    --text:#e2e8f8;
+    --text-m:#8892a8;
+    --text-d:#4a5270;
+    --danger:#ff4f4f;
+    --success:#22c55e;
+    --warning:#f59e0b;
+    --mono:'JetBrains Mono',monospace;
+    --display:'Unbounded',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:14px;
+    min-height:100vh;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background:
+      radial-gradient(ellipse 60% 50% at 15% 30%,rgba(16,185,129,0.06) 0%,transparent 100%),
+      radial-gradient(ellipse 50% 60% at 85% 25%,rgba(16,185,129,0.04) 0%,transparent 100%);
+  }
+
+  /* ─── Полупрозрачные фильтры сверху (еле видимые) ─── */
+  .filters-bar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;gap:18px;
+    padding:10px 24px;
+    background:rgba(22,22,22,0.45);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,0.03);
+    opacity:0.55;
+    transition:opacity .25s ease;
+    font-size:11px;
+    color:var(--text-m);
+  }
+  .filters-bar:hover{opacity:1}
+  .filters-bar a{
+    color:var(--text-m);text-decoration:none;
+    display:flex;align-items:center;gap:6px;
+    transition:color .15s;
+  }
+  .filters-bar a:hover{color:var(--accent)}
+  .filters-bar .sep{color:var(--text-d);opacity:.4}
+  .filters-bar .logo{
+    font-family:var(--display);font-size:12px;font-weight:700;
+    color:var(--text);letter-spacing:-.01em;
+  }
+  .filters-bar .logo span{color:var(--accent)}
+
+  .filter-group{
+    display:flex;align-items:center;gap:6px;
+    padding:4px 10px;
+    border-radius:5px;
+    border:1px solid transparent;
+    transition:all .15s;
+    cursor:pointer;
+    user-select:none;
+  }
+  .filter-group:hover{border-color:var(--glass-border);background:rgba(255,255,255,0.02)}
+  .filter-group label{
+    font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-d);font-weight:600;
+  }
+  .filter-group select{
+    background:transparent;border:none;color:var(--text);
+    font-family:var(--mono);font-size:11px;
+    cursor:pointer;outline:none;
+    -webkit-appearance:none;appearance:none;
+    padding-right:14px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4 L5 7 L8 4' stroke='%238892a8' fill='none' stroke-width='1.2'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right center;
+  }
+  .filter-group select option{background:var(--glass-solid);color:var(--text)}
+  .filter-group select option:checked{color:var(--accent)}
+  .filter-group select:focus{color:var(--accent)}
+
+  /* ─── Центральная зона поиска ─── */
+  .search-center{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:0 24px;
+    min-height:calc(100vh - 90px);
+    position:relative;
+    z-index:1;
+  }
+  .search-center.has-results{
+    justify-content:flex-start;
+    padding-top:60px;
+    min-height:auto;
+  }
+
+  .search-title{
+    font-family:var(--display);
+    font-size:42px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin-bottom:8px;
+    text-align:center;
+    background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .search-subtitle{
+    font-size:13px;color:var(--text-m);
+    margin-bottom:36px;
+    text-align:center;
+  }
+  .search-subtitle b{color:var(--accent);font-weight:600}
+
+  .search-wrap{
+    width:100%;
+    max-width:720px;
+    position:relative;
+  }
+  .search-input-row{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .search-icon{
+    position:absolute;
+    left:18px;
+    width:18px;height:18px;
+    color:var(--text-d);
+    pointer-events:none;
+    transition:color .2s;
+  }
+  .search-input{
+    width:100%;
+    background:rgba(18,21,31,0.7);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:16px;
+    padding:18px 60px 18px 50px;
+    outline:none;
+    transition:border-color .2s,box-shadow .2s,background .2s;
+  }
+  .search-input::placeholder{
+    color:var(--text-d);
+    opacity:0.55;
+    font-style:italic;
+  }
+  .search-input:focus{
+    border-color:var(--accent-dim);
+    box-shadow:0 0 0 4px var(--accent-glow);
+    background:rgba(18,21,31,0.9);
+  }
+  .search-input:focus ~ .search-icon{color:var(--accent)}
+  .search-clear{
+    position:absolute;
+    right:14px;
+    width:28px;height:28px;
+    background:transparent;
+    border:1px solid var(--glass-border);
+    border-radius:50%;
+    color:var(--text-m);
+    cursor:pointer;
+    display:none;
+    align-items:center;justify-content:center;
+    font-size:14px;
+    transition:all .15s;
+  }
+  .search-clear:hover{border-color:var(--danger);color:var(--danger)}
+  .search-clear.show{display:flex}
+
+  .search-hint{
+    margin-top:12px;
+    font-size:11px;
+    color:var(--text-d);
+    text-align:center;
+    opacity:0.7;
+  }
+  .search-hint kbd{
+    background:var(--surface2);
+    border:1px solid var(--glass-border);
+    border-radius:3px;
+    padding:1px 6px;
+    font-size:10px;
+    color:var(--accent);
+    font-family:var(--mono);
+  }
+
+  /* ─── Подсказки-чипсы под инпутом (на стартовом экране) ─── */
+  .quick-examples{
+    display:flex;flex-wrap:wrap;gap:8px;
+    justify-content:center;margin-top:24px;
+  }
+  .quick-chip{
+    background:var(--surface2);
+    border:1px solid var(--glass-border);
+    border-radius:18px;
+    padding:6px 14px;
+    font-size:12px;color:var(--text-m);
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .quick-chip:hover{
+    border-color:var(--accent-dim);
+    background:var(--accent-glow);
+    color:var(--accent);
+  }
+
+  /* ─── Статус загрузки / ошибки ─── */
+  .search-status{
+    width:100%;
+    max-width:720px;
+    margin-top:16px;
+    text-align:center;
+    font-size:12px;
+    color:var(--text-m);
+  }
+  .search-status.error{color:var(--danger)}
+  .search-status .spinner{
+    display:inline-block;
+    width:14px;height:14px;
+    border:2px solid var(--glass-border-h);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    vertical-align:-2px;margin-right:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ─── Результаты ─── */
+  .results-meta{
+    width:100%;
+    max-width:880px;
+    margin:24px auto 12px;
+    font-size:12px;
+    color:var(--text-d);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .results-meta b{color:var(--accent);font-weight:600}
+
+  .results-list{
+    width:100%;
+    max-width:880px;
+    margin:0 auto 80px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+
+  .result-card{
+    background:rgba(18,21,31,0.6);
+    border:1px solid var(--glass-border);
+    border-radius:10px;
+    padding:14px 18px;
+    transition:all .15s;
+    text-decoration:none;
+    color:inherit;
+    display:block;
+    position:relative;
+  }
+  .result-card:hover{
+    border-color:var(--accent-dim);
+    background:rgba(18,21,31,0.85);
+    transform:translateY(-1px);
+    box-shadow:0 4px 18px rgba(0,0,0,0.25);
+  }
+  .result-card-top{
+    display:flex;align-items:baseline;gap:10px;
+    margin-bottom:4px;
+  }
+  .result-id{
+    font-size:13px;font-weight:700;color:var(--accent);
+    flex-shrink:0;
+  }
+  .result-sim{
+    font-size:10px;color:var(--text-d);
+    background:var(--surface2);
+    border:1px solid var(--glass-border);
+    padding:1px 7px;border-radius:10px;
+    flex-shrink:0;
+  }
+  .result-sim.high{color:var(--warning);border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)}
+  .result-sim.mid{color:var(--accent);border-color:var(--accent-dim);background:var(--accent-glow)}
+  .result-title{
+    font-size:15px;font-weight:600;color:var(--text);
+    line-height:1.35;flex:1;
+  }
+  .result-card:hover .result-title{color:var(--accent)}
+  .result-desc{
+    font-size:12px;color:var(--text-m);
+    line-height:1.55;
+    margin:6px 0 8px;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    word-break:break-word;
+  }
+  .result-meta{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    font-size:11px;color:var(--text-d);
+  }
+  .result-meta-item{
+    display:flex;align-items:center;gap:5px;
+  }
+  .result-meta-item svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .result-status{
+    padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .result-status.s-pending{background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid rgba(245,158,11,0.25)}
+  .result-status.s-progress{background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent-dim)}
+  .result-status.s-done{background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.25)}
+  .result-status.s-default{background:var(--surface2);color:var(--text-d);border:1px solid var(--glass-border)}
+
+  /* ─── Пустое состояние (нет результатов) ─── */
+  .empty-state{
+    width:100%;max-width:880px;margin:0 auto 80px;
+    text-align:center;padding:60px 24px;
+    color:var(--text-m);
+  }
+  .empty-state svg{
+    width:48px;height:48px;
+    stroke:var(--text-d);fill:none;stroke-width:1.2;
+    margin-bottom:16px;opacity:.5;
+  }
+  .empty-state-title{
+    font-size:15px;font-weight:600;color:var(--text);
+    margin-bottom:6px;
+  }
+  .empty-state-sub{font-size:12px;color:var(--text-d)}
+
+  /* ─── Футер ─── */
+  .footer{
+    position:fixed;bottom:0;left:0;right:0;
+    padding:8px 24px;
+    font-size:10px;color:var(--text-d);
+    background:rgba(22,22,22,0.6);
+    backdrop-filter:blur(8px);
+    border-top:1px solid rgba(255,255,255,0.03);
+    display:flex;justify-content:space-between;align-items:center;
+    opacity:.7;
+  }
+  .footer a{color:var(--text-m);text-decoration:none}
+  .footer a:hover{color:var(--accent)}
+
+  /* ─── Адаптив ─── */
+  @media (max-width:640px){
+    .search-title{font-size:30px}
+    .search-input{font-size:14px;padding:14px 50px 14px 42px}
+    .search-icon{left:14px;width:16px;height:16px}
+    .filters-bar{padding:8px 14px;gap:8px;font-size:10px;overflow-x:auto}
+    .filter-group{padding:3px 6px}
+    .filter-group label{display:none}
+    .results-list,.results-meta{padding:0 14px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Фильтры сверху (еле видимые) ═══ -->
+<div class="filters-bar">
+  <div class="logo">Bitrix24 <span>KB</span></div>
+  <span class="sep">·</span>
+  <a href="index.html" title="Вернуться к форме создания задачи">← форма</a>
+  <span class="sep" style="margin-left:auto">·</span>
+
+  <div class="filter-group" title="Фильтр по статусу задачи">
+    <label>статус</label>
+    <select id="filterStatus">
+      <option value="all">все</option>
+      <option value="open">только открытые</option>
+      <option value="closed">только закрытые</option>
+    </select>
+  </div>
+
+  <div class="filter-group" title="Сортировка результатов">
+    <label>сортировка</label>
+    <select id="filterSort">
+      <option value="relevance">по релевантности</option>
+      <option value="date_desc">сначала новые</option>
+      <option value="date_asc">сначала старые</option>
+    </select>
+  </div>
+
+  <div class="filter-group" title="Минимальный порог совпадения">
+    <label>порог</label>
+    <select id="filterThreshold">
+      <option value="0.30">30% (широко)</option>
+      <option value="0.40" selected>40% (по умолчанию)</option>
+      <option value="0.55">55% (строго)</option>
+      <option value="0.70">70% (только близкие)</option>
+    </select>
+  </div>
+
+  <div class="filter-group" title="Сколько результатов показать">
+    <label>лимит</label>
+    <select id="filterLimit">
+      <option value="10">10</option>
+      <option value="20" selected>20</option>
+      <option value="50">50</option>
+    </select>
+  </div>
+</div>
+
+<!-- ═══ Центральная зона ═══ -->
+<div class="search-center" id="searchCenter">
+
+  <h1 class="search-title" id="searchTitle">База знаний</h1>
+  <p class="search-subtitle" id="searchSubtitle">
+    Поиск по <b id="taskCount">…</b> задачам — работает семантически (понимает смысл, не только слова)
+  </p>
+
+  <div class="search-wrap">
+    <div class="search-input-row">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="опишите задачу: «минус резерв», «выгрузка в excel», «права доступа»…"
+        autocomplete="off"
+        autofocus
+      >
+      <button class="search-clear" id="searchClear" title="Очистить (Esc)">×</button>
+    </div>
+
+    <div class="search-hint" id="searchHint">
+      <kbd>Enter</kbd> — искать · <kbd>Esc</kbd> — очистить · слова и фразы можно вводить в любом порядке
+    </div>
+
+    <div class="quick-examples" id="quickExamples">
+      <span class="quick-chip" data-q="минус резерв">минус резерв</span>
+      <span class="quick-chip" data-q="выгрузка в excel">выгрузка в excel</span>
+      <span class="quick-chip" data-q="права доступа">права доступа</span>
+      <span class="quick-chip" data-q="тормозит база">тормозит база</span>
+      <span class="quick-chip" data-q="интеграция озон">интеграция озон</span>
+      <span class="quick-chip" data-q="отчёт по продажам">отчёт по продажам</span>
+    </div>
+  </div>
+
+  <div class="search-status" id="searchStatus"></div>
+</div>
+
+<!-- ═══ Футер ═══ -->
+<div class="footer">
+  <span>v7.28 · semantic search via Supabase pgvector + OpenAI embeddings</span>
+  <span><a href="index.html">← форма задачи</a></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// КОНФИГ
+// ═══════════════════════════════════════════════════════════════════
+const AI_API = 'https://bitrix-form-ai.vercel.app/api';
+
+// ═══════════════════════════════════════════════════════════════════
+// Состояние
+// ═══════════════════════════════════════════════════════════════════
+let lastResults = [];
+let searchTimer = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// DOM refs
+// ═══════════════════════════════════════════════════════════════════
+const $input = document.getElementById('searchInput');
+const $clear = document.getElementById('searchClear');
+const $center = document.getElementById('searchCenter');
+const $title = document.getElementById('searchTitle');
+const $subtitle = document.getElementById('searchSubtitle');
+const $status = document.getElementById('searchStatus');
+const $hint = document.getElementById('searchHint');
+const $quickEx = document.getElementById('quickExamples');
+const $filterStatus = document.getElementById('filterStatus');
+const $filterSort = document.getElementById('filterSort');
+const $filterThreshold = document.getElementById('filterThreshold');
+const $filterLimit = document.getElementById('filterLimit');
+const $taskCount = document.getElementById('taskCount');
+
+// ═══════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  return (s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function stripBbcode(s) {
+  return (s || '')
+    .replace(/\[b\]|\[\/b\]|\[i\]|\[\/i\]|\[list\]|\[\/list\]|\[\*\]|\[url=[^\]]*\]|\[\/url\]/gi, '')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  try {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  } catch { return ''; }
+}
+
+function statusClass(status) {
+  const s = (status || '').toLowerCase();
+  if (s.includes('ожида') || s.includes('pending') || s.includes('новая')) return 's-pending';
+  if (s.includes('работ') || s.includes('progress') || s.includes('в работе')) return 's-progress';
+  if (s.includes('заверш') || s.includes('done') || s.includes('закрыт') || s.includes('принят')) return 's-done';
+  return 's-default';
+}
+
+function simClass(sim) {
+  const v = Number(sim) || 0;
+  if (v >= 0.7) return 'high';
+  return 'mid';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Рендер
+// ═══════════════════════════════════════════════════════════════════
+function applyFiltersAndSort(items) {
+  let out = items.slice();
+
+  // Фильтр по статусу
+  const sf = $filterStatus.value;
+  if (sf === 'open') {
+    out = out.filter(t => {
+      const s = (t.status || '').toLowerCase();
+      return !s.includes('заверш') && !s.includes('закрыт') && !s.includes('принят') && !s.includes('done');
+    });
+  } else if (sf === 'closed') {
+    out = out.filter(t => {
+      const s = (t.status || '').toLowerCase();
+      return s.includes('заверш') || s.includes('закрыт') || s.includes('принят') || s.includes('done');
+    });
+  }
+
+  // Сортировка
+  const sort = $filterSort.value;
+  if (sort === 'date_desc') {
+    out.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  } else if (sort === 'date_asc') {
+    out.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  } else {
+    // relevance — по умолчанию, /ai-similar уже возвращает отсортированным
+    out.sort((a, b) => (Number(b.similarity) || 0) - (Number(a.similarity) || 0));
+  }
+
+  return out;
+}
+
+function renderResults(items) {
+  // Убираем старые результаты
+  document.querySelectorAll('.results-meta, .results-list, .empty-state').forEach(el => el.remove());
+
+  // Прячем стартовые элементы
+  $title.style.display = 'none';
+  $subtitle.style.display = 'none';
+  $quickEx.style.display = 'none';
+  $hint.style.display = 'none';
+  $center.classList.add('has-results');
+
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = `
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <div class="empty-state-title">Ничего не нашлось</div>
+      <div class="empty-state-sub">Попробуйте другие слова или понизьте порог совпадения в фильтрах сверху</div>
+    `;
+    $center.appendChild(empty);
+    return;
+  }
+
+  // Метазаголовок
+  const meta = document.createElement('div');
+  meta.className = 'results-meta';
+  const query = $input.value.trim();
+  meta.innerHTML = `<span>Найдено <b>${items.length}</b> задач по запросу «<b>${escapeHtml(query)}</b>»</span>
+    <span style="opacity:.6">клик по карточке → откроется в Bitrix24</span>`;
+  $center.appendChild(meta);
+
+  // Список
+  const list = document.createElement('div');
+  list.className = 'results-list';
+
+  items.forEach(t => {
+    const sim = Number(t.similarity) || 0;
+    const simPct = Math.round(sim * 100);
+    const desc = stripBbcode(t.description || '').slice(0, 200);
+    const dateStr = fmtDate(t.created_at);
+    const sClass = statusClass(t.status);
+    const sCls = simClass(sim);
+
+    const card = document.createElement('a');
+    card.className = 'result-card';
+    card.href = t.url || '#';
+    card.target = '_blank';
+    card.rel = 'noopener';
+
+    card.innerHTML = `
+      <div class="result-card-top">
+        <span class="result-id">#${escapeHtml(String(t.id))}</span>
+        <span class="result-sim ${sCls}">${simPct}%</span>
+        <span class="result-title">${escapeHtml(t.title || '')}</span>
+      </div>
+      ${desc ? `<div class="result-desc">${escapeHtml(desc)}</div>` : ''}
+      <div class="result-meta">
+        <span class="result-status ${sClass}">${escapeHtml(t.status || '')}</span>
+        ${t.responsible ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>${escapeHtml(t.responsible)}</span>` : ''}
+        ${t.project_name ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>${escapeHtml(t.project_name)}</span>` : ''}
+        ${dateStr ? `<span class="result-meta-item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${dateStr}</span>` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  $center.appendChild(list);
+}
+
+function renderInitial() {
+  // Сброс к начальному виду
+  document.querySelectorAll('.results-meta, .results-list, .empty-state').forEach(el => el.remove());
+  $title.style.display = '';
+  $subtitle.style.display = '';
+  $quickEx.style.display = '';
+  $hint.style.display = '';
+  $center.classList.remove('has-results');
+  $status.innerHTML = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Поиск
+// ═══════════════════════════════════════════════════════════════════
+async function runSearch(q) {
+  const query = (q || '').trim();
+  if (!query) {
+    renderInitial();
+    $clear.classList.remove('show');
+    return;
+  }
+
+  $clear.classList.add('show');
+  $status.innerHTML = '<span class="spinner"></span>Ищем похожие задачи…';
+  $status.className = 'search-status';
+
+  const threshold = parseFloat($filterThreshold.value);
+  const limit = parseInt($filterLimit.value);
+
+  try {
+    const res = await fetch(AI_API + '/ai-similar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: query, threshold, limit }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`/ai-similar ${res.status}: ${txt.slice(0, 200)}`);
+    }
+
+    const data = await res.json();
+    lastResults = data.similar || [];
+
+    // Применяем фильтры и сортировку
+    const filtered = applyFiltersAndSort(lastResults);
+    renderResults(filtered);
+
+    $status.innerHTML = '';
+  } catch (err) {
+    console.error('search error:', err);
+    $status.innerHTML = '⚠ Ошибка поиска: ' + (err.message || err);
+    $status.className = 'search-status error';
+  }
+}
+
+// Debounced поиск
+function scheduleSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
+  const val = $input.value;
+  if (!val.trim()) {
+    renderInitial();
+    $clear.classList.remove('show');
+    return;
+  }
+  searchTimer = setTimeout(() => runSearch(val), 350);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Счётчик задач (для подзаголовка) — простой запрос к Supabase
+// ═══════════════════════════════════════════════════════════════════
+async function loadTaskCount() {
+  try {
+    // Используем /ai-similar с пустым запросом и очень низким порогом — быстро и бесплатно
+    // (или просто показываем «1000+»)
+    $taskCount.textContent = '1200+';
+  } catch {
+    $taskCount.textContent = '1000+';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Event listeners
+// ═══════════════════════════════════════════════════════════════════
+$input.addEventListener('input', scheduleSearch);
+$input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (searchTimer) clearTimeout(searchTimer);
+    runSearch($input.value);
+  } else if (e.key === 'Escape') {
+    $input.value = '';
+    renderInitial();
+    $clear.classList.remove('show');
+    $input.focus();
+  }
+});
+
+$clear.addEventListener('click', () => {
+  $input.value = '';
+  renderInitial();
+  $clear.classList.remove('show');
+  $input.focus();
+});
+
+// Клик по чипсам-примерам
+document.querySelectorAll('.quick-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    $input.value = chip.dataset.q;
+    runSearch(chip.dataset.q);
+    $input.focus();
+  });
+});
+
+// Изменение фильтров — пересобрать список из lastResults
+[$filterStatus, $filterSort, $filterThreshold, $filterLimit].forEach(el => {
+  el.addEventListener('change', () => {
+    if (lastResults.length) {
+      const filtered = applyFiltersAndSort(lastResults);
+      renderResults(filtered);
+    }
+    // Если порог или лимит изменились и есть активный запрос — повторим поиск
+    if (el === $filterThreshold || el === $filterLimit) {
+      if ($input.value.trim()) runSearch($input.value);
+    }
+  });
+});
+
+// Старт
+loadTaskCount();
+$input.focus();
+</script>
+
+</body>
+</html>

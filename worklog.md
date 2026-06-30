@@ -217,3 +217,65 @@ Stage Summary:
 - Rollback: git reset --hard v7.26.2-rollback-2026-06-30 (старый v7.25-rollback сохранён)
 - Все 3 задачи пользователя выполнены: гибрид 70/30 ✓, UI разделение ✓, cron 06:00 МСК ✓
 - Отчёт для руководителя в docs/REPORT_v7_to_v7.27.md ✓
+
+---
+Task ID: v7.28-knowledge-base
+Agent: main
+Task: Полное использование базы знаний по задачам — 4 инициативы (1.2, 1.3, 2.2, 2.3, 2.6, 2.7)
+
+Work Log:
+- Клонированы оба репо (bitrix-form + bitrix-form-AI), изучена текущая архитектура v7.27
+- Сохранены доступы в /home/z/my-project/scripts/.env.local (chmod 600)
+- ФАЗА 1 (1.2 + 2.7) — автоподстановка аналогичных задач в DESCRIPTION:
+  * Написан /home/z/my-project/scripts/test-similar-block.mjs — standalone тест генератора
+  * Реализована fetchAiSimilarBlock() в index.html — top-3 задач (sim≥0.65, fallback top-3 из sim≥0.4) + для каждого top-2 детей (sim≥0.5)
+  * Формат BBCode: [b]⚠ Подсказка ИИ[/b] + [url] ссылки с процентом, статусом, исполнителем + дерево (└)
+  * Интегрирован вызов в handleSubmit() — перед tasks.task.add, статус "Подбор аналогичных задач для описания..."
+  * Создана ТЕСТОВАЯ ЗАДАЧА #7990 через Bitrix24 API (project=Backlog/78, resp=116, creator=116, status=2)
+  * Проверено через tasks.task.get: descriptionInBbcode=Y, BBCode блок на месте, ссылки релевантные
+- ФАЗА 2 (1.3) — Яндекс-подобная страница поиска:
+  * Создан /home/z/my-project/bitrix-form/search.html — статический HTML, vanilla JS, GitHub Pages
+  * Фильтры сверху (еле видимые, opacity 0.55, → 1 при hover): статус, сортировка, порог, лимит
+  * Центр: большой заголовок "База знаний", подзаголовок "1200+ задач", инпут с placeholder-подсказкой
+  * Чипсы-примеры под инпутом: минус резерв, права доступа, выгрузка в excel и т.д.
+  * Результаты: карточка (#ID · %sim · title, 2-строчное превью описания, статус + исполнитель + проект + дата)
+  * Порог по умолчанию 0.4, сортировка по умолчанию — релевантность
+  * Расширен /api/ai-similar (backend): добавлены description (500 chars) + created_at в ответ
+  * Расширен RPC search_similar_tasks (v7.28): добавлен created_at в RETURNS TABLE
+  * SQL применён через Supabase Management API (IPv4 forced)
+- ФАЗА 3a (2.2) — детектор повторяющихся проблем:
+  * Создан RPC cluster_repeated_tasks(sim_threshold, min_cluster_size, max_clusters) — SQL на стороне БД
+  * Жадная star-кластеризация: для каждой задачи находим её top-K соседей (sim ≥ 0.75) → кластер
+  * Создана таблица task_clusters (cluster_key, task_ids[], task_count, avg_similarity, period_start/end)
+  * Скрипт scripts/cluster-analytics.mjs — вызывает RPC, upsert в task_clusters, печатает алерты
+  * Тестовый прогон: 9 кластеров с ≥5 задач, 5 алертов за последние 30 дней (вкл. реальный "загрузка остатков от поставщиков" — 5 задач за 4 месяца)
+- ФАЗА 3b (2.3) — библиотека решений:
+  * Расширена схема tasks: solution_text, solution_embedding (VECTOR 1536), solution_indexed_at
+  * Создан scripts/sync-solutions.mjs — тянуть task.commentitem.getlist, фильтровать ботов/EOD, извлекать solution
+  * Логика: последний осмысленный комментарий (>20 символов, не от бота 154, не EOD-фразы)
+  * Embedding решений через OpenRouter, batch 100, cap 2000 chars на решение
+- ФАЗА 3c (2.6) — авто-тегирование:
+  * Колонка tags TEXT[] добавлена в tasks, gin-индекс для поиска
+  * 8 тегов: бухгалтерия, интеграции, остатки, права, отчёты, эдо, обучение, инфраструктура
+  * scripts/index-tags.mjs — LLM (DeepSeek/Gemini/GPT-4o-mini fallback) → 0-3 тега на задачу
+  * Тест на 5 задачах: 2 получили теги (обучение, инфраструктура), 3 без тегов (лекции с generic titles)
+- GITHUB ACTIONS:
+  * .github/workflows/weekly-analytics.yml — каждое воскресенье 06:00 МСК:
+    1. cluster-analytics → 2. index-tags → 3. sync-solutions
+  * + workflow_dispatch с input.only для запуска одного шага
+- ОТКАТЫ:
+  * git tag v7.27-rollback-2026-06-30 — будет создан перед пушем
+  * SQL-миграции идемпотентны (CREATE OR REPLACE, IF NOT EXISTS) — можно пере-применять
+
+Stage Summary:
+- v7.28 готова: 4 новые возможности для базы знаний (1.2 + 2.7 + 1.3 + 2.2 + 2.3 + 2.6)
+- Тестовая задача #7990 создана с корректным BBCode-блоком аналогичных задач
+- search.html задеплоится на GitHub Pages после пуша
+- Vercel бэкенд уже задеплоен (description + created_at в /ai-similar)
+- RPC search_similar_tasks обновлён до v7.28 (created_at в ответе)
+- RPC cluster_repeated_tasks создан и протестирован
+- 3 новые колонки в tasks: solution_text, solution_embedding, tags
+- 1 новая таблица: task_clusters
+- Weekly cron готов: воскресенье 06:00 МСК будет прогонять 3 аналитики
+- Полная стоимость: ~$0.005/день для embeddings (sync) + ~$0.001/задачу для LLM-тегов (~$1-2/мес)
+- Rollback: git reset --hard v7.27-rollback-2026-06-30 (возврат к чистой v7.27 без базы знаний)

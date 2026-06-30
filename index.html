@@ -428,7 +428,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.27</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.28</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1267,6 +1267,94 @@ function buildDescription() {
   return p.join('\n\n');
 }
 
+// AI-CHANGE: NEW-FUNCTION v7.28 — автоподстановка аналогичных задач в DESCRIPTION.
+// ПРИЧИНА: пользователь хочет, чтобы при создании задачи через «быструю задачу» в описание
+// автоматически добавлялась секция «Аналогичные задачи» (top-3 по релевантности) + дерево
+// похожих задач (для каждого из top-3 — его top-2). Формат как в поиске дубликатов.
+// ОТКАТ: удалить функцию и вызов fetchAiSimilarBlock() в handleSubmit().
+//
+// Логика:
+//   1. Запрос /ai-similar с title+description, threshold=0.4, limit=10
+//   2. Фильтр на клиенте: sim≥0.65 предпочтительно, иначе top-3 из того что есть
+//   3. Для каждого из top-3 — ещё один запрос с его title+description, sim≥0.5, top-2 (исключая текущий)
+//   4. Собрать BBCode-блок с предупреждением «⚠ Подсказка ИИ»
+//   5. Вернуть строку (или '' если ничего не нашлось / ошибка — не блокировать создание)
+async function fetchAiSimilarBlock(title, body) {
+  const stripBb = s => (s || '')
+    .replace(/\[b\]|\[\/b\]|\[i\]|\[\/i\]|\[list\]|\[\/list\]|\[\*\]|\[url=[^\]]*\]|\[\/url\]/gi, '')
+    .replace(/\n{2,}/g, '\n').trim();
+  const fmtPct = sim => Math.round((Number(sim) || 0) * 100) + '%';
+  const queryText = stripBb(`${title}\n${body}`).slice(0, 1000);
+  if (!queryText) return '';
+
+  try {
+    // 1. Top-5 похожих
+    const r1 = await fetch(AI_API + '/ai-similar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: queryText, threshold: 0.4, limit: 10 })
+    });
+    if (!r1.ok) { console.warn('fetchAiSimilarBlock: r1 not ok', r1.status); return ''; }
+    const d1 = await r1.json();
+    const raw = d1.similar || [];
+    if (!raw.length) return '';
+
+    // Фильтр sim≥0.65, fallback — top-3 из того что есть
+    let top = raw.filter(t => Number(t.similarity) >= 0.65);
+    if (!top.length) top = raw.slice(0, 3);
+    const top3 = top.slice(0, 3);
+    if (!top3.length) return '';
+
+    // 2. Для каждого — запрос дерева
+    const top3Ids = top3.map(t => String(t.id));
+    const tree = [];
+    for (const t of top3) {
+      const subQuery = stripBb(`${t.title}\n${t.description || ''}`).slice(0, 1000);
+      let children = [];
+      try {
+        const r2 = await fetch(AI_API + '/ai-similar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: subQuery, threshold: 0.4, limit: 5 })
+        });
+        if (r2.ok) {
+          const d2 = await r2.json();
+          children = (d2.similar || [])
+            .filter(s => String(s.id) !== String(t.id))
+            .filter(s => !top3Ids.includes(String(s.id)))
+            .filter(s => Number(s.similarity) >= 0.5)
+            .slice(0, 2);
+        }
+      } catch (e) { /* ignore — children остаётся [] */ }
+      tree.push({ parent: t, children });
+    }
+
+    // 3. Собрать BBCode
+    const lines = [];
+    lines.push('[b]⚠ Подсказка ИИ — аналогичные задачи (проверьте релевантность):[/b]');
+    lines.push('');
+    tree.forEach(({ parent, children }) => {
+      const pct = fmtPct(parent.similarity);
+      const url = parent.url || `https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${parent.id}/`;
+      const statusStr = parent.status ? ` · ${parent.status}` : '';
+      const respStr = parent.responsible ? ` · ${parent.responsible}` : '';
+      lines.push(`[b][url=${url}]#${parent.id}[/url][/b] (${pct}${statusStr}${respStr}) — ${parent.title}`);
+      if (children.length) {
+        children.forEach(c => {
+          const cPct = fmtPct(c.similarity);
+          const cUrl = c.url || `https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${c.id}/`;
+          const cStatusStr = c.status ? ` · ${c.status}` : '';
+          lines.push(`    └ [url=${cUrl}]#${c.id}[/url] (${cPct}${cStatusStr}) — ${c.title}`);
+        });
+      }
+    });
+    return lines.join('\n');
+  } catch (e) {
+    console.warn('fetchAiSimilarBlock failed:', e);
+    return '';
+  }
+}
+
 // AI-CHANGE: MODIFIED — updatePreview обёрнут в debounce.
 // ПРИЧИНА: тормоза при быстром наборе из-за частого пересчёта.
 // ОТКАТ: заменить на прямой вызов updatePreview() без debounce.
@@ -1485,10 +1573,23 @@ async function handleSubmit(e) {
   }
   if (window._skipDuplicateCheck) delete window._skipDuplicateCheck;
 
+  // AI-CHANGE: NEW v7.28 — автоподстановка аналогичных задач + дерево в DESCRIPTION.
+  // ПРИЧИНА: при создании задачи через «быструю задачу» — автоматически дописывать в описание
+  // секцию «Аналогичные задачи» (top-3 по релевантности) + дерево top-2 для каждого.
+  // Формат: BBCode с [b], [url] — Bitrix24 рендерит.
+  // ОТКАТ: удалить блок (3 строки ниже) — DESCRIPTION будет без блока аналогичных.
+  aiSetStatus('Подбор аналогичных задач для описания...');
+  let descBase = buildDescription();
+  let aiBlock = '';
+  try {
+    aiBlock = await fetchAiSimilarBlock(title, descBase);
+  } catch (e) { console.warn('aiBlock failed:', e); }
+  const fullDescription = aiBlock ? (descBase + '\n\n' + aiBlock) : descBase;
+
   const payload = {
     fields: {
       TITLE: title,
-      DESCRIPTION: buildDescription(),
+      DESCRIPTION: fullDescription,
       DESCRIPTION_FORMAT: '2',
       GROUP_ID: parseInt(selectedProjId),
       RESPONSIBLE_ID: parseInt(selectedDevId),

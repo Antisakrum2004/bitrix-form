@@ -18,6 +18,8 @@ interface SimilarTask {
   status: string;
   similarity: number;
   project_name?: string;
+  description?: string;       // AI-CHANGE: NEW v7.28 — для search.html (превью 2 строки)
+  created_at?: string | null; // AI-CHANGE: NEW v7.28 — для search.html (дата создания)
 }
 
 /**
@@ -156,6 +158,10 @@ export async function POST(req: NextRequest) {
       status: row.status_label || row.status || "",
       project_name: row.project_name || "",
       similarity: row.similarity || 0,
+      // AI-CHANGE: NEW v7.28 — пробрасываем description и created_at для search.html.
+      // description обрезаем до 500 символов, чтобы не раздувать ответ (достаточно для превью).
+      description: (row.description || "").slice(0, 500),
+      created_at: row.created_at || null,
     }));
 
     return NextResponse.json(

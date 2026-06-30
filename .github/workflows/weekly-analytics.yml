@@ -1,0 +1,74 @@
+name: Weekly Analytics — clusters + tags + solutions
+
+# v7.28 — еженедельная аналитика базы знаний.
+#   1. cluster-analytics — детектор повторяющихся проблем (2.2)
+#   2. index-tags — LLM авто-тегирование новых задач (2.6)
+#   3. sync-solutions — извлечение текстов решений из комментариев (2.3)
+#
+# Schedule: воскресенье 06:00 МСК = суббота 22:00 UTC (после ежедневного supabase-sync.yml)
+# Также можно запустить вручную из Actions tab.
+
+on:
+  schedule:
+    - cron: '0 22 * * 6'   # Sat 22:00 UTC = Sun 00:00 MSK (≈ начало раб дня)
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Запустить только один шаг (cluster|tags|solutions|all)'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: read
+
+jobs:
+  analytics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run cluster-analytics (2.2 — детектор повторов)
+        if: ${{ github.event.inputs.only == 'all' || github.event.inputs.only == 'cluster' || github.event.inputs.only == '' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/cluster-analytics.mjs
+
+      - name: Run index-tags (2.6 — LLM тегирование)
+        if: ${{ github.event.inputs.only == 'all' || github.event.inputs.only == 'tags' || github.event.inputs.only == '' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/index-tags.mjs
+
+      - name: Run sync-solutions (2.3 — извлечение решений)
+        if: ${{ github.event.inputs.only == 'all' || github.event.inputs.only == 'solutions' || github.event.inputs.only == '' }}
+        env:
+          BITRIX24_WEBHOOK: ${{ secrets.BITRIX24_WEBHOOK }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/sync-solutions.mjs
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly Analytics Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Schedule: every Sunday 06:00 MSK (Sat 22:00 UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "- Date: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. cluster-analytics — детектор повторов (≥5 задач за 30 дней → алерт)" >> $GITHUB_STEP_SUMMARY
+          echo "2. index-tags — LLM тегирование новых задач (8 категорий)" >> $GITHUB_STEP_SUMMARY
+          echo "3. sync-solutions — извлечение текстов решений из Bitrix24 комментариев" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Re-run manually: https://github.com/${{ github.repository }}/actions/workflows/weekly-analytics.yml" >> $GITHUB_STEP_SUMMARY
