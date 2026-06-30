@@ -419,7 +419,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.25</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.26</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -2194,22 +2194,42 @@ async function handleAiGenerate() {
     // Auto-fill form: title + body + original
     aiFillForm(decData.title, decData.fullBody || decData.body || '', decData.original || '');
 
-    // Step 2: Search similar tasks
-    // AI-CHANGE: MODIFIED — приоритет userKeywords над decData.keywords.
-    // ПРИЧИНА: если пользователь явно указал ключевые слова — используем их, иначе fallback на AI-нарезку.
-    // ОТКАТ: вернуть проверку только на decData.keywords.
+    // Step 2: Search similar tasks (semantic via Supabase pgvector)
+    // AI-CHANGE: MODIFIED — переключение с лексического /ai-search на семантический /ai-similar.
+    // ПРИЧИНА: /ai-similar использует OpenAI embeddings + Supabase pgvector — находит задачи по смыслу,
+    // синонимам и парафразам (например "минус резерв" ≈ "отрицательные остатки").
+    // ОТКАТ: заменить '/ai-similar' на '/ai-search' и вернуть { keywords: searchKeywords }.
     const searchKeywords = userKeywords.length ? userKeywords : (decData.keywords || []);
-    if (searchKeywords.length) {
+    const searchText = (decData.title + ' ' + (decData.fullBody || decData.body || '')).trim();
+    if (searchKeywords.length || searchText) {
       aiSetStatus(userKeywords.length ? 'Поиск по твоим ключевым словам...' : 'Поиск похожих задач...');
-      const searchRes = await fetch(AI_API + '/ai-search', {
+      const searchRes = await fetch(AI_API + '/ai-similar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: searchKeywords })
+        body: JSON.stringify({
+          text: searchText,
+          keywords: searchKeywords,
+          threshold: 0.5,
+          limit: 10
+        })
       });
       if (searchRes.ok) {
         const searchData = await searchRes.json();
         aiSimilarTasks = searchData.similar || [];
         aiRenderSimilar(aiSimilarTasks);
+      } else {
+        // Fallback: если /ai-similar не отвечает — пробуем старый /ai-search
+        console.warn('ai-similar failed, falling back to /ai-search');
+        const fallbackRes = await fetch(AI_API + '/ai-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keywords: searchKeywords, text: searchText })
+        });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          aiSimilarTasks = fallbackData.similar || [];
+          aiRenderSimilar(aiSimilarTasks);
+        }
       }
     }
 

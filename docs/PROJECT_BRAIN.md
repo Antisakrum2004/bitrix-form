@@ -588,6 +588,84 @@
   - Сортировка: по matchCount (сколько терминов совпало), потом по дате изменения
 - **Файлы изменены:** `index.html` (CSS + HTML + JS)
 
+### v7.26 — Семантический поиск задач через Supabase pgvector ✅ (2026-06-30)
+- **Что:** Заменил лексический поиск Bitrix24 SEARCH_INDEX на векторный семантический поиск через Supabase pgvector
+- **Проблема:** Bitrix24 SEARCH_INDEX ищет только точные слова/фразы. По запросу «отрицательные остатки» не находилась задача #7646 «Проверить почему пишет минус резерв по остатки» — хотя по смыслу это одно и то же
+- **Решение:** Хранить embeddings всех задач в Supabase, искать через косинусную близость векторов
+- **Backup:** Создан git tag `v7.25-rollback-2026-06-30` — для отката: `git reset --hard v7.25-rollback-2026-06-30`
+
+**Инфраструктура:**
+- Supabase project: `nopccnooivztriqdkbie` (https://nopccnooivztriqdkbie.supabase.co)
+- Тариф: Free (500 MB, запас ×15 для 2000 задач)
+- Расширения: `vector` (pgvector), `pg_trgm` (для будущего гибрида)
+- OpenAI модель: `text-embedding-3-small` (1536 dims, $0.02/1M токенов)
+- Объём: 2000 задач × 6 KB embedding = ~12 MB
+
+**Схема БД (supabase/schema.sql):**
+- Таблица `tasks`: id, title, description, project_id, project_name, responsible_id, responsible_name, status, status_label, created_at, updated_at, embedding(1536), indexed_at
+- HNSW-индекс на embedding для быстрого cosine search
+- B-tree индексы для фильтров (project_id, status, dates)
+- pg_trgm GIN-индексы на title/description (для будущего гибрида)
+- RPC-функция `search_similar_tasks(query_embedding, threshold, count)` — возвращает топ-N похожих
+
+**Новые файлы:**
+- `supabase/schema.sql` — DDL для таблицы tasks + индексы
+- `supabase/rpc_search.sql` — RPC-функция search_similar_tasks
+- `scripts/sync-bitrix-to-supabase.mjs` — скрипт индексации Bitrix24 → Supabase (запускать локально)
+- `scripts/.env.local.example` — шаблон env vars для скрипта
+- `src/app/api/ai-similar/route.ts` — новый API endpoint на Vercel
+
+**Изменённые файлы:**
+- `index.html` — в `handleAiGenerate()` переключение с `/ai-search` на `/ai-similar`, с fallback на `/ai-search` при ошибке
+
+**Pipeline поиска:**
+1. Фронт отправляет `{text, keywords, threshold: 0.5, limit: 10}` на `/api/ai-similar`
+2. Endpoint получает embedding запроса через OpenAI API (~200ms)
+3. Вызывает Supabase RPC `search_similar_tasks(embedding, 0.5, 10)` (~5ms)
+4. Возвращает топ-10 задач с similarity score
+5. Фронт рендерит список (как раньше — UI не менялся)
+6. При ошибке — fallback на старый `/ai-search` (лексический, как раньше)
+
+**Env vars (нужно добавить в Vercel):**
+- `SUPABASE_URL` = `https://nopccnooivztriqdkbie.supabase.co`
+- `SUPABASE_SERVICE_KEY` = eyJ... (service_role key, хранится в Vercel env)
+- `OPENAI_API_KEY` = уже есть в Vercel env
+
+**Запуск индексации (один раз + cron позже):**
+```bash
+# 1. Вставить supabase/schema.sql в https://supabase.com/dashboard/project/nopccnooivztriqdkbie/sql/new
+# 2. Вставить supabase/rpc_search.sql туда же
+# 3. Скопировать scripts/.env.local.example → scripts/.env.local, заполнить BITRIX24_WEBHOOK и OPENAI_API_KEY
+# 4. Запустить:
+cd /home/z/my-project/bitrix-form
+node scripts/sync-bitrix-to-supabase.mjs
+```
+
+**Откат (если что-то пойдёт не так):**
+```bash
+# Полный откат к моменту до v7.26:
+git reset --hard v7.25-rollback-2026-06-30
+git push origin main --force
+
+# Или точечно — заменить в index.html '/ai-similar' на '/ai-search' и вернуть body на { keywords: searchKeywords }
+
+# Очистка Supabase (если нужно):
+# TRUNCATE TABLE tasks; — в SQL Editor дашборда
+```
+
+**Что НЕ меняли:**
+- `/api/ai-search` — оставили как fallback
+- `/api/ai-duplicate` — не трогали
+- UI «Похожие задачи» — визуально не менялся
+- Поле ключевых слов v7.25 — работает как раньше
+- Промпт AI-дубликатов — не трогали
+
+**Next steps (не сделано в v7.26):**
+- Cron-синхронизация новых задач (раз в час)
+- Гибридный скоринг: вектор 70% + pg_trgm 30%
+- Ре-ранжирование через AI (LLM re-rank)
+- Разделение UI на «Дубликаты» (строго) и «Похожие» (широко)
+
 ### v7.10 — Оценка времени ✅
 - Поле «Оценка в часах» в карточке «Сроки» рядом с дедлайном
 - Лейблы «Крайний срок» и «Оценка в часах» на одной плоскости
