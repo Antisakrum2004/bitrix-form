@@ -84,3 +84,39 @@ Stage Summary:
 - Link unfurling fix: added SKIP_CONNECTOR_CHECK='Y'
 - All features in TEST_MODE — sending to Андрей (116) only
 - Марина Тарасюк (156) was already in config.js from previous session
+
+---
+Task ID: v7.26.1
+Agent: main
+Task: Проиндексировать все задачи 2026 года в Supabase pgvector и подготовить Vercel env vars
+
+Work Log:
+- Прочитал scripts/sync-bitrix-to-supabase.mjs — уже настроен на OpenRouter и SINCE_DATE=2026-01-01 (весь 2026+)
+- Проверил работу OpenRouter embeddings endpoint: тестовый запрос "проверка эмбеддинга" + "минус резерв" → 200 OK, dim=1536, cost $3.4e-7 за 17 токенов
+- Создал scripts/.env.local с реальными ключами пользователя (BITRIX24_WEBHOOK, OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY)
+- Запустил индексацию: `node --env-file=scripts/.env.local scripts/sync-bitrix-to-supabase.mjs`
+  - Этап 1: fetch из Bitrix24 — 1201 задача за 2026 год (24 страницы по 50)
+  - Этап 2: embeddings через OpenRouter — 13 батчей по 100, все 1201 успешно
+  - Этап 3: upsert в Supabase — 6 батчей по 200, все 1201 записаны
+- Проверил результат через verify-supabase.mjs:
+  - SELECT count(*) → 1201 строк в таблице tasks ✓
+  - Тест RPC search_similar_tasks с нулевым вектором → 1 строка вернулась ✓
+  - Реальный тест: запрос "минус резерв" → 5 релевантных задач найдено:
+    1. #7932 "Проверить резервы" — Ольга (Дакар)
+    2. #7646 "Проверить почему пишет минус резерв по остатки" — Ольга (Дакар) ← та самая!
+    3. #5864 "ТЗ ОГФ Резерв" — Саша (Медицина КЗ)
+    4. #6362 "Создание минусовое приобретения прочих активов" — Константин (Бигап)
+    5. #6832 "УПР держит резерв" — Константин (Бигап)
+- Обновил src/app/api/ai-similar/route.ts — добавил OpenRouter-заголовки (HTTP-Referer, X-Title) для атрибуции
+- Создал docs/VERCEL_ENV_VARS.md — инструкция по добавлению 3 env vars в Vercel (с прямыми значениями)
+- Обновил docs/PROJECT_BRAIN.md — добавил запись v7.26.1 с результатами индексации
+- Vercel CLI не аутентифицирован (нет VERCEL_TOKEN), пользователь добавит env vars через dashboard по инструкции
+
+Stage Summary:
+- 1201 задача за 2026 год проиндексирована в Supabase pgvector
+- Стоимость индексации: ~$0.005 (240K токенов × $0.02/1M)
+- Семантический поиск работает: "минус резерв" находит задачу #7646 (раньше не находилась)
+- 3 новых env vars подготовлены для Vercel: OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
+- Инструкция в docs/VERCEL_ENV_VARS.md — пользователь добавит через dashboard за 1 минуту
+- Существующий OPENAI_API_KEY в Vercel НЕ трогаем — чат-маршруты работают как прежде
+- Rollback tag v7.25-rollback-2026-06-30 — на случай отката всей v7.26 серии

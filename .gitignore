@@ -42,6 +42,9 @@ yarn-error.log*
 next-env.d.ts
 local-*
 .claude
+
+# supabase CLI temp
+supabase/.temp/
 .z-ai-config
 *.log
 dev.log

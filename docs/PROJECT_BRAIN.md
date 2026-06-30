@@ -666,6 +666,28 @@ git push origin main --force
 - Ре-ранжирование через AI (LLM re-rank)
 - Разделение UI на «Дубликаты» (строго) и «Похожие» (широко)
 
+### v7.26.1 — Индексация 2026 + OpenRouter embeddings ✅ (2026-06-30)
+- **Что:** Проиндексированы ВСЕ задачи за 2026 год (1201 задача) в Supabase pgvector. Эмбеддинги получены через OpenRouter (не прямой OpenAI).
+- **Проблема:** У пользователя есть OpenRouter ключ (`sk-or-v1-...`), но нет прямого OpenAI ключа. Sync-скрипт и ai-similar route обращались к `api.openai.com` — не работало бы с OpenRouter ключом.
+- **Решение:**
+  1. Проверили, что OpenRouter поддерживает endpoint `/api/v1/embeddings` с моделью `text-embedding-3-small` — работает (dim=1536, $0.02/1M токенов)
+  2. Sync-скрипт уже переключён на OpenRouter в v7.26
+  3. ai-similar route обновлён: добавлены OpenRouter-заголовки (`HTTP-Referer`, `X-Title`) для атрибуции
+  4. Запустили индексацию: `node --env-file=scripts/.env.local scripts/sync-bitrix-to-supabase.mjs`
+- **Результат:**
+  - 1201 задача за 2026 год (с 2026-01-01 по текущую дату)
+  - 1201/1201 эмбеддингов успешно получены (13 батчей по 100)
+  - 1201/1201 записей upsert в Supabase
+  - Тестовый запрос «минус резерв» нашёл задачу #7646 «Проверить почему пишет минус резерв по остатки» (раньше не находилась лексически)
+  - Также нашлись: #7932 «Проверить резервы», #5864 «ТЗ ОГФ Резерв», #6362 «Создание минусовое приобретения», #6832 «УПР держит резерв» — все семантически релевантны
+- **Стоимость:** ~$0.005 за всю индексацию (1201 × ~200 токенов × $0.02/1M)
+- **Env vars для Vercel** (см. `docs/VERCEL_ENV_VARS.md`):
+  - `OPENROUTER_API_KEY` = `sk-or-v1-...` (новая)
+  - `SUPABASE_URL` = `https://nopccnooivztriqdkbie.supabase.co` (новая)
+  - `SUPABASE_SERVICE_KEY` = eyJ... (новая, service_role)
+- **Не заменяет** существующий `OPENAI_API_KEY` в Vercel — чат-маршруты (`/api/ai-task`, `/api/ai-search`, `/api/ai-decompose`, `/api/ai-duplicate`) продолжают работать как есть. `OPENROUTER_API_KEY` используется ТОЛЬКО в `/api/ai-similar` для embeddings.
+- **Rollback tag:** `v7.25-rollback-2026-06-30` (создан в v7.26) — точка отката к моменту ДО внедрения семантического поиска. Откат: `git reset --hard v7.25-rollback-2026-06-30 && git push origin main --force`.
+
 ### v7.10 — Оценка времени ✅
 - Поле «Оценка в часах» в карточке «Сроки» рядом с дедлайном
 - Лейблы «Крайний срок» и «Оценка в часах» на одной плоскости

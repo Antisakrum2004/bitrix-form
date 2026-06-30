@@ -71,12 +71,20 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Get embedding from OpenAI (via OpenRouter proxy)
+    const isOpenRouter = embeddingsUrl.includes("openrouter.ai");
     const embRes = await fetch(embeddingsUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiKey}`,
-      },
+      headers: isOpenRouter
+        ? {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openaiKey}`,
+            "HTTP-Referer": "https://antisakrum2004.github.io",
+            "X-Title": "bitrix-form EOD",
+          }
+        : {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openaiKey}`,
+          },
       body: JSON.stringify({
         model: "text-embedding-3-small",
         input: queryText.slice(0, 8000),
