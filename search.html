@@ -891,12 +891,20 @@ async function runSearch(q) {
 
     lastResults = Array.from(seen.values());
 
-    // Сортировка по умолчанию: 'both' > 'semantic' > 'lexical', внутри — по similarity DESC
+    // Сортировка по умолчанию: phrase_title (100%) > phrase_desc (85%) > semantic > lexical word/trgm
+    // Если у задачи match_kind = phrase_title — она самая релевантная.
     lastResults.sort((a, b) => {
-      const order = { both: 0, semantic: 1, lexical: 2 };
-      const o = order[a.match_type] - order[b.match_type];
-      if (o !== 0) return o;
-      return (Number(b.similarity) || 0) - (Number(a.similarity) || 0);
+      const score = (t) => {
+        const s = Number(t.similarity) || 0;
+        if (t.match_kind === 'phrase_title') return 1000 + s;  // 1000+
+        if (t.match_type === 'both') return 900 + s;            // 900+
+        if (t.match_kind === 'phrase_desc') return 800 + s;     // 800+
+        if (t.match_type === 'semantic') return 500 + s;        // 500+
+        if (t.match_kind === 'all_words') return 400 + s;
+        if (t.match_kind === 'half_words') return 300 + s;
+        return s;  // lexical trgm/word — по similarity
+      };
+      return score(b) - score(a);
     });
 
     const filtered = applyFiltersAndSort(lastResults);
