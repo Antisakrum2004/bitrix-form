@@ -361,6 +361,15 @@
   .ai-similar-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-m);margin-bottom:4px;display:none}
   .ai-similar-title.show{display:block}
   .ai-similar-list{display:flex;flex-direction:column;gap:6px}
+  /* v7.27: dual-section UI — Дубликаты (warn) / Похожие (info) */
+  .ai-similar-section{margin-top:10px;display:none}
+  .ai-similar-section.show{display:block}
+  .ai-similar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .ai-similar-section-title.s-dup{color:var(--warning)}
+  .ai-similar-section-title.s-sim{color:var(--accent)}
+  .ai-similar-section-title .dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+  .ai-similar-section-empty{padding:8px 10px;border-radius:6px;font-size:10px;line-height:1.4;background:rgba(34,197,94,0.08);color:var(--success);border:1px solid rgba(34,197,94,0.2)}
+  .ai-similar-section-empty .ico{margin-right:4px;font-weight:700}
   .ai-similar-item{padding:10px 12px;border-radius:6px;border:1px solid var(--glass-border);background:var(--surface2);cursor:pointer;transition:all .15s;text-decoration:none;color:inherit}
   .ai-similar-item:hover{border-color:var(--accent-dim);background:var(--accent-glow)}
   .ai-similar-item-id{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:2px}
@@ -419,7 +428,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.26</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.27</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -2093,29 +2102,71 @@ function aiRenderKeywords(keywords) {
 }
 
 function aiRenderSimilar(tasks) {
-  const listEl = document.getElementById('aiSimilarList');
-  const titleEl = document.getElementById('aiSimilarTitle');
-  listEl.innerHTML = '';
-  if (tasks && tasks.length) {
-    titleEl.classList.add('show');
-    tasks.forEach(t => {
-      let statusClass = 's-default';
-      const s = (t.status || '').toLowerCase();
-      if (s.includes('ожида') || s.includes('pending') || s.includes('новая')) statusClass = 's-pending';
-      else if (s.includes('работ') || s.includes('progress') || s.includes('в работе')) statusClass = 's-progress';
-      else if (s.includes('заверш') || s.includes('done') || s.includes('закрыт')) statusClass = 's-done';
-      listEl.innerHTML += `<a class="ai-similar-item" href="${escapeHtml(t.url || '#')}" target="_blank" rel="noopener">
-        <div class="ai-similar-item-id">#${escapeHtml(String(t.id))}</div>
-        <div class="ai-similar-item-name">${escapeHtml(t.title)}</div>
-        <div class="ai-similar-item-meta">
-          <span>${escapeHtml(t.responsible || '')}</span>
-          <span class="ai-similar-item-status ${statusClass}">${escapeHtml(t.status || '')}</span>
-        </div>
-      </a>`;
-    });
+  // v7.27: dual-section render — Дубликаты (sim>=0.85) and Похожие (0.40<=sim<0.85)
+  // Legacy single-list elements (aiSimilarList/aiSimilarTitle) kept for backward compat but hidden.
+  const dupSectionEl = document.getElementById('aiDupSection');
+  const dupListEl = document.getElementById('aiDupSectionList');
+  const dupEmptyEl = document.getElementById('aiDupEmpty');
+  const simSectionEl = document.getElementById('aiSimSection');
+  const simListEl = document.getElementById('aiSimSectionList');
+  const legacyTitleEl = document.getElementById('aiSimilarTitle');
+
+  // Reset
+  dupListEl.innerHTML = '';
+  simListEl.innerHTML = '';
+  dupSectionEl.classList.remove('show');
+  simSectionEl.classList.remove('show');
+  dupEmptyEl.style.display = 'none';
+  legacyTitleEl.classList.remove('show');
+
+  if (!tasks || !tasks.length) return;
+
+  const DUP_THRESHOLD = 0.85;
+  const duplicates = [];
+  const similars = [];
+  tasks.forEach(t => {
+    const sim = Number(t.similarity || 0);
+    if (sim >= DUP_THRESHOLD) duplicates.push(t);
+    else similars.push(t);
+  });
+
+  // Render duplicates section (always show — empty state is positive feedback)
+  dupSectionEl.classList.add('show');
+  if (duplicates.length) {
+    dupEmptyEl.style.display = 'none';
+    duplicates.forEach(t => dupListEl.appendChild(buildSimilarItem(t)));
   } else {
-    titleEl.classList.remove('show');
+    dupEmptyEl.style.display = 'block';
   }
+
+  // Render similar section (only if non-empty)
+  if (similars.length) {
+    simSectionEl.classList.add('show');
+    similars.forEach(t => simListEl.appendChild(buildSimilarItem(t)));
+  }
+}
+
+function buildSimilarItem(t) {
+  let statusClass = 's-default';
+  const s = (t.status || '').toLowerCase();
+  if (s.includes('ожида') || s.includes('pending') || s.includes('новая')) statusClass = 's-pending';
+  else if (s.includes('работ') || s.includes('progress') || s.includes('в работе')) statusClass = 's-progress';
+  else if (s.includes('заверш') || s.includes('done') || s.includes('закрыт')) statusClass = 's-done';
+  const sim = Number(t.similarity || 0);
+  const simPct = Math.round(sim * 100);
+  const a = document.createElement('a');
+  a.className = 'ai-similar-item';
+  a.href = escapeHtml(t.url || '#');
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.innerHTML = `
+    <div class="ai-similar-item-id">#${escapeHtml(String(t.id))} <span style="opacity:.6;font-weight:400">· ${simPct}%</span></div>
+    <div class="ai-similar-item-name">${escapeHtml(t.title)}</div>
+    <div class="ai-similar-item-meta">
+      <span>${escapeHtml(t.responsible || '')}</span>
+      <span class="ai-similar-item-status ${statusClass}">${escapeHtml(t.status || '')}</span>
+    </div>`;
+  return a;
 }
 
 // AI-CHANGE: NEW-FUNCTION — парсинг пользовательских ключевых слов.
@@ -2209,7 +2260,7 @@ async function handleAiGenerate() {
         body: JSON.stringify({
           text: searchText,
           keywords: searchKeywords,
-          threshold: 0.5,
+          threshold: 0.4,
           limit: 10
         })
       });
@@ -2359,6 +2410,16 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <div class="ai-similar-title" id="aiSimilarTitle">Похожие задачи</div>
     <div class="ai-similar-list" id="aiSimilarList"></div>
+    <!-- v7.27: dual-section UI -->
+    <div class="ai-similar-section" id="aiDupSection">
+      <div class="ai-similar-section-title s-dup"><span class="dot"></span>Возможные дубликаты</div>
+      <div class="ai-similar-list" id="aiDupSectionList"></div>
+      <div class="ai-similar-section-empty" id="aiDupEmpty"><span class="ico">✓</span>Дубликатов не найдено — можно создавать спокойно</div>
+    </div>
+    <div class="ai-similar-section" id="aiSimSection">
+      <div class="ai-similar-section-title s-sim"><span class="dot"></span>Похожие задачи</div>
+      <div class="ai-similar-list" id="aiSimSectionList"></div>
+    </div>
   </div>
 </div>
 <!-- END AI PANEL HTML -->

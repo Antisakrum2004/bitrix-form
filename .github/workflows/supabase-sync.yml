@@ -1,0 +1,46 @@
+name: Supabase Sync — daily 06:00 MSK
+
+# v7.27 — daily index refresh of Bitrix24 tasks into Supabase pgvector.
+# Schedule: 03:00 UTC = 06:00 MSK (Moscow).
+# Also runnable manually from Actions tab.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03:00 UTC = 06:00 MSK daily
+  workflow_dispatch:        # manual trigger from GitHub UI
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync script
+        env:
+          BITRIX24_WEBHOOK: ${{ secrets.BITRIX24_WEBHOOK }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SINCE_DATE: '2026-01-01'
+        run: node scripts/sync-bitrix-to-supabase.mjs
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Supabase Sync Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Schedule: daily 06:00 MSK" >> $GITHUB_STEP_SUMMARY
+          echo "- SINCE_DATE: 2026-01-01 (all of 2026+)" >> $GITHUB_STEP_SUMMARY
+          echo "- Date: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Re-run manually: https://github.com/${{ github.repository }}/actions/workflows/supabase-sync.yml" >> $GITHUB_STEP_SUMMARY

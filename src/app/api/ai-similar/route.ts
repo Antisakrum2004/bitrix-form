@@ -34,7 +34,7 @@ interface SimilarTask {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { text, keywords, threshold = 0.5, limit = 10 } = await req.json();
+    const { text, keywords, threshold = 0.4, limit = 10 } = await req.json();
 
     // Build query text: prefer keywords if provided (user-controlled), else text
     let queryText = "";
@@ -111,7 +111,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Call Supabase RPC: search_similar_tasks
+    // 2. Call Supabase RPC: search_similar_tasks (v7.27 hybrid: vector + pg_trgm)
+    // Pass query_text so RPC can compute trgm_score; if not provided, RPC falls back to pure vector mode.
     const rpcRes = await fetch(`${supaUrl}/rest/v1/rpc/search_similar_tasks`, {
       method: "POST",
       headers: {
@@ -123,6 +124,7 @@ export async function POST(req: NextRequest) {
         query_embedding: embedding,
         match_threshold: threshold,
         match_count: limit,
+        query_text: queryText.slice(0, 1000),  // cap at 1000 chars for trgm
       }),
     });
 

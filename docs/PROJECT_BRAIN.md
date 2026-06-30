@@ -721,6 +721,80 @@ git push origin main --force
 - **Team ID:** `team_FZzl1NrBI13a1rApX3p5LRF4`
 - **Production URL:** `https://bitrix-form-ai.vercel.app` (alias к последнему production deployment)
 
+### v7.27 — Гибридный поиск + разделение UI + cron-синхронизация ✅ (2026-06-30)
+- **Что:** 3 улучшения поверх v7.26.2: гибридный скоринг (вектор 70% + pg_trgm 30%), разделение UI на «Дубликаты» и «Похожие», ежедневный cron для автообновления индекса.
+- **Backup:** Создан git tag `v7.26.2-rollback-2026-06-30` — для отката к моменту ДО v7.27 (старый tag `v7.25-rollback-2026-06-30` сохранён как более глубокий fallback).
+
+**1. Гибридный поиск (Supabase RPC):**
+- Обновлён `search_similar_tasks` — теперь принимает 4-й параметр `query_text` (опционально)
+- Скоринг: `0.7 × cosine_sim + 0.3 × trgm_sim` (если `query_text` передан)
+- Если `query_text = NULL/empty` — fallback на чисто векторный режим (как v7.26)
+- Pre-filter: vector_sim > 0.25 (отсекаем совсем нерелевантные до trgm-скоринга)
+- Limit: берём 4×match_count кандидатов для re-ranking, потом топ-N
+- DDL: `supabase/rpc_search_v727_hybrid.sql` (применён через Supabase Management API)
+- Response теперь включает `vector_score`, `trgm_score`, `similarity` (для отладки/UI)
+
+**2. Threshold снижен с 0.5 до 0.4:**
+- В `route.ts` default `threshold = 0.4`
+- В `index.html` fetch передаёт `threshold: 0.4`
+- Причина: при гибридном скоринге некоторые точные совпадения с низкой векторной близостью раньше отсекались; 0.4 даёт больше релевантных результатов
+
+**3. Разделение UI (index.html):**
+- Список «Похожие задачи» заменён на 2 секции:
+  - **«Возможные дубликаты»** (sim ≥ 0.85) — жёлтая подсветка, заголовок s-dup
+  - **«Похожие задачи»** (sim 0.40–0.85) — синяя подсветка, заголовок s-sim
+- Секция дубликатов ВСЕГДА показывается (даже если пустая) — даёт позитивный фидбек зелёной плашкой «✓ Дубликатов не найдено — можно создавать спокойно»
+- Секция похожих скрывается, если пустая
+- У каждой задачи виден процент совпадения (simPct%) рядом с ID
+- Legacy элементы `aiSimilarList`/`aiSimilarTitle` оставлены для backward compat, но скрыты
+
+**4. Cron-синхронизация (GitHub Actions):**
+- Файл: `.github/workflows/supabase-sync.yml`
+- Расписание: `0 3 * * *` UTC = 06:00 МСК ежедневно
+- Также доступен `workflow_dispatch` (ручной запуск из GitHub UI)
+- Шаги: checkout → setup Node 20 → run `node scripts/sync-bitrix-to-supabase.mjs` → summary
+- 4 секрета добавлены в репо `bitrix-form` через GitHub API (libsodium encryption):
+  - `BITRIX24_WEBHOOK` — для fetch задач
+  - `OPENROUTER_API_KEY` — для embeddings
+  - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` — для upsert
+- `SINCE_DATE=2026-01-01` — индексируем все задачи 2026+ (не оптимизировано, каждый раз пере-индексируем все 1201+; это ~$0.005/день = $1.8/год — в рамках бюджета)
+
+**5. Тест гибридного поиска (vs чисто векторного):**
+
+| Запрос | Чисто вектор (v7.26) top-1 | Гибрид (v7.27) top-1 | Улучшение |
+|---|---|---|---|
+| «отрицательные остатки на складе» | #6956 vec=0.613 | #6956 hybrid=0.556 | trgm поднял точные совпадения в top-3 |
+| «настроить права доступа пользователям» | #6434 vec=0.702 | #6434 hybrid=0.684 | trgm=0.643 — «точное совпадение слов», уверенность выше |
+| «ошибка при проведении документа» | #7450 vec=0.817 | #7450 hybrid=0.711 | trgm=0.463, общий скоринг «сбалансированный» |
+| «минус резерв» | #7932 vec=0.561 | #5864 hybrid=0.472 | trgm поднял задачу со словом «Резерв» в title |
+
+**6. Слабые места (НЕ решены гибридом):**
+- Запрос «почта не работает письма не приходят» — нет точных совпадений, вектор тоже слабый (sim<0.5). Это зона AI re-rank (отложено).
+- Запрос «тормозит база медленно работает» — аналогично. Тоже AI re-rank.
+
+**7. Файлы изменены:**
+- `supabase/rpc_search_v727_hybrid.sql` (NEW — DDL для гибридной RPC)
+- `src/app/api/ai-similar/route.ts` (передаёт query_text в RPC, threshold=0.4)
+- `index.html` (новый CSS + HTML + aiRenderSimilar переписана + buildSimilarItem добавлена + threshold=0.4 + версия v7.27)
+- `.github/workflows/supabase-sync.yml` (NEW — cron)
+- `docs/REPORT_v7_to_v7.27.md` (NEW — отчёт для руководителя)
+
+**8. Синхронизация с bitrix-form-AI:**
+- Скопирован обновлённый `src/app/api/ai-similar/route.ts` в `bitrix-form-AI`
+- Push → Vercel auto-deploy
+
+**9. GitHub secrets добавлены (4 шт.):**
+- Через REST API + libsodium-wrappers (официальный способ GitHub)
+- `BITRIX24_WEBHOOK`, `OPENROUTER_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+
+**Rollback tag:** `v7.26.2-rollback-2026-06-30` (новый, старый `v7.25-rollback-2026-06-30` не тронут)
+
+**Next steps (НЕ сделано в v7.27, отложено):**
+- AI re-rank топ-5 через LLM (требует доп. латентности + стоимости)
+- Оптимизация cron-скрипта (incremental sync через `MAX(updated_at)`)
+- Webhook от Bitrix24 для мгновенной индексации
+- Расширение индексации на 2025 год (по запросу)
+
 ### v7.10 — Оценка времени ✅
 - Поле «Оценка в часах» в карточке «Сроки» рядом с дедлайном
 - Лейблы «Крайний срок» и «Оценка в часах» на одной плоскости

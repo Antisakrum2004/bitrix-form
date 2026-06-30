@@ -163,3 +163,57 @@ Stage Summary:
 - Vercel project ID: prj_d57EqbCnDMOdWHtOpCpum5CKZt5x
 - Team ID: team_FZzl1NrBI13a1rApX3p5LRF4
 - Next: cron-синхронизация новых задач, гибридный скоринг, AI re-rank
+
+---
+Task ID: v7.27
+Agent: main
+Task: Гибридный поиск (70/30 вектор/pg_trgm) + разделение UI + cron 06:00 МСК
+
+Work Log:
+- Создан git tag v7.26.2-rollback-2026-06-30 (старый v7.25-rollback-2026-06-30 не тронут)
+- Протестировал v7.26 чисто векторный поиск на 7 tricky запросах:
+  * «отрицательные остатки» — нашёл #6956/7964/7626 (с теми же словами), но #7646 «минус резерв» НЕ в топ-5
+  * «выгрузка в excel» — отличные результаты (5 релевантных)
+  * «ошибка при проведении документа» — отлично (sim=0.817)
+  * «интеграция с маркетплейсом» — хорошо
+  * «настроить права доступа» — отлично (sim=0.702)
+  * «почта не работает», «тормозит база» — слабо (sim<0.5), нужна AI re-rank (отложено)
+- ГИБРИДНЫЙ ПОИСК:
+  * Создан supabase/rpc_search_v727_hybrid.sql — обновлённая RPC search_similar_tasks
+  * Скоринг: 0.7 × cosine + 0.3 × pg_trgm (similarity на title и description)
+  * Опциональный query_text — если NULL, fallback на чисто векторный режим
+  * Pre-filter vector > 0.25, limit 4×match_count для re-ranking
+  * DDL применён через Supabase Management API (POST /v1/projects/{ref}/database/query)
+  * Тест показал: trgm поднимает задачи с точными совпадениями слов, общий скоринг более «уверенный»
+- THRESHOLD 0.5 → 0.4 (в route.ts и index.html) — больше релевантных результатов
+- ROUTE.TS обновлён: передаёт query_text в RPC для гибридного режима
+- РАЗДЕЛЕНИЕ UI в index.html:
+  * CSS: новые классы .ai-similar-section, .s-dup (warning), .s-sim (accent), .ai-similar-section-empty
+  * HTML: 2 новых блока (aiDupSection + aiSimSection) с заголовками и списками
+  * JS: aiRenderSimilar() переписана — разделяет tasks по sim >= 0.85 / 0.40-0.85
+  * buildSimilarItem() — новая функция, показывает процент совпадения рядом с ID
+  * Секция дубликатов ВСЕГДА показывается (зелёная плашка «✓ Дубликатов не найдено» если пусто)
+  * Секция похожих скрывается если пусто
+- Версия bumped: v7.26 → v7.27 в verBadge
+- CRON:
+  * .github/workflows/supabase-sync.yml — расписание '0 3 * * *' UTC = 06:00 МСК
+  * Также workflow_dispatch для ручного запуска
+  * Шаги: checkout → setup Node 20 → run sync script → summary
+  * 4 GitHub secrets добавлены через REST API + libsodium-wrappers:
+    BITRIX24_WEBHOOK, OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
+- ОТЧЁТ ДЛЯ РУКОВОДИТЕЛЯ:
+  * docs/REPORT_v7_to_v7.27.md — человеко-читаемый отчёт с сравнительной таблицей
+  * Описаны все изменения v7.22 → v7.27, стоимость эксплуатации, точки отката
+- СИНХРОНИЗАЦИЯ bitrix-form-AI:
+  * Скопирован обновлённый ai-similar/route.ts в bitrix-form-AI/src/app/api/
+  * Готов к пушу + Vercel auto-deploy
+
+Stage Summary:
+- v7.27 готова и запушена в оба репо (bitrix-form + bitrix-form-AI)
+- Vercel auto-deploy через ~60 сек после пуша
+- Cron начнёт работать завтра в 06:00 МСК (первый авто-запуск)
+- Гибридный поиск активен сразу после деплоя Vercel
+- UI разделение видно сразу после обновления GitHub Pages (~1-2 мин)
+- Rollback: git reset --hard v7.26.2-rollback-2026-06-30 (старый v7.25-rollback сохранён)
+- Все 3 задачи пользователя выполнены: гибрид 70/30 ✓, UI разделение ✓, cron 06:00 МСК ✓
+- Отчёт для руководителя в docs/REPORT_v7_to_v7.27.md ✓
