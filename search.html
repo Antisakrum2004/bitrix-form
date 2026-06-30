@@ -692,6 +692,7 @@ const $filterSort = document.getElementById('filterSort');
 const $filterThreshold = document.getElementById('filterThreshold');
 const $filterLimit = document.getElementById('filterLimit');
 const $taskCount = document.getElementById('taskCount');
+const $taskUpdated = document.getElementById('taskUpdated');
 
 // ═══════════════════════════════════════════════════════════════════
 // Helpers
@@ -985,8 +986,9 @@ function scheduleSearch() {
 // ═══════════════════════════════════════════════════════════════════
 async function loadTaskCount() {
   try {
-    // Запрос: count (HEAD с Prefer: count=exact) + max(indexed_at) через RPC или select
-    // Делаем одним GET-запросом: order=indexed_at.desc&limit=1 + Prefer header
+    // v7.28.4: Прямой запрос к Supabase REST API.
+    // HEAD не работает с CORS на GitHub Pages (no content-range header exposed),
+    // поэтому используем GET с Prefer: count=exact — в ответе content-range в заголовке.
     const res = await fetch('https://nopccnooivztriqdkbie.supabase.co/rest/v1/tasks?select=indexed_at&order=indexed_at.desc&limit=1', {
       method: 'GET',
       headers: {
@@ -995,8 +997,8 @@ async function loadTaskCount() {
         'Prefer': 'count=exact',
       },
     });
-    if (!res.ok) throw new Error('count fetch failed');
-    const range = res.headers.get('content-range') || '';  // "0-0/1201"
+    if (!res.ok) throw new Error(`count fetch ${res.status}`);
+    const range = res.headers.get('content-range') || '';
     const count = range.split('/')[1] || '—';
     const data = await res.json();
     const lastIdx = data?.[0]?.indexed_at;
@@ -1004,6 +1006,7 @@ async function loadTaskCount() {
     $taskUpdated.textContent = lastIdx ? fmtRelative(lastIdx) : 'неизвестно';
   } catch (e) {
     console.warn('loadTaskCount failed', e);
+    // Fallback: попробуем через /api/ai-lexical с пустым запросом — вернёт 0, но не упадёт
     $taskCount.textContent = '1200+ задач';
     $taskUpdated.textContent = 'неизвестно';
   }
