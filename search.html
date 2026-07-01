@@ -779,7 +779,7 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28.8 · semantic + lexical + meetings + graph pan/zoom</span>
+  <span>v7.28.9 · combined endpoint · graph for meetings</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
@@ -811,6 +811,7 @@
     <span class="gl-item"><span class="gl-dot" style="background:var(--accent)"></span>выбранная</span>
     <span class="gl-item"><span class="gl-dot" style="background:var(--warning)"></span>похожие</span>
     <span class="gl-item"><span class="gl-dot" style="background:var(--text-d)"></span>соседние</span>
+    <span class="gl-item"><span class="gl-dot" style="background:#3b82f6"></span>встреча</span>
     <span class="gl-item" style="margin-left:auto;opacity:.6">колесо — zoom · перетаскивание — pan</span>
   </div>
 </div>
@@ -826,6 +827,7 @@ const AI_API = 'https://bitrix-form-ai.vercel.app/api';
 // Состояние
 // ═══════════════════════════════════════════════════════════════════
 let lastResults = [];
+let lastMeetings = [];
 let searchTimer = null;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1198,13 +1200,11 @@ function renderMeetings(meetings) {
       ${relatedHtml}
     `;
 
-    // Клик по карточке встречи — открываем источник если есть, иначе ничего
-    card.addEventListener('click', () => {
-      if (m.source_url) {
-        window.open(m.source_url, '_blank');
-      } else if (m.audio_url) {
-        window.open(m.audio_url, '_blank');
-      }
+    // Клик по карточке встречи — рисуем граф (anchor = встреча)
+    card.addEventListener('click', (e) => {
+      // Не открываем source, рисуем граф
+      $graphPanel.classList.add('show');
+      drawMeetingGraph(m);
     });
 
     section.appendChild(card);
@@ -1231,36 +1231,27 @@ async function runSearch(q) {
   const threshold = parseFloat($filterThreshold.value);
   const limit = parseInt($filterLimit.value);
 
-  // v7.28.1: параллельный запрос к /ai-similar (семантика) и /ai-lexical (точные слова).
-  // v7.28.8: + параллельный запрос к /ai-meetings (встречи из NotebookLM).
+  // v7.28.9: ОДИН запрос к /api/ai-search-all вместо 3 параллельных.
+  // Причина: 3 cold starts Vercel = ~3 сек. 1 cold start = ~1 сек.
+  // Endpoint внутри делает 3 параллельных запроса к Supabase + 1 embedding.
   try {
-    const [semRes, lexRes, meetRes] = await Promise.allSettled([
-      fetch(AI_API + '/ai-similar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: query, threshold, limit }),
-      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-similar ${r.status}`))),
-      fetch(AI_API + '/ai-lexical', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: query, limit: limit * 2 }),
-      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-lexical ${r.status}`))),
-      fetch(AI_API + '/ai-meetings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: query, threshold: 0.3, limit: 5 }),
-      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-meetings ${r.status}`))),
-    ]);
+    const res = await fetch(AI_API + '/ai-search-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: query, threshold, limit }),
+    });
 
-    const semantic = semRes.status === 'fulfilled' ? (semRes.value.similar || []) : [];
-    const lexical  = lexRes.status === 'fulfilled' ? (lexRes.value.similar || []) : [];
-    const meetings = meetRes.status === 'fulfilled' ? (meetRes.value.meetings || []) : [];
-
-    if (semRes.status === 'rejected' && lexRes.status === 'rejected') {
-      throw new Error(semRes.reason?.message || lexRes.reason?.message || 'оба поиска упали');
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`/ai-search-all ${res.status}: ${txt.slice(0, 200)}`);
     }
 
-    // Объединение: дедуп по id, помечаем match_type
+    const data = await res.json();
+    const semantic = data.similar || [];
+    const lexical = data.lexical || [];
+    const meetings = data.meetings || [];
+
+    // Объединение tasks: дедуп по id, помечаем match_type
     const seen = new Map();
     semantic.forEach(t => {
       seen.set(String(t.id), { ...t, match_type: t.match_type || 'semantic' });
@@ -1268,7 +1259,6 @@ async function runSearch(q) {
     lexical.forEach(t => {
       const id = String(t.id);
       if (seen.has(id)) {
-        // Задача нашлась обоими способами — помечаем как 'both'
         seen.get(id).match_type = 'both';
       } else {
         seen.set(id, { ...t, match_type: 'lexical' });
@@ -1276,21 +1266,21 @@ async function runSearch(q) {
     });
 
     lastResults = Array.from(seen.values());
-    lastQuery = query;  // v7.28.5: запоминаем для подсветки
+    lastQuery = query;
+    lastMeetings = meetings;  // v7.28.9: сохраняем для графа
 
-    // Сортировка по умолчанию: phrase_title (100%) > phrase_desc (85%) > semantic > lexical word/trgm
-    // Если у задачи match_kind = phrase_title — она самая релевантная.
+    // Сортировка
     lastResults.sort((a, b) => {
       const score = (t) => {
         const s = Number(t.similarity) || 0;
-        if (t.match_kind === 'phrase_title') return 1000 + s;  // 1000+
-        if (t.match_type === 'both') return 900 + s;            // 900+
-        if (t.match_kind === 'phrase_desc') return 800 + s;     // 800+
-        if (t.match_type === 'semantic') return 500 + s;        // 500+
+        if (t.match_kind === 'phrase_title') return 1000 + s;
+        if (t.match_type === 'both') return 900 + s;
+        if (t.match_kind === 'phrase_desc') return 800 + s;
+        if (t.match_type === 'semantic') return 500 + s;
         if (t.match_kind === 'all_words') return 400 + s;
         if (t.match_kind === 'half_words') return 300 + s;
         if (t.match_kind === 'single_word') return 200 + s;
-        return s;  // lexical trgm/word — по similarity
+        return s;
       };
       return score(b) - score(a);
     });
@@ -1301,14 +1291,14 @@ async function runSearch(q) {
     // v7.28.8: рендерим блок встреч отдельно (синие карточки снизу)
     renderMeetings(meetings);
 
-    // Статус: сколько нашли каким способом
+    // Статус
     const semCount = semantic.length;
     const lexCount = lexical.length;
     const bothCount = lastResults.filter(t => t.match_type === 'both').length;
     const meetCount = meetings.length;
     let statusText = '';
     if (semCount === 0 && lexCount > 0) {
-      statusText = `⚠ Семантика ничего не нашла — показываем только точные совпадения (${lexCount})`;
+      statusText = `⚠ Семантика ничего не нашла — точные совпадения (${lexCount})`;
     } else if (semCount > 0 && lexCount === 0) {
       statusText = `Семантика: ${semCount} · точных: 0`;
     } else {
@@ -1470,7 +1460,7 @@ async function drawTaskGraph(taskId, taskTitle) {
   if (graphState.taskId === String(taskId)) {
     return; // граф уже построен, ничего не делаем
   }
-  graphState = { taskId: String(taskId), query: taskTitle || '' };
+  graphState = { taskId: String(taskId), query: taskTitle || '', kind: 'task' };
   $graphEmpty.style.display = 'none';
   $graphSvg.style.display = 'block';
   $graphSvg.innerHTML = '';
@@ -1540,6 +1530,87 @@ async function drawTaskGraph(taskId, taskTitle) {
   renderGraph(uniqNodes, links);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// v7.28.9: Граф для встречи (meeting)
+// Anchor = встреча (синий), дети = related_task_ids (если есть) + похожие meetings
+// ═══════════════════════════════════════════════════════════════════
+async function drawMeetingGraph(meeting) {
+  const meetingId = String(meeting.id);
+  if (graphState.taskId === meetingId && graphState.kind === 'meeting') {
+    return;  // кэш
+  }
+  graphState = { taskId: meetingId, query: meeting.title || '', kind: 'meeting' };
+  $graphEmpty.style.display = 'none';
+  $graphSvg.style.display = 'block';
+  $graphSvg.innerHTML = '';
+
+  const headerTitle = document.querySelector('.graph-title');
+  headerTitle.textContent = `Граф: ${meeting.title?.slice(0, 40) || 'встреча'}`;
+
+  // Узел встречи (anchor, синий)
+  const nodes = [
+    { id: `meeting-${meetingId}`, label: '📅', title: meeting.title, kind: 'meeting', sim: 1.0 }
+  ];
+  const links = [];
+
+  // 1. Related task_ids (если есть — добавляем как узлы-задачи)
+  const relatedIds = meeting.related_task_ids || [];
+  for (const tid of relatedIds.slice(0, 5)) {
+    nodes.push({
+      id: `task-${tid}`,
+      label: `#${tid}`,
+      title: `Задача #${tid}`,
+      kind: 'task',
+      sim: 0.8,
+    });
+    links.push({
+      source: `meeting-${meetingId}`,
+      target: `task-${tid}`,
+      sim: 0.8,
+      label: 'связана',
+    });
+  }
+
+  // 2. Похожие meetings (из lastMeetings, кроме текущей)
+  const otherMeetings = (lastMeetings || [])
+    .filter(m => String(m.id) !== meetingId)
+    .slice(0, 3);
+  for (const om of otherMeetings) {
+    nodes.push({
+      id: `meeting-${om.id}`,
+      label: '📅',
+      title: om.title,
+      kind: 'meeting',
+      sim: om.similarity || 0.5,
+    });
+    links.push({
+      source: `meeting-${meetingId}`,
+      target: `meeting-${om.id}`,
+      sim: om.similarity || 0.5,
+      label: `${Math.round((om.similarity || 0) * 100)}%`,
+    });
+  }
+
+  // Если нет ни related ни других meetings — добавим фейковый узел-подсказку
+  if (nodes.length === 1) {
+    nodes.push({
+      id: 'empty-hint',
+      label: '?',
+      title: 'Связей пока нет. Добавьте related_task_ids в JSON из NotebookLM.',
+      kind: 'hint',
+      sim: 0,
+    });
+    links.push({
+      source: `meeting-${meetingId}`,
+      target: 'empty-hint',
+      sim: 0,
+      label: '',
+    });
+  }
+
+  renderGraph(nodes, links);
+}
+
 function renderGraph(nodes, links) {
   const width = $graphSvg.clientWidth || 360;
   const height = $graphSvg.clientHeight || 500;
@@ -1569,18 +1640,24 @@ function renderGraph(nodes, links) {
 
   svg.call(zoom);
 
-  // Цвета по kind
+  // Цвета по kind (v7.28.9: добавлены meeting, task, hint)
   const colors = {
-    anchor: '#10b981',
-    top3: '#f59e0b',
-    child: '#4a5270',
+    anchor: '#10b981',   // зелёный — выбранная задача
+    top3: '#f59e0b',     // оранжевый — похожие задачи
+    child: '#4a5270',    // серый — соседи
+    meeting: '#3b82f6',  // СИНИЙ — встречи
+    task: '#10b981',     // зелёный — задачи в графе встречи
+    hint: '#6b7280',     // серый — подсказка
   };
 
   // Размер узла по sim
   const radius = (n) => {
     const s = Number(n.sim) || 0;
     if (n.kind === 'anchor') return 16;
+    if (n.kind === 'meeting') return 18;  // встречи чуть больше
     if (n.kind === 'top3') return 10 + s * 6;
+    if (n.kind === 'task') return 12;
+    if (n.kind === 'hint') return 10;
     return 6 + s * 4;
   };
 
@@ -1646,20 +1723,49 @@ function renderGraph(nodes, links) {
     .text(d => `${d.label} — ${d.title || ''}\n${d.kind === 'anchor' ? 'выбранная задача' : 'схожесть: ' + Math.round((Number(d.sim)||0)*100) + '%'}\n\nклик → подсветит слева\nдвойной клик → откроет в Bitrix24`);
 
   // v7.28.4: SINGLE click = highlight card слева (на 5 сек)
-  // DOUBLE click = open in Bitrix24
+  // v7.28.9: DOUBLE click = open in Bitrix24 (для задач) или подсветить встречу
   let clickTimer = null;
   node.on('click', (event, d) => {
     event.stopPropagation();
     if (clickTimer) {
-      // Двойной клик — открываем в Bitrix24
       clearTimeout(clickTimer);
       clickTimer = null;
-      window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${d.id}/`, '_blank');
+      // Двойной клик — открываем
+      if (d.kind === 'task' || d.id.startsWith('task-')) {
+        // Извлекаем ID задачи из d.id вида "task-12345" или используем d.id напрямую
+        const taskId = d.id.replace('task-', '');
+        window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${taskId}/`, '_blank');
+      } else if (d.id.startsWith('meeting-')) {
+        // Встреча — подсветить карточку встречи (если есть)
+        const meetingId = d.id.replace('meeting-', '');
+        const card = document.querySelector(`.meeting-card[data-meeting-id="${meetingId}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.5), 0 0 30px rgba(59,130,246,0.3)';
+          setTimeout(() => { card.style.boxShadow = ''; }, 5000);
+        }
+      } else if (d.kind === 'anchor') {
+        // anchor — открыть задачу
+        const taskId = d.id;
+        window.open(`https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${taskId}/`, '_blank');
+      }
     } else {
-      // Одинарный клик — ждём 250мс, если не двойной — подсвечиваем
       clickTimer = setTimeout(() => {
         clickTimer = null;
-        highlightCard(d.id);
+        // Одинарный клик — подсветить карточку слева
+        if (d.id.startsWith('task-')) {
+          highlightCard(d.id.replace('task-', ''));
+        } else if (d.id.startsWith('meeting-')) {
+          const meetingId = d.id.replace('meeting-', '');
+          const card = document.querySelector(`.meeting-card[data-meeting-id="${meetingId}"]`);
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.boxShadow = '0 0 0 2px rgba(59,130,246,0.4)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 5000);
+          }
+        } else {
+          highlightCard(d.id);
+        }
       }, 250);
     }
   });
