@@ -594,6 +594,89 @@
   }
   .filter-fav:hover{color:var(--warning)}
   .filter-fav.active{color:var(--warning);background:rgba(245,158,11,0.08)}
+
+  /* v7.28.8: блок встреч (meetings) */
+  .meetings-section{
+    width:100%;max-width:880px;margin:24px auto 12px;
+  }
+  .meetings-section-title{
+    font-size:13px;font-weight:700;color:var(--accent);
+    margin-bottom:10px;display:flex;align-items:center;gap:8px;
+    letter-spacing:.02em;
+  }
+  .meetings-section-title::before{
+    content:'📅';font-size:16px;
+  }
+  .meetings-section-title .count{
+    font-size:11px;font-weight:500;color:var(--text-d);
+    background:var(--surface2);padding:2px 8px;border-radius:10px;
+    border:1px solid var(--glass-border);
+  }
+  .meeting-card{
+    background:rgba(18,21,31,0.6);
+    border:1px solid rgba(59,130,246,0.2);  /* синий акцент для встреч */
+    border-left:3px solid rgba(59,130,246,0.6);
+    border-radius:8px;
+    padding:12px 16px;
+    margin-bottom:8px;
+    transition:all .15s;
+    cursor:pointer;
+    position:relative;
+  }
+  .meeting-card:hover{
+    border-color:rgba(59,130,246,0.5);
+    background:rgba(18,21,31,0.85);
+    transform:translateY(-1px);
+  }
+  .meeting-card-top{
+    display:flex;align-items:baseline;gap:8px;margin-bottom:4px;
+    flex-wrap:wrap;
+  }
+  .meeting-date{
+    font-size:11px;color:rgba(59,130,246,0.9);font-weight:600;
+    flex-shrink:0;
+  }
+  .meeting-sim{
+    font-size:10px;color:var(--text-d);
+    background:var(--surface2);
+    border:1px solid var(--glass-border);
+    padding:1px 7px;border-radius:10px;
+    flex-shrink:0;
+  }
+  .meeting-title{
+    font-size:14px;font-weight:600;color:var(--text);
+    line-height:1.35;flex:1;
+  }
+  .meeting-card:hover .meeting-title{color:rgba(59,130,246,1)}
+  .meeting-decision{
+    font-size:12px;color:var(--text-m);line-height:1.55;
+    margin:6px 0 8px;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  }
+  .meeting-meta{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    font-size:11px;color:var(--text-d);
+  }
+  .meeting-meta-item{display:flex;align-items:center;gap:4px}
+  .meeting-meta-item svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .meeting-tag{
+    font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+    padding:1px 6px;border-radius:3px;
+    background:rgba(59,130,246,0.1);color:rgba(59,130,246,1);
+    border:1px solid rgba(59,130,246,0.25);
+  }
+  .meeting-actions{
+    margin-top:6px;font-size:11px;color:var(--text-m);
+  }
+  .meeting-actions b{color:var(--accent);font-weight:600}
+  .meeting-related{
+    margin-top:4px;font-size:10px;color:var(--text-d);
+  }
+  .meeting-related a{
+    color:var(--accent);text-decoration:none;
+    margin-right:6px;
+  }
+  .meeting-related a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -696,7 +779,7 @@
 
 <!-- ═══ Футер ═══ -->
 <div class="footer">
-  <span>v7.28.5 · semantic + lexical + word-roots · favorites · suggestions · graph pan/zoom</span>
+  <span>v7.28.8 · semantic + lexical + meetings + graph pan/zoom</span>
   <span><a href="index.html">← форма задачи</a></span>
 </div>
 
@@ -1055,13 +1138,79 @@ document.addEventListener('click', (e) => {
 
 function renderInitial() {
   // Сброс к начальному виду
-  document.querySelectorAll('.results-meta, .results-list, .empty-state').forEach(el => el.remove());
+  document.querySelectorAll('.results-meta, .results-list, .empty-state, .meetings-section').forEach(el => el.remove());
   $title.style.display = '';
   $subtitle.style.display = '';
   $quickEx.style.display = '';
   $hint.style.display = '';
   $center.classList.remove('has-results');
   $status.innerHTML = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.28.8: Рендер блока встреч (meetings из NotebookLM)
+// ═══════════════════════════════════════════════════════════════════
+function renderMeetings(meetings) {
+  // Удаляем старый блок
+  document.querySelectorAll('.meetings-section').forEach(el => el.remove());
+
+  if (!meetings || !meetings.length) return;
+
+  const section = document.createElement('div');
+  section.className = 'meetings-section';
+
+  const title = document.createElement('div');
+  title.className = 'meetings-section-title';
+  title.innerHTML = `Встречи и решения <span class="count">${meetings.length}</span>`;
+  section.appendChild(title);
+
+  meetings.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'meeting-card';
+    card.dataset.meetingId = m.id;
+
+    const simPct = Math.round((Number(m.similarity) || 0) * 100);
+    const dateStr = m.meeting_date ? fmtDate(m.meeting_date) : '';
+    const participantsStr = (m.participants || []).join(', ');
+    const tagsHtml = (m.tags || []).slice(0, 4).map(t => `<span class="meeting-tag">${escapeHtml(t)}</span>`).join('');
+    const actionsHtml = (m.action_items || []).slice(0, 2).map(a => `<div>• ${escapeHtml(a)}</div>`).join('');
+    const relatedHtml = (m.related_task_ids || []).length
+      ? `<div class="meeting-related">🔗 Связанные задачи: ${m.related_task_ids.map(id => `<a href="https://1c-cms.bitrix24.ru/company/personal/user/116/tasks/task/view/${id}/" target="_blank" rel="noopener">#${id}</a>`).join('')}</div>`
+      : '';
+
+    const sourceLink = m.source_url
+      ? `<a href="${escapeHtml(m.source_url)}" target="_blank" rel="noopener" class="open-bitrix" style="color:rgba(59,130,246,1)" onclick="event.stopPropagation()">↗ источник</a>`
+      : '';
+
+    card.innerHTML = `
+      <div class="meeting-card-top">
+        ${dateStr ? `<span class="meeting-date">${dateStr}</span>` : ''}
+        <span class="meeting-sim">${simPct}%</span>
+        <span class="meeting-title">${escapeHtml(m.title || '')}</span>
+        ${sourceLink}
+      </div>
+      ${m.decision_text ? `<div class="meeting-decision">${escapeHtml(m.decision_text)}</div>` : ''}
+      <div class="meeting-meta">
+        ${participantsStr ? `<span class="meeting-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>${escapeHtml(participantsStr)}</span>` : ''}
+        ${tagsHtml}
+      </div>
+      ${actionsHtml ? `<div class="meeting-actions"><b>Шаги:</b> ${actionsHtml}</div>` : ''}
+      ${relatedHtml}
+    `;
+
+    // Клик по карточке встречи — открываем источник если есть, иначе ничего
+    card.addEventListener('click', () => {
+      if (m.source_url) {
+        window.open(m.source_url, '_blank');
+      } else if (m.audio_url) {
+        window.open(m.audio_url, '_blank');
+      }
+    });
+
+    section.appendChild(card);
+  });
+
+  $center.appendChild(section);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1083,11 +1232,9 @@ async function runSearch(q) {
   const limit = parseInt($filterLimit.value);
 
   // v7.28.1: параллельный запрос к /ai-similar (семантика) и /ai-lexical (точные слова).
-  // ПРИЧИНА: семантика не находит короткие аббревиатуры (FTP) и специфичные термины
-  // (номенклатура в длинных заголовках). Лексика добавляет их через pg_trgm.
-  // ОБЪЕДИНЕНИЕ: берём все семантические + лексические, дедуп по id, сортируем.
+  // v7.28.8: + параллельный запрос к /ai-meetings (встречи из NotebookLM).
   try {
-    const [semRes, lexRes] = await Promise.allSettled([
+    const [semRes, lexRes, meetRes] = await Promise.allSettled([
       fetch(AI_API + '/ai-similar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1096,12 +1243,18 @@ async function runSearch(q) {
       fetch(AI_API + '/ai-lexical', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: query, limit: limit * 2, min_score: 0.05 }),
+        body: JSON.stringify({ text: query, limit: limit * 2 }),
       }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-lexical ${r.status}`))),
+      fetch(AI_API + '/ai-meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: query, threshold: 0.3, limit: 5 }),
+      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/ai-meetings ${r.status}`))),
     ]);
 
     const semantic = semRes.status === 'fulfilled' ? (semRes.value.similar || []) : [];
     const lexical  = lexRes.status === 'fulfilled' ? (lexRes.value.similar || []) : [];
+    const meetings = meetRes.status === 'fulfilled' ? (meetRes.value.meetings || []) : [];
 
     if (semRes.status === 'rejected' && lexRes.status === 'rejected') {
       throw new Error(semRes.reason?.message || lexRes.reason?.message || 'оба поиска упали');
@@ -1145,17 +1298,26 @@ async function runSearch(q) {
     const filtered = applyFiltersAndSort(lastResults);
     renderResults(filtered);
 
+    // v7.28.8: рендерим блок встреч отдельно (синие карточки снизу)
+    renderMeetings(meetings);
+
     // Статус: сколько нашли каким способом
     const semCount = semantic.length;
     const lexCount = lexical.length;
     const bothCount = lastResults.filter(t => t.match_type === 'both').length;
+    const meetCount = meetings.length;
+    let statusText = '';
     if (semCount === 0 && lexCount > 0) {
-      $status.innerHTML = `<span style="color:var(--warning)">⚠ Семантика ничего не нашла — показываем только точные совпадения (${lexCount})</span>`;
+      statusText = `⚠ Семантика ничего не нашла — показываем только точные совпадения (${lexCount})`;
     } else if (semCount > 0 && lexCount === 0) {
-      $status.innerHTML = `<span style="opacity:.7">Семантика: ${semCount} · точных совпадений: 0</span>`;
+      statusText = `Семантика: ${semCount} · точных: 0`;
     } else {
-      $status.innerHTML = `<span style="opacity:.7">Семантика: ${semCount} · точных: ${lexCount} · совпали оба: ${bothCount}</span>`;
+      statusText = `Семантика: ${semCount} · точных: ${lexCount} · оба: ${bothCount}`;
     }
+    if (meetCount > 0) {
+      statusText += ` · <span style="color:rgba(59,130,246,1)">📅 встреч: ${meetCount}</span>`;
+    }
+    $status.innerHTML = `<span style="opacity:.85">${statusText}</span>`;
   } catch (err) {
     console.error('search error:', err);
     $status.innerHTML = '⚠ Ошибка поиска: ' + (err.message || err);
