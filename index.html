@@ -428,7 +428,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.28</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.28.6</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -1573,6 +1573,21 @@ async function handleSubmit(e) {
   }
   if (window._skipDuplicateCheck) delete window._skipDuplicateCheck;
 
+  // AI-CHANGE: FIX v7.28.6 — блокировка кнопки ДО любого await.
+  // ПРИЧИНА: fetchAiSimilarBlock() делает 4 последовательных HTTP-запроса (~1-3 сек).
+  // Раньше isSubmitting выставалось ПОСЛЕ этого await — за это окно второй клик
+  // успевал пройти все проверки и создать дубль задачи (см. таски #8000/#8002,
+  // созданные с разницей в 1 секунду). Теперь кнопка блокируется мгновенно
+  // сразу после всех проверок, до AI-поиска аналогичных задач.
+  // ОТКАТ: вернуть блок `btn.classList.add('loading')... bt.textContent='Создаём...'`
+  // на место после updateRepeatButton() (где он был до фикса).
+  const btn = document.getElementById('submitBtn');
+  const bt = btn.querySelector('.btn-text');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  isSubmitting = true;
+  bt.textContent = 'Создаём...';
+
   // AI-CHANGE: NEW v7.28 — автоподстановка аналогичных задач + дерево в DESCRIPTION.
   // ПРИЧИНА: при создании задачи через «быструю задачу» — автоматически дописывать в описание
   // секцию «Аналогичные задачи» (top-3 по релевантности) + дерево top-2 для каждого.
@@ -1621,12 +1636,19 @@ async function handleSubmit(e) {
   }));
   updateRepeatButton();
 
-  const btn = document.getElementById('submitBtn');
-  const bt = btn.querySelector('.btn-text');
-  btn.classList.add('loading');
-  btn.disabled = true;
-  isSubmitting = true; // AI-CHANGE: блокировка
-  bt.textContent = 'Создаём...';
+  // AI-CHANGE: FIX v7.28.6 — повторная проверка дубля прямо перед tasks.task.add.
+  // ПРИЧИНА: за время fetchAiSimilarBlock() (~1-3 сек) теоретически могла проскочить
+  // копия из другого источника (другая вкладка, repeatLastTask и т.п.).
+  // Это belt-and-suspenders поверх isSubmitting — фактически двойная защита.
+  // ОТКАТ: удалить if-блок ниже, оставить только try { fetch(tasks.task.add) }.
+  if (isDuplicateTask(title, selectedDevId, selectedProjId) && !window._skipDuplicateCheck) {
+    showToast('error', 'Дубликат заблокирован', 'Такая задача уже создана менее 5 минут назад. Измени название или открой существующую.');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    isSubmitting = false;
+    bt.textContent = 'Создать задачу';
+    return;
+  }
 
   try {
     const res = await fetch(hook + 'tasks.task.add', {
