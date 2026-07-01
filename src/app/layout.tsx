@@ -26,22 +26,19 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
-  title: "EOD Inspector — Панель управления",
-  description: "Панель управления отчётами EOD Inspector для Bitrix24",
-  keywords: ["EOD", "Bitrix24", "Inspector", "Reports"],
-  authors: [{ name: "EOD Inspector" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  title: "Bitrix Form — AI assistant for tasks",
+  description: "AI backend for the Bitrix24 task form (decomposition, duplicate search, similar tasks, lexical search)",
+  keywords: ["Bitrix24", "AI", "Tasks", "Search"],
+  authors: [{ name: "Antisakrum2004" }],
   openGraph: {
-    title: "EOD Inspector — Панель управления",
-    description: "Панель управления отчётами EOD Inspector для Bitrix24",
+    title: "Bitrix Form AI",
+    description: "AI backend for the Bitrix24 task form",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "EOD Inspector",
-    description: "Панель управления отчётами EOD Inspector для Bitrix24",
+    title: "Bitrix Form AI",
+    description: "AI backend for the Bitrix24 task form",
   },
 };
 
