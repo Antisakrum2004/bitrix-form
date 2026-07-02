@@ -124,7 +124,8 @@
   .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,.25),0 18px 40px rgba(0,0,0,.35),0 44px 80px rgba(0,0,0,.25)}
   .card+.card{margin-top:14px}
   .card-header{padding:12px 18px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:10px;background:var(--surface2)}
-  .eod-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);user-select:none}
+  .toggles-group{margin-left:auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .eod-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-d);user-select:none}
   .eod-toggle input{display:none}
   .eod-toggle .eod-box{width:16px;height:16px;border:1.5px solid var(--glass-border-h);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:10px;color:transparent;background:var(--surface2)}
   .eod-toggle input:checked+.eod-box{border-color:var(--accent);background:var(--accent);color:#fff}
@@ -428,7 +429,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.28.6</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.29</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -552,7 +553,13 @@
       </div>
 
       <div class="card" style="animation-delay:.08s">
-        <div class="card-header"><div class="card-num">2</div><div class="card-title">Команда</div><label class="eod-toggle"><input type="checkbox" id="eodCheck" checked /><span class="eod-box">✓</span><span>EOD</span></label></div>
+        <div class="card-header"><div class="card-num">2</div><div class="card-title">Команда</div>
+          <div class="toggles-group">
+            <label class="eod-toggle" title="Создать обязательный чек-лист тестирования"><input type="checkbox" id="dodMandatoryCheck" /><span class="eod-box">✓</span><span>DoD Обязат.</span></label>
+            <label class="eod-toggle" title="Доп. блок для сложных задач (новые модули, обмены, >8ч)"><input type="checkbox" id="dodExtendedCheck" /><span class="eod-box">✓</span><span>DoD Расшир.</span></label>
+            <label class="eod-toggle" title="Добавить EOD-комментарий с шаблоном Done/Next/Test/Block"><input type="checkbox" id="eodCheck" checked /><span class="eod-box">✓</span><span>EOD</span></label>
+          </div>
+        </div>
         <div class="card-body">
           <div class="crew-section-label"><svg viewBox="0 0 13 13"><circle cx="6.5" cy="4" r="2.5"/><path d="M1 12c0-3 2.5-5.5 5.5-5.5S12 9 12 12"/></svg>Разработчик</div>
           <div class="crew-grid" id="devGrid"></div>
@@ -1668,6 +1675,10 @@ async function handleSubmit(e) {
       const eodOn = document.getElementById('eodCheck').checked;
       if (eodOn) observerIds.push(154); // Бот для EOD-комментариев
 
+      // v7.29: DoD-чек-листы (Обязат. + Расшир.)
+      const dodMandatoryOn = document.getElementById('dodMandatoryCheck').checked;
+      const dodExtendedOn = document.getElementById('dodExtendedCheck').checked;
+
       let obsMsg = '';
       if (observerIds.length) {
         bt.textContent = 'Наблюдатель...';
@@ -1677,6 +1688,13 @@ async function handleSubmit(e) {
       if (selectedFiles.length) {
         bt.textContent = `Файлы (${selectedFiles.length})...`;
         await uploadFiles(hook, tid);
+      }
+
+      // v7.29: добавляем чек-листы DoD перед EOD-комментарием
+      let dodMsg = '';
+      if (dodMandatoryOn) {
+        bt.textContent = 'DoD чек-лист...';
+        dodMsg = await addDodChecklists(hook, tid, dodExtendedOn);
       }
 
       // EOD-комментарий если галка стоит (бот уже добавлен наблюдателем выше)
@@ -1695,6 +1713,7 @@ async function handleSubmit(e) {
       let msg = `${dn} → ${pn}`;
       if (flameOn) msg += ' · Важная';
       if (obsMsg) msg += obsMsg;
+      if (dodMsg) msg += dodMsg;
       if (eodMsg) msg += eodMsg;
 
       showToast('success', `Задача #${tid}`, msg);
@@ -1801,6 +1820,83 @@ async function addEodComment(hook, tid, projId) {
     console.warn('[EOD] Error:', e.message);
     return '';
   }
+}
+
+// v7.29: DoD-чек-листы (Обязат. + Расшир.)
+// ПРИЧИНА: при создании задачи добавить в неё чек-листы тестирования.
+// ОТКАТ: удалить функцию, константы и вызов в handleSubmit.
+const DOD_MANDATORY_ITEMS = [
+  'Перечитай условия задачи — сверь результат с требуемым',
+  'Протестируй на демо-базе — пройди сценарий до конца, ошибки фиксируй и правь',
+  'Убери жёсткие ссылки (ID/GUID/коды) — привязки через настройки или константы',
+  'Не затёр чужой код в общих модулях. Менял общий объект — согласуй даже в тестовой',
+  'Прогони код через ИИ-линтер на синтаксис и базовые ошибки',
+  'User-инструкция в .docx вложением. Не нужна — кратко опиши доработки кода/метода',
+  'Приложи файлы обработки/конфигурации (.cf/.dt/.epf/.erf) при необходимости',
+  'Комментарий в формате Done/Next/Test/Block (инструкция ТУТ)',
+  'Пингани постановщика (@ или +) о готовности к проверке — в Done или отдельно'
+];
+const DOD_EXTENDED_ITEMS = [
+  'Согласуй архитектуру до начала кода и покажи структуру',
+  'Предложи несколько вариантов решения задачи',
+  'Проверь — нет запросов в цикле',
+  'Задай жёсткое расписание фоновых/регламентных (согласуй с другими)',
+  'Протестируй под обычным пользователем и под админом',
+  'Составь список переноса в рабочую базу: реквизиты, роли, .cf/.dt/.epf/.erf, путь к инструкции'
+];
+
+async function addDodChecklists(hook, taskId, includeExtended) {
+  let added = 0;
+  let failed = 0;
+
+  // Утилита: создать пункт чек-листа через новый унифицированный API tasks.task.checklist.add
+  // (старый task.checklist.add возвращает DISPATCHER_ERROR)
+  async function addItem(title, isComplete, parentId) {
+    try {
+      const r = await fetch(hook + 'tasks.task.checklist.add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: taskId,
+          fields: { TITLE: title, IS_COMPLETE: isComplete, PARENT_ID: parentId || 0 }
+        })
+      });
+      const d = await r.json();
+      if (d?.result?.checkListItem?.id) return d.result.checkListItem.id;
+      console.warn('[DoD] Item fail:', title, d.error || d);
+      return null;
+    } catch (e) {
+      console.warn('[DoD] Item error:', title, e.message);
+      return null;
+    }
+  }
+
+  // Секция 1: ОБЯЗАТЕЛЬНЫЙ БЛОК
+  const mandParentId = await addItem('📋 ОБЯЗАТЕЛЬНЫЙ БЛОК ТЕСТИРОВАНИЯ', 'N', 0);
+  console.log('[DoD] Parent (mandatory) added:', mandParentId);
+  if (mandParentId) added++; else failed++;
+
+  for (const item of DOD_MANDATORY_ITEMS) {
+    const id = await addItem(item, 'N', mandParentId);
+    if (id) added++; else failed++;
+  }
+
+  // Секция 2: ДОПОЛНИТЕЛЬНЫЙ БЛОК (если включён)
+  if (includeExtended) {
+    const extParentId = await addItem('🚀 ДОПОЛНИТЕЛЬНЫЙ БЛОК (для сложных задач, новых модулей, обменов)', 'N', 0);
+    console.log('[DoD] Parent (extended) added:', extParentId);
+    if (extParentId) added++; else failed++;
+
+    for (const item of DOD_EXTENDED_ITEMS) {
+      const id = await addItem(item, 'N', extParentId);
+      if (id) added++; else failed++;
+    }
+  }
+
+  console.log(`[DoD] Done. Added: ${added}, Failed: ${failed}`);
+  if (failed === 0) return includeExtended ? ' · DoD ✓✓' : ' · DoD ✓';
+  if (added > 0) return ` · DoD ⚠ (${added}/${added + failed})`;
+  return ' · ⚠ DoD не добавлен';
 }
 
 async function uploadFiles(hook, tid) {
