@@ -181,16 +181,29 @@
   .crew-section-label{font-size:10px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
   .crew-section-label svg{width:13px;height:13px;stroke:var(--accent);fill:none;stroke-width:1.2;stroke-linecap:round}
 
-  .project-grid{display:flex;flex-wrap:wrap;gap:6px}
-  .proj-chip{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:6px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none}
+  .project-grid{display:flex;flex-wrap:wrap;gap:5px}
+  .proj-chip{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .2s;user-select:none;font-size:11px}
   .proj-chip:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
   .proj-chip.active{border-color:var(--accent-dim);background:var(--accent-glow-s);color:var(--accent)}
-  .proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text-d);transition:all .2s}
+  .proj-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--text-d);transition:all .2s}
   .proj-chip.active .proj-dot{background:var(--accent);box-shadow:0 0 6px var(--accent-dim)}
   .proj-chip.dimmed .proj-dot{background:var(--dim-red)}
   .proj-chip.dimmed{opacity:.45;pointer-events:none}
   .proj-id{font-size:9px;color:var(--text-d);font-weight:500}
   .proj-chip.active .proj-id{color:var(--accent-dim)}
+
+  /* v7.30: DoD-чипсы в новом блоке 4.5 */
+  .dod-block{margin-bottom:14px}.dod-block:last-child{margin-bottom:0}
+  .dod-block-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .dod-block-title .dod-block-icon{font-size:13px}
+  .dod-block-title .dod-block-count{font-size:9px;color:var(--text-d);font-weight:400;background:var(--surface2);padding:1px 6px;border-radius:8px;border:1px solid var(--glass-border)}
+  .dod-grid{display:flex;flex-wrap:wrap;gap:5px}
+  .dod-chip{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:5px;border:1px solid var(--glass-border-h);background:var(--surface2);color:var(--text-m);cursor:pointer;transition:all .15s;user-select:none;font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .dod-chip:hover{border-color:var(--accent-dim);color:var(--text)}
+  .dod-chip.active{border-color:var(--accent);background:var(--accent-glow-s);color:var(--accent)}
+  .dod-chip.active::before{content:'✓';font-size:10px;font-weight:700}
+  .dod-chip .dod-chip-dot{width:5px;height:5px;border-radius:50%;background:var(--text-d);flex-shrink:0}
+  .dod-chip.active .dod-chip-dot{display:none}
 
   .file-upload-area{border:1px dashed var(--glass-border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(10,12,18,0.6);position:relative}
   .file-upload-area:hover,.file-upload-area.drag-over,.file-upload-area.paste-flash{border-color:var(--accent);background:var(--accent-glow)}
@@ -429,7 +442,7 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.29</span>
+  <div class="topbar-logo">Bitrix24 <span>Tasks</span> <span id="verBadge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text-d);margin-left:6px;opacity:.7">v7.30</span>
     <!-- AI-CHANGE: NEW-HTML — индикатор черновика.
          ПРИЧИНА: визуальный фидбек о несохранённых изменениях.
          ОТКАТ: удалить span.draft-indicator. -->
@@ -555,8 +568,6 @@
       <div class="card" style="animation-delay:.08s">
         <div class="card-header"><div class="card-num">2</div><div class="card-title">Команда</div>
           <div class="toggles-group">
-            <label class="eod-toggle" title="Создать обязательный чек-лист тестирования"><input type="checkbox" id="dodMandatoryCheck" /><span class="eod-box">✓</span><span>DoD Обязат.</span></label>
-            <label class="eod-toggle" title="Доп. блок для сложных задач (новые модули, обмены, >8ч)"><input type="checkbox" id="dodExtendedCheck" /><span class="eod-box">✓</span><span>DoD Расшир.</span></label>
             <label class="eod-toggle" title="Добавить EOD-комментарий с шаблоном Done/Next/Test/Block"><input type="checkbox" id="eodCheck" checked /><span class="eod-box">✓</span><span>EOD</span></label>
           </div>
         </div>
@@ -610,12 +621,27 @@
           <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><line x1="8" y1="2" x2="8" y2="5.5"/><line x1="8" y1="10.5" x2="8" y2="14"/><line x1="2" y1="8" x2="5.5" y2="8"/><line x1="10.5" y1="8" x2="14" y2="8"/></svg></div><div class="section-content"><div class="section-label">Цель</div><textarea id="fieldGoal" data-icon-field rows="1" placeholder="Зачем делаем и какой результат."></textarea></div></div>
           <div class="section-field" data-state="empty" id="todoSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5L4 5l1.5 1.5M8.5 3.5L10 5 8.5 6.5"/><line x1="6.5" y1="11" x2="9.5" y2="11"/><line x1="3" y1="8.5" x2="13" y2="8.5"/><line x1="3" y1="13.5" x2="13" y2="13.5"/></svg></div><div class="section-content"><div class="section-label">Что сделать</div><div class="dynamic-fields" id="todoDynamicFields"><div class="dynamic-field-row"><textarea class="dynamic-input" data-group="todo" data-icon-field rows="1" placeholder="- действие 1&#10;- действие 2"></textarea><button type="button" class="add-field-btn" data-group="todo" title="Добавить поле">+</button></div></div><div class="dynamic-hint"><span class="dynamic-count" id="todoCount">1 / 10</span> · <span class="sb-key">Enter</span> — добавить · <span class="sb-key">Shift+Enter</span> — новая строка</div></div></div>
           <div class="section-field" data-state="empty" id="dodSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg></div><div class="section-content"><div class="section-label">Критерии приёмки</div><div class="dynamic-fields" id="dodDynamicFields"><div class="dynamic-field-row"><textarea class="dynamic-input" data-group="dod" data-icon-field rows="1" placeholder="- что проверяем при сдаче"></textarea><button type="button" class="add-field-btn" data-group="dod" title="Добавить поле">+</button></div></div><div class="dynamic-hint"><span class="dynamic-count" id="dodCount">1 / 10</span> · <span class="sb-key">Enter</span> — добавить · <span class="sb-key">Shift+Enter</span> — новая строка</div></div></div>
-          <div class="section-field" data-state="empty" id="contactSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M2 8h8M2 12h10"/><circle cx="14" cy="12" r="2"/></svg></div><div class="section-content"><div class="section-label">Контакт</div><textarea id="fieldContact" data-icon-field rows="1" placeholder="Кому писать вопросы по задаче"></textarea></div></div>
-          <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2a3.5 3.5 0 014.24 4.24l-1.2 1.2M9.5 14a3.5 3.5 0 01-4.24-4.24l1.2-1.2"/></svg></div><div class="section-content"><div class="section-label">Материалы</div><textarea id="fieldMaterials" data-icon-field rows="1" placeholder="https://..."></textarea></div></div>
+          <div class="section-field" data-state="empty" id="materialsSection"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2a3.5 3.5 0 014.24 4.24l-1.2 1.2M9.5 14a3.5 3.5 0 01-4.24-4.24l1.2-1.2"/></svg></div><div class="section-content"><div class="section-label">Материалы</div><textarea id="fieldMaterials" data-icon-field rows="1" placeholder="https://..."></textarea></div></div>
           <div class="section-field" data-state="empty"><div class="section-icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4v7a1 1 0 001 1h11a1 1 0 001-1V5a1 1 0 00-1-1H7.5L6.5 3H2.5a1 1 0 00-1 1z"/></svg></div><div class="section-content"><div class="section-label">Файлы</div><div class="file-upload-area" id="dropZone"><input type="file" id="fileInput" multiple /><div class="file-upload-text">Перетащи, <span>выбери</span> или <span>Ctrl+V</span></div></div><div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div><div class="file-list" id="fileList"></div></div></div>
           <div class="divider"></div>
           <div class="section-label" style="font-size:10px;color:var(--text-m);margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em">Предпросмотр</div>
           <div class="preview-wrap" id="descPreview">Заполни поля — здесь появится текст</div>
+        </div>
+      </div>
+
+      <!-- v7.30: НОВЫЙ БЛОК 4.5 — DoD-чипсы (Обязательный + Дополнительный) -->
+      <div class="card" style="animation-delay:.18s">
+        <div class="card-header"><div class="card-num">4½</div><div class="card-title">DoD</div><span style="margin-left:auto;font-size:9px;color:var(--text-d)">выбери нужные пункты — попадут в чек-лист задачи</span></div>
+        <div class="card-body">
+          <div class="dod-block">
+            <div class="dod-block-title"><span class="dod-block-icon">📋</span><span>Обязательный блок тестирования</span><span class="dod-block-count" id="dodMandCount">0/10</span></div>
+            <div class="dod-grid" id="dodMandGrid"></div>
+          </div>
+          <div style="height:1px;background:var(--glass-border);margin:14px 0"></div>
+          <div class="dod-block">
+            <div class="dod-block-title"><span class="dod-block-icon">🚀</span><span>Дополнительный блок (для сложных задач, новых модулей, обменов)</span><span class="dod-block-count" id="dodExtCount">0/8</span></div>
+            <div class="dod-grid" id="dodExtGrid"></div>
+          </div>
         </div>
       </div>
 
@@ -787,18 +813,44 @@ const LAST_TASK_KEY = 'bx_last_task';
 const WEBHOOK_KEY = 'bx_webhook';
 
 const DEVS = [
-  {name:'Константин',id:'18'},{name:'Александр',id:'38'},{name:'Саша',id:'54'},
-  {name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Ольга',id:'98'},{name:'Марина',id:'156'},
+  {name:'Костя',id:'18'},{name:'АС',id:'38'},{name:'Саша',id:'54'},
+  {name:'Тимур',id:'82'},{name:'Елена',id:'92'},{name:'Оля',id:'98'},{name:'Марина',id:'156'},
   {name:'АМ',id:'116'},{name:'ВМ',id:'1'}
 ];
 const MGRS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const OBSS = [{name:'АМ',id:'116'},{name:'ВМ',id:'1'}];
 const PROJS = [
-  {name:'Backlog',id:'78'},{name:'Бигап',id:'6'},{name:'Дакар',id:'32'},{name:'Иванов',id:'66'},
-  {name:'Медицина КЗ',id:'36'},{name:'Живое пиво',id:'4'},{name:'ВДЛ',id:'20'},{name:'Белолапотко',id:'50'},
-  {name:'ИТ Контроль',id:'42'},{name:'Нейс Юг',id:'62'},{name:'Самокаты',id:'18'},{name:'МАРКЕТДЖЕТ',id:'70'},
-  {name:'Керамика',id:'72'},{name:'ОПТИМАПЛАСТ',id:'52'},{name:'id86',id:'86'}
+  {name:'BL',fullName:'Backlog',id:'78'},{name:'Бигап',fullName:'Бигап',id:'6'},{name:'Дакар',fullName:'Дакар',id:'32'},{name:'Иванов',fullName:'Иванов',id:'66'},
+  {name:'Медицина КЗ',fullName:'Медицина КЗ',id:'36'},{name:'Живое пиво',fullName:'Живое пиво',id:'4'},{name:'ВДЛ',fullName:'ВДЛ',id:'20'},{name:'Белолапотко',fullName:'Белолапотко',id:'50'},
+  {name:'ИТ Контр',fullName:'ИТ Контроль',id:'42'},{name:'Нейс Юг',fullName:'Нейс Юг',id:'62'},{name:'Самокаты',fullName:'Самокаты',id:'18'},{name:'МЖ',fullName:'МАРКЕТДЖЕТ',id:'70'},
+  {name:'Керамика',fullName:'Керамика',id:'72'},{name:'ОПТИМАПЛАСТ',fullName:'ОПТИМАПЛАСТ',id:'52'},{name:'id86',fullName:'id86',id:'86'}
 ];
+
+// v7.30: DoD-чипсы — выбор конкретных пунктов чек-листа для добавления в задачу
+// shortName — на чипсе, fullName — в tooltip, text — попадает в Bitrix24 чек-лист
+const DOD_MANDATORY_ITEMS = [
+  {short:'smoke',  full:'Перечитай условия задачи — сравни результат с тем, что надо получить',                          text:'Перечитай условия задачи — сравни результат с требуемым'},
+  {short:'тест',   full:'Протестируй результат на демо-базе. Пройди сценарий от начала до конца, как пользователь',     text:'Протестируй на демо-базе — пройди сценарий до конца, ошибки фиксируй и правь'},
+  {short:'конст',  full:'Убери из кода жесткие ссылки на ID, GUID, коды, наименования. Все привязки через настройки',   text:'Убери жёсткие ссылки (ID/GUID/коды) — привязки через настройки или константы'},
+  {short:'регресс',full:'Проверь старый функционал, который может зависеть от твоей доработки',                         text:'Проверь старый функционал, зависящий от доработки (особенно общие модули/справочники)'},
+  {short:'затир',  full:'Проверь, что доработка не затирает чужой код в общих модулях',                                 text:'Не затёр чужой код в общих модулях. Менял общий объект — согласуй даже в тестовой'},
+  {short:'линт',   full:'Прогони код (если есть) через ИИ на синтаксис и базовые ошибки (линтер)',                      text:'Прогони код через ИИ-линтер на синтаксис и базовые ошибки'},
+  {short:'инстр',  full:'Напиши юзер-инструкцию или описание изменений в .doc (ворд) и приложи в задачу',               text:'User-инструкция в .docx вложением. Не нужна — кратко опиши доработки кода/метода'},
+  {short:'файл',   full:'Приложи файлы обработки и конфигурации в задачу (cf, dt, epf)',                                text:'Приложи файлы обработки/конфигурации (.cf/.dt/.epf/.erf) при необходимости'},
+  {short:'EOD',    full:'Оставь комментарий в формате Done, Next, Test, Block',                                         text:'Комментарий в формате Done/Next/Test/Block (инструкция ТУТ)'},
+  {short:'пинг',   full:'Напиши постановщику о готовности к проверке через пинг: @постановщик или +постановщик',        text:'Пингани постановщика (@ или +) о готовности к проверке — в Done или отдельно'}
+];
+const DOD_EXTENDED_ITEMS = [
+  {short:'арх',     full:'Согласуй архитектуру задачи до начала кода и покажи её структуру',                          text:'Согласуй архитектуру до начала кода и покажи структуру'},
+  {short:'способ',  full:'Предложи варианты решения задачи несколькими способами',                                    text:'Предложи несколько вариантов решения задачи'},
+  {short:'цикл',    full:'Проверь, что в коде не предусмотрено запросов в цикле',                                      text:'Проверь — нет запросов в цикле'},
+  {short:'сквозное',full:'Протестируй задачу под пользователем с ограниченными правами и под админом',                text:'Протестируй под обычным пользователем и под админом'},
+  {short:'unit',    full:'Проверь изолированно отдельный компонент или модуль кода (функцию, метод, класс)',           text:'Проверь изолированно отдельный компонент кода (функцию/метод/класс)'},
+  {short:'интеграц',full:'Проверь, как твоя доработка работает вместе с другими модулями',                            text:'Проверь интеграцию с другими модулями'},
+  {short:'стресс',  full:'Для фоновых и рег заданий проверь при максимальной нагрузке',                               text:'Фоновые/регламентные: проверь при максимальной нагрузке (особенно при рестарте сервера)'},
+  {short:'secur',   full:'Проверь права доступа для разных ролей. Убедись, что юзер не видит чужие данные',            text:'Проверь права доступа для разных ролей — юзер не должен видеть/менять чужие данные'}
+];
+const dodSelected = new Set(); // выбранные ключи в формате 'mand:INDEX' или 'ext:INDEX'
 
 const TEMPLATES = {
   bug: {
@@ -905,10 +957,10 @@ function saveDraft() {
     obsId: selectedObsId,
     projId: selectedProjId,
     goal: document.getElementById('fieldGoal').value,
-    contact: document.getElementById('fieldContact').value,
     materials: document.getElementById('fieldMaterials').value,
     todo: getDynamicValues('todo'),
     dod: getDynamicValues('dod'),
+    dodChips: [...dodSelected],
     savedAt: Date.now()
   };
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -931,8 +983,8 @@ function loadDraft() {
     // НЕ восстанавливаем дедлайн из черновика — всегда сегодня
     // if (d.deadline) document.getElementById('taskDeadline').value = d.deadline;
     if (d.goal) document.getElementById('fieldGoal').value = d.goal;
-    if (d.contact) document.getElementById('fieldContact').value = d.contact;
     if (d.materials) document.getElementById('fieldMaterials').value = d.materials;
+    if (d.dodChips) selectDodChipsFromDraft(d.dodChips);
     if (d.flameOn && !flameOn) toggleFlame();
     if (d.devId) { const c = document.querySelector(`#devGrid .crew-chip[data-id="${d.devId}"]`); if (c) selectChip(c); }
     if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
@@ -1022,11 +1074,63 @@ function selectChip(ch) {
 
 function renderProjects() {
   const g = document.getElementById('projGrid');
-  g.innerHTML = PROJS.map(p => `<div class="proj-chip" data-id="${p.id}" role="radio" aria-checked="false" tabindex="0"><span class="proj-dot"></span><span>${escapeHtml(p.name)}</span></div>`).join('');
+  g.innerHTML = PROJS.map(p => `<div class="proj-chip" data-id="${p.id}" title="${escapeHtml(p.fullName)}" role="radio" aria-checked="false" tabindex="0"><span class="proj-dot"></span><span>${escapeHtml(p.name)}</span></div>`).join('');
   g.querySelectorAll('.proj-chip').forEach(ch => {
     ch.addEventListener('click', () => selectProject(ch));
     ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProject(ch); } });
   });
+}
+
+// v7.30: DoD-чипсы — рендер обоих блоков
+function renderDodChips() {
+  const mand = document.getElementById('dodMandGrid');
+  const ext  = document.getElementById('dodExtGrid');
+  if (!mand || !ext) return;
+
+  mand.innerHTML = DOD_MANDATORY_ITEMS.map((item, i) =>
+    `<div class="dod-chip" data-block="mand" data-idx="${i}" title="${escapeHtml(item.full)}" tabindex="0"><span class="dod-chip-dot"></span><span>${escapeHtml(item.short)}</span></div>`
+  ).join('');
+  ext.innerHTML = DOD_EXTENDED_ITEMS.map((item, i) =>
+    `<div class="dod-chip" data-block="ext" data-idx="${i}" title="${escapeHtml(item.full)}" tabindex="0"><span class="dod-chip-dot"></span><span>${escapeHtml(item.short)}</span></div>`
+  ).join('');
+
+  const updateCount = () => {
+    const mandCount = [...dodSelected].filter(k => k.startsWith('mand:')).length;
+    const extCount  = [...dodSelected].filter(k => k.startsWith('ext:')).length;
+    const mc = document.getElementById('dodMandCount'); const ec = document.getElementById('dodExtCount');
+    if (mc) mc.textContent = `${mandCount}/${DOD_MANDATORY_ITEMS.length}`;
+    if (ec) ec.textContent = `${extCount}/${DOD_EXTENDED_ITEMS.length}`;
+  };
+
+  const toggle = (chip) => {
+    const key = chip.dataset.block + ':' + chip.dataset.idx;
+    if (dodSelected.has(key)) { dodSelected.delete(key); chip.classList.remove('active'); }
+    else { dodSelected.add(key); chip.classList.add('active'); }
+    updateCount();
+    saveDraft();
+  };
+
+  document.querySelectorAll('.dod-chip').forEach(ch => {
+    ch.addEventListener('click', () => toggle(ch));
+    ch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(ch); } });
+  });
+
+  updateCount();
+}
+
+function selectDodChipsFromDraft(arr) {
+  if (!Array.isArray(arr)) return;
+  dodSelected.clear();
+  arr.forEach(k => dodSelected.add(k));
+  document.querySelectorAll('.dod-chip').forEach(ch => {
+    const key = ch.dataset.block + ':' + ch.dataset.idx;
+    ch.classList.toggle('active', dodSelected.has(key));
+  });
+  const mc = document.getElementById('dodMandCount'); const ec = document.getElementById('dodExtCount');
+  const mandCount = [...dodSelected].filter(k => k.startsWith('mand:')).length;
+  const extCount  = [...dodSelected].filter(k => k.startsWith('ext:')).length;
+  if (mc) mc.textContent = `${mandCount}/${DOD_MANDATORY_ITEMS.length}`;
+  if (ec) ec.textContent = `${extCount}/${DOD_EXTENDED_ITEMS.length}`;
 }
 
 function selectProject(ch) {
@@ -1115,7 +1219,7 @@ function repeatLastTask() {
     if (d.mgrId) { const c = document.querySelector(`#mgrGrid .crew-chip[data-id="${d.mgrId}"]`); if (c) selectChip(c); }
     if (d.obsId) { const c = document.querySelector(`#obsGrid .crew-chip[data-id="${d.obsId}"]`); if (c) selectChip(c); }
     if (d.projId) { const c = document.querySelector(`#projGrid .proj-chip[data-id="${d.projId}"]`); if (c) selectProject(c); }
-    const m = { goal: 'fieldGoal', materials: 'fieldMaterials', contact: 'fieldContact' };
+    const m = { goal: 'fieldGoal', materials: 'fieldMaterials' };
     Object.entries(m).forEach(([k, id]) => { if (d.f && d.f[k]) { const el = document.getElementById(id); el.value = d.f[k]; autoGrow(el); } });
     if (d.f && d.f.todo && Array.isArray(d.f.todo)) { resetDynamicFields('todo'); d.f.todo.forEach(v => { if(v) addDynamicField('todo', v); }); }
     else { resetDynamicFields('todo'); }
@@ -1269,7 +1373,6 @@ function buildDescription() {
   if (todoVals.length) p.push('[b]Что сделать:[/b]\n' + todoVals.join('\n'));
   const dodVals = getDynamicValues('dod');
   if (dodVals.length) p.push('[b]Критерии приёмки:[/b]\n' + dodVals.join('\n'));
-  if (g('fieldContact')) p.push('[b]Контакт:[/b]\n' + g('fieldContact'));
   if (g('fieldMaterials')) p.push('[b]Материалы:[/b]\n' + g('fieldMaterials'));
   return p.join('\n\n');
 }
@@ -1637,7 +1740,6 @@ async function handleSubmit(e) {
     f: {
       goal: document.getElementById('fieldGoal').value,
       todo: getDynamicValues('todo'), dod: getDynamicValues('dod'),
-      contact: document.getElementById('fieldContact').value,
       materials: document.getElementById('fieldMaterials').value
     }
   }));
@@ -1675,9 +1777,8 @@ async function handleSubmit(e) {
       const eodOn = document.getElementById('eodCheck').checked;
       if (eodOn) observerIds.push(154); // Бот для EOD-комментариев
 
-      // v7.29: DoD-чек-листы (Обязат. + Расшир.)
-      const dodMandatoryOn = document.getElementById('dodMandatoryCheck').checked;
-      const dodExtendedOn = document.getElementById('dodExtendedCheck').checked;
+      // v7.30: DoD-чек-листы — только выбранные чипсы
+      const dodSelectedArr = [...dodSelected];
 
       let obsMsg = '';
       if (observerIds.length) {
@@ -1690,11 +1791,11 @@ async function handleSubmit(e) {
         await uploadFiles(hook, tid);
       }
 
-      // v7.29: добавляем чек-листы DoD перед EOD-комментарием
+      // v7.30: добавляем чек-листы DoD из выбранных чипсов
       let dodMsg = '';
-      if (dodMandatoryOn) {
+      if (dodSelectedArr.length) {
         bt.textContent = 'DoD чек-лист...';
-        dodMsg = await addDodChecklists(hook, tid, dodExtendedOn);
+        dodMsg = await addDodChecklists(hook, tid, dodSelectedArr);
       }
 
       // EOD-комментарий если галка стоит (бот уже добавлен наблюдателем выше)
@@ -1822,35 +1923,14 @@ async function addEodComment(hook, tid, projId) {
   }
 }
 
-// v7.29: DoD-чек-листы (Обязат. + Расшир.)
-// ПРИЧИНА: при создании задачи добавить в неё чек-листы тестирования.
-// ОТКАТ: удалить функцию, константы и вызов в handleSubmit.
-const DOD_MANDATORY_ITEMS = [
-  'Перечитай условия задачи — сверь результат с требуемым',
-  'Протестируй на демо-базе — пройди сценарий до конца, ошибки фиксируй и правь',
-  'Убери жёсткие ссылки (ID/GUID/коды) — привязки через настройки или константы',
-  'Не затёр чужой код в общих модулях. Менял общий объект — согласуй даже в тестовой',
-  'Прогони код через ИИ-линтер на синтаксис и базовые ошибки',
-  'User-инструкция в .docx вложением. Не нужна — кратко опиши доработки кода/метода',
-  'Приложи файлы обработки/конфигурации (.cf/.dt/.epf/.erf) при необходимости',
-  'Комментарий в формате Done/Next/Test/Block (инструкция ТУТ)',
-  'Пингани постановщика (@ или +) о готовности к проверке — в Done или отдельно'
-];
-const DOD_EXTENDED_ITEMS = [
-  'Согласуй архитектуру до начала кода и покажи структуру',
-  'Предложи несколько вариантов решения задачи',
-  'Проверь — нет запросов в цикле',
-  'Задай жёсткое расписание фоновых/регламентных (согласуй с другими)',
-  'Протестируй под обычным пользователем и под админом',
-  'Составь список переноса в рабочую базу: реквизиты, роли, .cf/.dt/.epf/.erf, путь к инструкции'
-];
-
-async function addDodChecklists(hook, taskId, includeExtended) {
+// v7.30: DoD-чек-листы — берём только выбранные чипсы
+// ПРИЧИНА: пользователь выбирает конкретные пункты в блоке 4½, в задачу попадают только они.
+// ОТКАТ: удалить функцию, вернуть старые DOD_MANDATORY_ITEMS + DOD_EXTENDED_ITEMS как массивы строк.
+async function addDodChecklists(hook, taskId, selectedKeys) {
   let added = 0;
   let failed = 0;
 
-  // Утилита: создать пункт чек-листа через новый унифицированный API tasks.task.checklist.add
-  // (старый task.checklist.add возвращает DISPATCHER_ERROR)
+  // Утилита: создать пункт чек-листа через tasks.task.checklist.add
   async function addItem(title, isComplete, parentId) {
     try {
       const r = await fetch(hook + 'tasks.task.checklist.add', {
@@ -1871,31 +1951,42 @@ async function addDodChecklists(hook, taskId, includeExtended) {
     }
   }
 
-  // Секция 1: ОБЯЗАТЕЛЬНЫЙ БЛОК
-  const mandParentId = await addItem('📋 ОБЯЗАТЕЛЬНЫЙ БЛОК ТЕСТИРОВАНИЯ', 'N', 0);
-  console.log('[DoD] Parent (mandatory) added:', mandParentId);
-  if (mandParentId) added++; else failed++;
+  // Группируем выбранные чипсы по блокам
+  const mandKeys = selectedKeys.filter(k => k.startsWith('mand:')).map(k => parseInt(k.split(':')[1]));
+  const extKeys  = selectedKeys.filter(k => k.startsWith('ext:')).map(k => parseInt(k.split(':')[1]));
 
-  for (const item of DOD_MANDATORY_ITEMS) {
-    const id = await addItem(item, 'N', mandParentId);
-    if (id) added++; else failed++;
-  }
+  // Секция 1: ОБЯЗАТЕЛЬНЫЙ БЛОК (если есть хоть один выбранный из него)
+  if (mandKeys.length) {
+    const mandParentId = await addItem('📋 ОБЯЗАТЕЛЬНЫЙ БЛОК ТЕСТИРОВАНИЯ', 'N', 0);
+    console.log('[DoD] Parent (mandatory) added:', mandParentId);
+    if (mandParentId) added++; else failed++;
 
-  // Секция 2: ДОПОЛНИТЕЛЬНЫЙ БЛОК (если включён)
-  if (includeExtended) {
-    const extParentId = await addItem('🚀 ДОПОЛНИТЕЛЬНЫЙ БЛОК (для сложных задач, новых модулей, обменов)', 'N', 0);
-    console.log('[DoD] Parent (extended) added:', extParentId);
-    if (extParentId) added++; else failed++;
-
-    for (const item of DOD_EXTENDED_ITEMS) {
-      const id = await addItem(item, 'N', extParentId);
+    for (const idx of mandKeys) {
+      const item = DOD_MANDATORY_ITEMS[idx];
+      if (!item) continue;
+      const id = await addItem(item.text, 'N', mandParentId);
       if (id) added++; else failed++;
     }
   }
 
-  console.log(`[DoD] Done. Added: ${added}, Failed: ${failed}`);
-  if (failed === 0) return includeExtended ? ' · DoD ✓✓' : ' · DoD ✓';
-  if (added > 0) return ` · DoD ⚠ (${added}/${added + failed})`;
+  // Секция 2: ДОПОЛНИТЕЛЬНЫЙ БЛОК
+  if (extKeys.length) {
+    const extParentId = await addItem('🚀 ДОПОЛНИТЕЛЬНЫЙ БЛОК (для сложных задач, новых модулей, обменов)', 'N', 0);
+    console.log('[DoD] Parent (extended) added:', extParentId);
+    if (extParentId) added++; else failed++;
+
+    for (const idx of extKeys) {
+      const item = DOD_EXTENDED_ITEMS[idx];
+      if (!item) continue;
+      const id = await addItem(item.text, 'N', extParentId);
+      if (id) added++; else failed++;
+    }
+  }
+
+  const total = mandKeys.length + extKeys.length + (mandKeys.length ? 1 : 0) + (extKeys.length ? 1 : 0);
+  console.log(`[DoD] Done. Selected: ${selectedKeys.length}, Added: ${added}, Failed: ${failed}, Expected: ${total}`);
+  if (failed === 0) return ` · DoD ✓ (${selectedKeys.length})`;
+  if (added > 0) return ` · DoD ⚠ (${added}/${total})`;
   return ' · ⚠ DoD не добавлен';
 }
 
@@ -1992,8 +2083,14 @@ function resetForm() {
   document.getElementById('timeEstimate').value = '';
   { const d = new Date(); document.getElementById('taskDeadline').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   document.getElementById('titleCount').textContent = '0 / 255';
-  document.getElementById('fieldContact').value = '';
-  document.getElementById('fieldContact').style.height = 'auto';
+  document.getElementById('fieldMaterials').value = '';
+  document.getElementById('fieldMaterials').style.height = 'auto';
+  // v7.30: сброс DoD-чипсов
+  dodSelected.clear();
+  document.querySelectorAll('.dod-chip').forEach(c => c.classList.remove('active'));
+  const mc = document.getElementById('dodMandCount'); const ec = document.getElementById('dodExtCount');
+  if (mc) mc.textContent = `0/${DOD_MANDATORY_ITEMS.length}`;
+  if (ec) ec.textContent = `0/${DOD_EXTENDED_ITEMS.length}`;
   if (flameOn) { const i = document.getElementById('flameIcon'), l = document.getElementById('flameLabel'); flameOn = false; i.className = 'flame-icon'; l.classList.remove('on'); }
   selectedFiles = [];
   renderFileList();
@@ -2038,6 +2135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChips('mgrGrid', MGRS);
   renderChips('obsGrid', OBSS);
   renderProjects();
+  renderDodChips();
   updateRepeatButton();
   renderHistory(); // AI-CHANGE: рендер истории при старте
 
